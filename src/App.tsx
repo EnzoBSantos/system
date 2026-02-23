@@ -49,14 +49,24 @@ const App = () => {
         <PWAInstallPrompt />
         <BrowserRouter>
           <Routes>
+            {/* The root route now purely redirects based on session state */}
             <Route 
               path="/" 
+              element={<Navigate to={session ? "/home" : "/login"} replace />} 
+            />
+            
+            {/* Dashboard / Home page */}
+            <Route 
+              path="/home" 
               element={session ? <Index /> : <Navigate to="/login" replace />} 
             />
+            
+            {/* Login page */}
             <Route 
               path="/login" 
-              element={!session ? <Login /> : <Navigate to="/" replace />} 
+              element={!session ? <Login /> : <Navigate to="/home" replace />} 
             />
+            
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
