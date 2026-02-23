@@ -3,6 +3,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Sidebar from '@/components/Sidebar';
+import MobileNav from '@/components/MobileNav';
 import Dashboard from '@/components/Dashboard';
 import HabitCard from '@/components/HabitCard';
 import AddHabitDialog from '@/components/AddHabitDialog';
@@ -148,11 +149,13 @@ const Index = () => {
       <div className="fixed inset-0 pointer-events-none opacity-[0.02] bg-[url('https://grainy-gradients.vercel.app/noise.svg')] z-50"></div>
 
       <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
+      <MobileNav activeTab={activeTab} setActiveTab={setActiveTab} />
 
-      <main className="flex-1 overflow-y-auto p-8 lg:p-16 relative">
+      <main className="flex-1 overflow-y-auto p-4 lg:p-16 pb-32 lg:pb-16 relative">
         <button 
           onClick={handleLogout}
-          className="absolute top-8 right-8 text-zinc-500 hover:text-white transition-colors"
+          className="absolute top-4 right-4 lg:top-8 lg:right-8 text-zinc-500 hover:text-white transition-colors p-2"
+          aria-label="Logout"
         >
           <LogOut size={20} />
         </button>
@@ -160,39 +163,39 @@ const Index = () => {
         <div className="max-w-6xl mx-auto">
           <AnimatePresence mode="wait">
             {activeTab === 'dashboard' && (
-              <motion.div key="dashboard" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+              <motion.div key="dashboard" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
                 <Dashboard habits={habits} sessions={sessions} />
               </motion.div>
             )}
 
             {activeTab === 'habits' && (
-              <motion.div key="habits" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-12">
-                <header className="flex flex-col md:flex-row md:items-end justify-between gap-8">
-                  <div className="space-y-3">
-                    <h2 className="text-6xl font-black tracking-tighter lowercase">daily rituals.</h2>
-                    <p className="text-zinc-500 text-lg font-medium lowercase">discipline is the path to freedom.</p>
+              <motion.div key="habits" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-8 lg:space-y-12">
+                <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 lg:gap-8">
+                  <div className="space-y-2 lg:space-y-3">
+                    <h2 className="text-4xl lg:text-6xl font-black tracking-tighter lowercase">daily rituals.</h2>
+                    <p className="text-zinc-500 text-base lg:text-lg font-medium lowercase">discipline is the path to freedom.</p>
                   </div>
                   <AddHabitDialog onAdd={handleAddHabit} />
                 </header>
 
-                <div className="flex flex-col md:flex-row gap-6 items-center justify-between bg-zinc-900 p-3 rounded-[2rem] border border-zinc-800">
+                <div className="flex flex-col md:flex-row gap-4 lg:gap-6 items-center justify-between bg-zinc-900 p-2 lg:p-3 rounded-[2rem] border border-zinc-800">
                   <div className="relative w-full md:w-80">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500" size={20} />
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500" size={18} />
                     <Input 
                       placeholder="search practices..." 
-                      className="pl-12 bg-transparent border-none focus-visible:ring-0 focus-visible:ring-offset-0 text-lg lowercase font-medium"
+                      className="pl-12 bg-transparent border-none focus-visible:ring-0 focus-visible:ring-offset-0 text-base lg:text-lg lowercase font-medium"
                       value={search}
                       onChange={(e) => setSearch(e.target.value)}
                     />
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 w-full md:w-auto overflow-x-auto pb-1 md:pb-0 scrollbar-hide">
                     {['All', 'Pending', 'Completed'].map((f) => (
                       <Button
                         key={f}
                         variant="ghost"
                         onClick={() => setFilter(f as any)}
                         className={cn(
-                          "px-6 h-12 font-bold text-xs uppercase tracking-widest rounded-2xl transition-all",
+                          "px-4 lg:px-6 h-10 lg:h-12 font-bold text-[10px] uppercase tracking-widest rounded-2xl transition-all whitespace-nowrap",
                           filter === f ? "bg-white text-black" : "text-zinc-500 hover:text-white"
                         )}
                       >
@@ -202,7 +205,7 @@ const Index = () => {
                   </div>
                 </div>
 
-                <div className="grid md:grid-cols-2 gap-6">
+                <div className="grid md:grid-cols-2 gap-4 lg:gap-6">
                   <AnimatePresence mode="popLayout">
                     {filteredHabits.map((habit) => (
                       <HabitCard 
@@ -216,8 +219,8 @@ const Index = () => {
                 </div>
 
                 {filteredHabits.length === 0 && (
-                  <div className="text-center py-32 space-y-4">
-                    <p className="text-4xl font-black tracking-tighter opacity-20 lowercase">void.</p>
+                  <div className="text-center py-24 lg:py-32 space-y-4">
+                    <p className="text-3xl lg:text-4xl font-black tracking-tighter opacity-20 lowercase">void.</p>
                     <p className="text-zinc-500 font-medium">every habit begins with a single choice.</p>
                   </div>
                 )}
@@ -225,23 +228,23 @@ const Index = () => {
             )}
 
             {activeTab === 'pomodoro' && (
-              <motion.div key="pomodoro" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                <header className="space-y-3 mb-12 text-center">
-                  <h2 className="text-6xl font-black tracking-tighter lowercase">deep focus.</h2>
-                  <p className="text-zinc-500 text-lg font-medium lowercase">be here now.</p>
+              <motion.div key="pomodoro" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
+                <header className="space-y-2 lg:space-y-3 mb-8 lg:mb-12 text-center">
+                  <h2 className="text-4xl lg:text-6xl font-black tracking-tighter lowercase">deep focus.</h2>
+                  <p className="text-zinc-500 text-base lg:text-lg font-medium lowercase">be here now.</p>
                 </header>
                 <PomodoroTimer habits={habits} onComplete={handleCompleteSession} />
                 
-                <div className="mt-20 max-w-xl mx-auto space-y-6">
-                  <h3 className="text-2xl font-black tracking-tighter border-b border-zinc-800 pb-4 lowercase">recorded sessions.</h3>
-                  <div className="space-y-4">
+                <div className="mt-12 lg:mt-20 max-w-xl mx-auto space-y-6">
+                  <h3 className="text-xl lg:text-2xl font-black tracking-tighter border-b border-zinc-800 pb-4 lowercase">recorded sessions.</h3>
+                  <div className="space-y-3 lg:space-y-4">
                     {sessions.slice(0, 5).map((s) => (
-                      <div key={s.id} className="flex items-center justify-between bg-zinc-900 p-6 rounded-[1.5rem] border border-zinc-800">
+                      <div key={s.id} className="flex items-center justify-between bg-zinc-900 p-4 lg:p-6 rounded-[1.5rem] border border-zinc-800">
                         <div className="flex items-center gap-4">
-                          <div className={cn("w-3 h-3 rounded-full", s.type === 'focus' ? "bg-white" : "bg-zinc-600")} />
-                          <span className="font-bold tracking-tight lowercase text-zinc-300">{s.type.replace('-', ' ')}</span>
+                          <div className={cn("w-2.5 h-2.5 lg:w-3 lg:h-3 rounded-full", s.type === 'focus' ? "bg-white" : "bg-zinc-600")} />
+                          <span className="font-bold tracking-tight lowercase text-zinc-300 text-sm lg:text-base">{s.type.replace('-', ' ')}</span>
                         </div>
-                        <span className="font-mono text-xs text-zinc-500">
+                        <span className="font-mono text-[10px] lg:text-xs text-zinc-500">
                           {new Date(s.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </span>
                       </div>

@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react';
-import { LayoutDashboard, CheckCircle2, Timer, Flame, Bird } from 'lucide-react';
+import { LayoutDashboard, CheckCircle2, Timer, Bird } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 type Tab = 'dashboard' | 'habits' | 'pomodoro';
@@ -19,7 +19,7 @@ const Sidebar = ({ activeTab, setActiveTab }: SidebarProps) => {
   ];
 
   return (
-    <div className="w-full lg:w-72 border-r border-border h-full bg-black flex flex-col p-8 space-y-12">
+    <div className="hidden lg:flex w-72 border-r border-border h-full bg-black flex-col p-8 space-y-12 shrink-0">
       <div className="flex items-center space-x-3 px-2">
         <div className="w-10 h-10 bg-white rounded-2xl flex items-center justify-center">
           <Bird className="text-black" size={22} />
