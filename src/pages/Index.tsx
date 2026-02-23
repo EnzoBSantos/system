@@ -11,6 +11,7 @@ import { Habit, PomodoroSession, Category } from '@/types/app';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Search, Filter } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'habits' | 'pomodoro'>('dashboard');
