@@ -11,7 +11,7 @@ import PomodoroTimer from '@/components/PomodoroTimer';
 import { Habit, PomodoroSession } from '@/types/app';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Search, LogOut } from 'lucide-react';
+import { Search, LogOut, Database } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { showSuccess, showError } from '@/utils/toast';
@@ -23,6 +23,7 @@ const Index = () => {
   const [habits, setHabits] = useState<Habit[]>([]);
   const [sessions, setSessions] = useState<PomodoroSession[]>([]);
   const [loading, setLoading] = useState(true);
+  const [dbError, setDbError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchData();
@@ -38,12 +39,15 @@ const Index = () => {
         supabase.from('pomodoro_sessions').select('*').order('timestamp', { ascending: false })
       ]);
 
-      if (habitsRes.data) {
+      if (habitsRes.error && habitsRes.error.code === 'PGRST116') {
+        setDbError("Table 'habits' not found. Please run the SQL script in Supabase.");
+      } else if (habitsRes.data) {
         setHabits(habitsRes.data.map(h => ({
           ...h,
           completedDays: h.completed_days || []
         })));
       }
+      
       if (sessionsRes.data) setSessions(sessionsRes.data);
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -66,12 +70,7 @@ const Index = () => {
 
   const handleAddHabit = async (newHabit: Omit<Habit, 'id' | 'completedDays' | 'createdAt' | 'streak' | 'longestStreak'>) => {
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      showError("you must be logged in.");
-      return;
-    }
-
-    console.log('Attempting to create ritual:', newHabit);
+    if (!user) return;
 
     const { data, error } = await supabase.from('habits').insert({
       user_id: user.id,
@@ -84,17 +83,13 @@ const Index = () => {
     }).select().single();
 
     if (error) {
-      console.error('Supabase Ritual Insert Error:', error);
-      showError(`failed: ${error.message || "check database setup"}`);
+      console.error('Insert error:', error);
+      showError(`failed: ${error.message}`);
       return;
     }
 
     if (data) {
-      const mappedHabit: Habit = {
-        ...data,
-        completedDays: data.completed_days || []
-      };
-      setHabits([mappedHabit, ...habits]);
+      setHabits([{ ...data, completedDays: [] }, ...habits]);
       showSuccess("ritual created.");
     }
   };
@@ -117,7 +112,6 @@ const Index = () => {
     }).eq('id', id);
 
     if (error) {
-      console.error('Update Error:', error);
       showError("failed to update ritual.");
       return;
     }
@@ -160,6 +154,17 @@ const Index = () => {
   if (loading) return (
     <div className="min-h-screen bg-black flex items-center justify-center">
       <div className="w-8 h-8 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+    </div>
+  );
+
+  if (dbError) return (
+    <div className="min-h-screen bg-black flex flex-col items-center justify-center p-6 text-center space-y-6">
+      <div className="w-16 h-16 bg-white/10 rounded-2xl flex items-center justify-center">
+        <Database className="text-white" size={32} />
+      </div>
+      <h2 className="text-3xl font-black tracking-tighter lowercase">setup required.</h2>
+      <p className="text-zinc-500 max-w-md">{dbError}</p>
+      <Button onClick={() => window.location.reload()} className="bg-white text-black rounded-xl">check again</Button>
     </div>
   );
 
