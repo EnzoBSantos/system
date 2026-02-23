@@ -12,6 +12,7 @@ import { SpeedInsights } from "@vercel/speed-insights/react";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
+import PWAInstallPrompt from "./components/PWAInstallPrompt";
 
 const queryClient = new QueryClient();
 
@@ -45,6 +46,7 @@ const App = () => {
         <Sonner />
         <Analytics />
         <SpeedInsights />
+        <PWAInstallPrompt />
         <BrowserRouter>
           <Routes>
             <Route 
