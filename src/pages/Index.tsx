@@ -124,6 +124,22 @@ const Index = () => {
     setHabits(habits.map(h => h.id === id ? { ...h, completedDays: newCompletedDays, streak: newStreak } : h));
   };
 
+  const handleUpdateHabit = async (id: string, updates: Partial<Habit>) => {
+    const { error } = await supabase.from('habits').update({
+      name: updates.name,
+      emoji: updates.emoji,
+      category: updates.category,
+    }).eq('id', id);
+
+    if (error) {
+      showError("failed to update ritual.");
+      return;
+    }
+
+    setHabits(habits.map(h => h.id === id ? { ...h, ...updates } : h));
+    showSuccess("ritual refined.");
+  };
+
   const handleDeleteHabit = async (id: string) => {
     const { error } = await supabase.from('habits').delete().eq('id', id);
     if (error) {
@@ -256,6 +272,7 @@ const Index = () => {
                         habit={habit} 
                         onToggle={handleToggleHabit} 
                         onDelete={handleDeleteHabit}
+                        onUpdate={handleUpdateHabit}
                       />
                     ))}
                   </AnimatePresence>
