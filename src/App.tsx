@@ -42,7 +42,7 @@ const App = () => {
   if (loading) return (
     <div className="min-h-screen bg-black flex flex-col items-center justify-center space-y-4">
       <div className="w-10 h-10 border-2 border-white/10 border-t-white rounded-full animate-spin" />
-      <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">aligning aura...</span>
+      <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">aligning pillar...</span>
     </div>
   );
 
@@ -54,13 +54,11 @@ const App = () => {
         <PWAInstallPrompt />
         <BrowserRouter>
           <Routes>
-            {/* Redireciona a raiz sempre para /login */}
             <Route 
               path="/" 
               element={<Navigate to="/login" replace />} 
             />
             
-            {/* O /login decide se mostra o formulário ou vai para o dashboard */}
             <Route 
               path="/login" 
               element={!session ? <Login /> : <Navigate to="/dashboard" replace />} 

@@ -14,7 +14,7 @@ const Login = () => {
             <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center">
               <Bird className="text-black" size={28} />
             </div>
-            <h1 className="text-5xl font-black tracking-tighter lowercase text-white">aura.</h1>
+            <h1 className="text-5xl font-black tracking-tighter lowercase text-white">pillar.</h1>
           </div>
           <p className="text-zinc-500 font-medium text-center">master your mind, one ritual at a time.</p>
         </div>

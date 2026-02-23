@@ -24,7 +24,7 @@ const Sidebar = ({ activeTab, setActiveTab }: SidebarProps) => {
         <div className="w-10 h-10 bg-white rounded-2xl flex items-center justify-center">
           <Bird className="text-black" size={22} />
         </div>
-        <h1 className="text-2xl font-bold tracking-tighter lowercase">aura.</h1>
+        <h1 className="text-2xl font-bold tracking-tighter lowercase">pillar.</h1>
       </div>
 
       <nav className="flex-1 space-y-4">

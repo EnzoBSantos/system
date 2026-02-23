@@ -12,29 +12,22 @@ const PWAInstallPrompt = () => {
   const [platform, setPlatform] = useState<'android' | 'ios' | 'other'>('other');
 
   useEffect(() => {
-    // Check if already in standalone mode
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches 
       || (window.navigator as any).standalone 
       || document.referrer.includes('android-app://');
 
     if (isStandalone) return;
 
-    // Detect Platform
     const userAgent = window.navigator.userAgent.toLowerCase();
     const isIos = /iphone|ipad|ipod/.test(userAgent);
     setPlatform(isIos ? 'ios' : 'android');
 
     const handleBeforeInstallPrompt = (e: Event) => {
-      // Prevent the default browser prompt
       e.preventDefault();
-      // Stash the event so it can be triggered later
       setDeferredPrompt(e);
-      
-      // Delay visibility by 2 seconds
       setTimeout(() => setIsVisible(true), 2000);
     };
 
-    // For iOS, there is no beforeinstallprompt event
     if (isIos) {
       setTimeout(() => setIsVisible(true), 2000);
     } else {
@@ -101,7 +94,7 @@ const PWAInstallPrompt = () => {
                 <Bird className="text-black" size={32} />
               </div>
               <div className="space-y-1">
-                <h3 className="text-2xl font-black tracking-tighter lowercase">aura.</h3>
+                <h3 className="text-2xl font-black tracking-tighter lowercase">pillar.</h3>
                 <p className="text-zinc-500 font-medium text-sm lowercase leading-tight">install for the best experience.</p>
               </div>
             </div>
@@ -149,7 +142,7 @@ const PWAInstallPrompt = () => {
                 onClick={handleInstall}
                 className="w-full bg-white hover:bg-zinc-200 text-black font-black text-xl h-16 rounded-[1.5rem] tracking-tight lowercase transition-transform active:scale-95 shadow-xl"
               >
-                install aura.
+                install pillar.
               </Button>
             )}
 
