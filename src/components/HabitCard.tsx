@@ -29,7 +29,7 @@ const HabitCard = ({ habit, onToggle, onDelete }: HabitCardProps) => {
       initial={{ opacity: 0, scale: 0.98 }}
       animate={{ opacity: 1, scale: 1 }}
       className={cn(
-        "group relative p-6 rounded-[2rem] flex items-center gap-6 transition-all duration-300 border",
+        "group relative p-5 md:p-6 rounded-[2rem] flex items-center gap-4 md:gap-6 transition-all duration-300 border",
         isCompletedToday 
           ? "bg-zinc-900 border-transparent opacity-60" 
           : "bg-black border-zinc-800 hover:border-zinc-600"
@@ -38,7 +38,7 @@ const HabitCard = ({ habit, onToggle, onDelete }: HabitCardProps) => {
       <button
         onClick={() => onToggle(habit.id)}
         className={cn(
-          "w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-300",
+          "w-12 h-12 md:w-14 md:h-14 rounded-2xl flex items-center justify-center transition-all duration-300 shrink-0",
           isCompletedToday 
             ? "bg-white text-black" 
             : "bg-zinc-900 text-zinc-500 hover:bg-zinc-800 hover:text-white"
@@ -52,41 +52,46 @@ const HabitCard = ({ habit, onToggle, onDelete }: HabitCardProps) => {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.5, opacity: 0 }}
             >
-              <Check size={28} strokeWidth={3} />
+              <Check size={24} md-size={28} strokeWidth={3} />
             </motion.div>
           ) : (
-            <span key="emoji" className="text-2xl grayscale hover:grayscale-0 transition-all">{habit.emoji}</span>
+            <span key="emoji" className="text-xl md:text-2xl grayscale hover:grayscale-0 transition-all">{habit.emoji}</span>
           )}
         </AnimatePresence>
       </button>
 
       <div className="flex-1 min-w-0">
         <h4 className={cn(
-          "text-xl font-bold tracking-tight lowercase transition-all duration-300",
+          "text-lg md:text-xl font-bold tracking-tight lowercase transition-all duration-300 truncate",
           isCompletedToday && "text-zinc-500 line-through"
         )}>
           {habit.name}
         </h4>
-        <div className="flex items-center gap-4 mt-1">
-          <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">{habit.category}</span>
-          <div className="flex items-center gap-1.5 text-white/80">
-            <Flame size={12} fill="currentColor" />
-            <span className="text-[10px] font-bold uppercase tracking-widest">{habit.streak} day streak</span>
+        <div className="flex items-center gap-3 mt-0.5">
+          <span className="text-[9px] md:text-[10px] font-bold text-zinc-500 uppercase tracking-widest">{habit.category}</span>
+          <div className="flex items-center gap-1 text-white/80">
+            <Flame size={10} md-size={12} fill="currentColor" />
+            <span className="text-[9px] md:text-[10px] font-bold uppercase tracking-widest">{habit.streak} day streak</span>
           </div>
         </div>
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl text-zinc-500 hover:text-white hover:bg-zinc-900">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-11 w-11 md:h-12 md:w-12 rounded-xl text-zinc-500 hover:text-white hover:bg-zinc-900"
+              aria-label="More options"
+            >
               <MoreVertical size={20} />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="bg-zinc-900 border-zinc-800 rounded-xl">
+          <DropdownMenuContent align="end" className="bg-zinc-900 border-zinc-800 rounded-xl p-1">
             <DropdownMenuItem 
               onClick={() => onDelete(habit.id)}
-              className="text-destructive focus:text-destructive focus:bg-destructive/10 cursor-pointer p-3 rounded-lg"
+              className="text-destructive focus:text-destructive focus:bg-destructive/10 cursor-pointer p-3 rounded-lg font-bold text-xs uppercase tracking-widest"
             >
               <Trash2 size={16} className="mr-2" />
               Delete ritual
