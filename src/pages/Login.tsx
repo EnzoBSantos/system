@@ -30,6 +30,7 @@ const Login = () => {
                   colors: {
                     brand: '#ffffff',
                     brandAccent: '#e5e5e5',
+                    brandButtonText: '#000000',
                     inputBackground: 'transparent',
                     inputText: 'white',
                     inputBorder: '#1c1c1e',
@@ -38,9 +39,10 @@ const Login = () => {
                 },
               },
               className: {
-                button: 'rounded-2xl h-12 font-bold uppercase tracking-widest text-[10px]',
+                button: 'rounded-2xl h-12 font-bold uppercase tracking-widest text-[10px] !text-black',
                 input: 'rounded-2xl h-12 border-zinc-800 focus:border-white transition-all',
                 label: 'text-[10px] font-bold uppercase tracking-widest text-zinc-500 mb-2 block',
+                anchor: 'text-zinc-400 hover:text-white transition-colors text-[10px] font-bold uppercase tracking-widest',
               }
             }}
             theme="dark"
