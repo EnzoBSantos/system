@@ -21,21 +21,25 @@ const App = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setLoading(false);
     });
 
+    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
+      setLoading(false);
     });
 
     return () => subscription.unsubscribe();
   }, []);
 
   if (loading) return (
-    <div className="min-h-screen bg-black flex items-center justify-center">
-      <div className="w-8 h-8 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+    <div className="min-h-screen bg-black flex flex-col items-center justify-center space-y-4">
+      <div className="w-10 h-10 border-2 border-white/10 border-t-white rounded-full animate-spin" />
+      <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">aligning aura...</span>
     </div>
   );
 
@@ -49,24 +53,25 @@ const App = () => {
         <PWAInstallPrompt />
         <BrowserRouter>
           <Routes>
-            {/* The root route now purely redirects based on session state */}
+            {/* Handle Root Path */}
             <Route 
               path="/" 
               element={<Navigate to={session ? "/home" : "/login"} replace />} 
             />
             
-            {/* Dashboard / Home page */}
+            {/* Protected Home Route */}
             <Route 
               path="/home" 
               element={session ? <Index /> : <Navigate to="/login" replace />} 
             />
             
-            {/* Login page */}
+            {/* Public Login Route */}
             <Route 
               path="/login" 
               element={!session ? <Login /> : <Navigate to="/home" replace />} 
             />
             
+            {/* Fallback */}
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
