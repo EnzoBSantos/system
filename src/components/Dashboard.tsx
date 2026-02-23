@@ -28,6 +28,13 @@ const Dashboard = ({ habits, sessions }: DashboardProps) => {
     { label: 'streak', value: totalStreaks, icon: Flame },
   ];
 
+  // Progress ring constants
+  const size = 200;
+  const strokeWidth = 12;
+  const radius = (size - strokeWidth) / 2;
+  const circumference = radius * 2 * Math.PI;
+  const offset = circumference - (completionRate / 100) * circumference;
+
   return (
     <div className="space-y-8 md:space-y-12 max-w-5xl mx-auto">
       <header className="space-y-3">
@@ -47,7 +54,7 @@ const Dashboard = ({ habits, sessions }: DashboardProps) => {
         <p className="text-sm font-medium leading-relaxed italic text-zinc-300">"what you think, you become."</p>
       </motion.div>
 
-      {/* Stats Grid: 2x2 on Mobile, 1x4 on Desktop */}
+      {/* Stats Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
         {stats.map((stat, idx) => (
           <motion.div
@@ -58,7 +65,7 @@ const Dashboard = ({ habits, sessions }: DashboardProps) => {
             className="bg-zinc-900 p-5 md:p-8 rounded-[2rem] md:rounded-[2.5rem] space-y-3 md:space-y-4 hover:bg-zinc-800 transition-colors border border-transparent hover:border-zinc-700"
           >
             <div className="flex items-center justify-between">
-              <stat.icon className="text-white" size={20} md-size={24} />
+              <stat.icon className="text-white" size={20} />
               <span className="text-[9px] md:text-[10px] font-bold text-zinc-500 uppercase tracking-widest">{stat.label}</span>
             </div>
             <p className="text-2xl md:text-4xl font-extrabold tracking-tighter">{stat.value}</p>
@@ -72,33 +79,36 @@ const Dashboard = ({ habits, sessions }: DashboardProps) => {
         </div>
         
         {/* Daily Goal Progress Ring */}
-        <div className="bg-white text-black rounded-[2.5rem] md:rounded-[3rem] p-8 md:p-10 flex flex-col items-center justify-center space-y-6 md:space-y-8 relative overflow-hidden min-h-[320px]">
-          <div className="relative w-40 h-40 md:w-48 md:h-48">
-            <svg className="w-full h-full transform -rotate-90">
+        <div className="bg-white text-black rounded-[2.5rem] md:rounded-[3rem] p-8 md:p-10 flex flex-col items-center justify-center space-y-6 md:space-y-8 relative overflow-hidden min-h-[360px]">
+          <div className="relative w-48 h-48 md:w-56 md:h-56">
+            <svg className="w-full h-full transform -rotate-90" viewBox={`0 0 ${size} ${size}`}>
+              {/* Background Circle */}
               <circle
-                cx="80" md-cx="96"
-                cy="80" md-cy="96"
-                r="70" md-r="84"
+                cx={size / 2}
+                cy={size / 2}
+                r={radius}
                 fill="none"
-                stroke="#e5e5e5"
-                strokeWidth="10" md-strokeWidth="12"
+                stroke="#f3f4f6"
+                strokeWidth={strokeWidth}
               />
+              {/* Progress Circle */}
               <motion.circle
-                cx="80" md-cx="96"
-                cy="80" md-cy="96"
-                r="70" md-r="84"
+                cx={size / 2}
+                cy={size / 2}
+                r={radius}
                 fill="none"
                 stroke="black"
-                strokeWidth="10" md-strokeWidth="12"
-                strokeDasharray="440" md-strokeDasharray="528"
-                initial={{ strokeDashoffset: 528 }}
-                animate={{ strokeDashoffset: 528 - (528 * completionRate) / 100 }}
-                transition={{ duration: 1, ease: "circOut" }}
+                strokeWidth={strokeWidth}
+                strokeDasharray={circumference}
+                initial={{ strokeDashoffset: circumference }}
+                animate={{ strokeDashoffset: offset }}
+                transition={{ duration: 1.5, ease: "circOut" }}
+                strokeLinecap="round"
               />
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <span className="text-3xl md:text-4xl font-black tracking-tighter">{completionRate}%</span>
-              <span className="text-[9px] md:text-[10px] font-bold text-zinc-500 uppercase">daily goal</span>
+              <span className="text-4xl md:text-5xl font-black tracking-tighter leading-none">{completionRate}%</span>
+              <span className="text-[10px] md:text-xs font-bold text-zinc-400 uppercase tracking-widest mt-1">rituals</span>
             </div>
           </div>
           <div className="text-center space-y-2">
