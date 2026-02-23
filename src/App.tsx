@@ -7,8 +7,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Analytics } from "@vercel/analytics/react";
-import { SpeedInsights } from "@vercel/speed-insights/react";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Landing from "./pages/Landing";
@@ -22,16 +20,23 @@ const App = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setLoading(false);
-    });
+    // Busca sessão inicial
+    const initAuth = async () => {
+      try {
+        const { data: { session: initialSession } } = await supabase.auth.getSession();
+        setSession(initialSession);
+      } catch (error) {
+        console.error("Auth init error:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-    // Listen for auth changes
+    initAuth();
+
+    // Listener para mudanças de auth
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
-      setLoading(false);
     });
 
     return () => subscription.unsubscribe();
@@ -49,30 +54,28 @@ const App = () => {
       <TooltipProvider>
         <Toaster />
         <Sonner />
-        <Analytics />
-        <SpeedInsights />
         <PWAInstallPrompt />
         <BrowserRouter>
           <Routes>
-            {/* Landing Page as the main entry point */}
+            {/* Landing Page */}
             <Route 
               path="/" 
               element={session ? <Navigate to="/home" replace /> : <Landing />} 
             />
             
-            {/* Protected Home Route */}
+            {/* Rota Protegida */}
             <Route 
               path="/home" 
               element={session ? <Index /> : <Navigate to="/login" replace />} 
             />
             
-            {/* Public Login Route */}
+            {/* Login */}
             <Route 
               path="/login" 
               element={!session ? <Login /> : <Navigate to="/home" replace />} 
             />
             
-            {/* Fallback */}
+            {/* 404 */}
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

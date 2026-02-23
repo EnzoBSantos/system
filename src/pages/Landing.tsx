@@ -12,7 +12,6 @@ const Landing = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Efeito de scroll para a Nav
     const handleScroll = () => {
       const nav = document.getElementById('nav');
       if (nav) {
@@ -21,23 +20,26 @@ const Landing = () => {
     };
 
     window.addEventListener('scroll', handleScroll);
-
-    // Observador para efeitos de revelação (reveal)
-    const reveals = document.querySelectorAll('.reveal');
-    const obs = new IntersectionObserver((entries) => {
-      entries.forEach(e => {
-        if (e.isIntersecting) {
-          e.target.classList.add('visible');
-          obs.unobserve(e.target);
-        }
-      });
-    }, { threshold: 0.08, rootMargin: '0px 0px -30px 0px' });
     
-    reveals.forEach(r => obs.observe(r));
+    const timer = setTimeout(() => {
+      const reveals = document.querySelectorAll('.reveal');
+      const obs = new IntersectionObserver((entries) => {
+        entries.forEach(e => {
+          if (e.isIntersecting) {
+            e.target.classList.add('visible');
+            obs.unobserve(e.target);
+          }
+        });
+      }, { threshold: 0.05, rootMargin: '0px 0px -20px 0px' });
+      
+      reveals.forEach(r => obs.observe(r));
+
+      return () => obs.disconnect();
+    }, 100);
 
     return () => {
       window.removeEventListener('scroll', handleScroll);
-      obs.disconnect();
+      clearTimeout(timer);
     };
   }, []);
 
@@ -49,32 +51,25 @@ const Landing = () => {
   return (
     <div className="landing-wrapper">
       <style>{`
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
         .landing-wrapper {
           background: #0a0a0a;
           color: white;
           font-family: 'Inter', sans-serif;
-          font-weight: 400;
-          overflow-x: hidden;
           min-height: 100vh;
         }
-
         nav.scrolled {
           background: rgba(10,10,10,0.95);
           backdrop-filter: blur(16px);
-          border-color: #222 !important;
+          border-bottom: 1px solid #222 !important;
         }
-
         @keyframes fadeUp {
           from { opacity: 0; transform: translateY(20px); }
           to { opacity: 1; transform: translateY(0); }
         }
-
         .reveal {
           opacity: 0;
           transform: translateY(24px);
-          transition: opacity 0.7s ease, transform 0.7s ease;
+          transition: opacity 0.8s ease-out, transform 0.8s ease-out;
         }
         .reveal.visible { opacity: 1; transform: none; }
         .d1 { transition-delay: 0.1s; }
@@ -84,14 +79,13 @@ const Landing = () => {
 
       <LandingNav onStart={handleStart} />
       
-      <main>
+      <main className="relative z-10">
         <LandingHero onStart={handleStart} />
         <LandingDashboardPreview />
         <LandingPhilosophy />
         
-        {/* Seção 30-Day Challenge (Simplificada) */}
         <section id="challenge" className="bg-[#141414] px-5 md:px-10 py-24">
-          <div className="grid md:grid-cols-2 gap-20 items-start">
+          <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-20 items-start">
             <div>
               <p className="text-[11px] font-semibold tracking-[0.1em] uppercase text-[#888] mb-5 reveal">the 30-day curriculum</p>
               <h2 className="text-[clamp(32px,6vw,80px)] font-black tracking-[-0.04em] leading-[0.95] text-white max-w-[680px] reveal d1">
@@ -122,9 +116,8 @@ const Landing = () => {
         <LandingFAQ />
       </main>
 
-      {/* Footer Simples */}
       <footer className="border-t border-[#222] px-5 md:px-10 py-14">
-        <div className="flex flex-col md:flex-row justify-between items-center gap-8">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center">
               <svg viewBox="0 0 18 18" fill="none" className="w-4 h-4"><path d="M9 2L9 16M2 9L16 9" stroke="#0a0a0a" strokeWidth="2.5" strokeLinecap="round"/></svg>
