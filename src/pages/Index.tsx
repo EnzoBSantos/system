@@ -29,22 +29,27 @@ const Index = () => {
   }, []);
 
   const fetchData = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
 
-    const [habitsRes, sessionsRes] = await Promise.all([
-      supabase.from('habits').select('*').order('created_at', { ascending: false }),
-      supabase.from('pomodoro_sessions').select('*').order('timestamp', { ascending: false })
-    ]);
+      const [habitsRes, sessionsRes] = await Promise.all([
+        supabase.from('habits').select('*').order('created_at', { ascending: false }),
+        supabase.from('pomodoro_sessions').select('*').order('timestamp', { ascending: false })
+      ]);
 
-    if (habitsRes.data) {
-      setHabits(habitsRes.data.map(h => ({
-        ...h,
-        completedDays: h.completed_days || []
-      })));
+      if (habitsRes.data) {
+        setHabits(habitsRes.data.map(h => ({
+          ...h,
+          completedDays: h.completed_days || []
+        })));
+      }
+      if (sessionsRes.data) setSessions(sessionsRes.data);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    } finally {
+      setLoading(false);
     }
-    if (sessionsRes.data) setSessions(sessionsRes.data);
-    setLoading(false);
   };
 
   const filteredHabits = useMemo(() => {
@@ -61,7 +66,12 @@ const Index = () => {
 
   const handleAddHabit = async (newHabit: Omit<Habit, 'id' | 'completedDays' | 'createdAt' | 'streak' | 'longestStreak'>) => {
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    if (!user) {
+      showError("you must be logged in.");
+      return;
+    }
+
+    console.log('Attempting to create ritual:', newHabit);
 
     const { data, error } = await supabase.from('habits').insert({
       user_id: user.id,
@@ -74,13 +84,19 @@ const Index = () => {
     }).select().single();
 
     if (error) {
-      console.error('Insert error:', error);
-      showError("failed to set intention.");
+      console.error('Supabase Ritual Insert Error:', error);
+      showError(`failed: ${error.message || "check database setup"}`);
       return;
     }
 
-    setHabits([{ ...data, completedDays: [] }, ...habits]);
-    showSuccess("ritual created.");
+    if (data) {
+      const mappedHabit: Habit = {
+        ...data,
+        completedDays: data.completed_days || []
+      };
+      setHabits([mappedHabit, ...habits]);
+      showSuccess("ritual created.");
+    }
   };
 
   const handleToggleHabit = async (id: string) => {
@@ -101,6 +117,7 @@ const Index = () => {
     }).eq('id', id);
 
     if (error) {
+      console.error('Update Error:', error);
       showError("failed to update ritual.");
       return;
     }
@@ -134,7 +151,7 @@ const Index = () => {
       return;
     }
 
-    setSessions([data, ...sessions]);
+    if (data) setSessions([data, ...sessions]);
     showSuccess("focus session recorded.");
   };
 
