@@ -1,2 +1,2 @@
-# As regras agora são gerenciadas pelo netlify.toml na raiz
+/ /login 302!
 /* /index.html 200
