@@ -9,7 +9,6 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
-import Landing from "./pages/Landing";
 import NotFound from "./pages/NotFound";
 import PWAInstallPrompt from "./components/PWAInstallPrompt";
 
@@ -57,22 +56,22 @@ const App = () => {
         <PWAInstallPrompt />
         <BrowserRouter>
           <Routes>
-            {/* Landing Page */}
+            {/* Root: Se logado vai pro dashboard, senão vai pro login */}
             <Route 
               path="/" 
-              element={session ? <Navigate to="/home" replace /> : <Landing />} 
+              element={session ? <Navigate to="/dashboard" replace /> : <Login />} 
             />
             
-            {/* Rota Protegida */}
-            <Route 
-              path="/home" 
-              element={session ? <Index /> : <Navigate to="/login" replace />} 
-            />
-            
-            {/* Login */}
+            {/* Login: Se já logado, redireciona pro dashboard */}
             <Route 
               path="/login" 
-              element={!session ? <Login /> : <Navigate to="/home" replace />} 
+              element={!session ? <Login /> : <Navigate to="/dashboard" replace />} 
+            />
+            
+            {/* Dashboard: Rota protegida */}
+            <Route 
+              path="/dashboard" 
+              element={session ? <Index /> : <Navigate to="/login" replace />} 
             />
             
             {/* 404 */}
