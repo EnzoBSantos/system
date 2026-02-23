@@ -69,10 +69,12 @@ const Index = () => {
       emoji: newHabit.emoji,
       category: newHabit.category,
       frequency: newHabit.frequency,
-      color: newHabit.color
+      color: newHabit.color,
+      completed_days: []
     }).select().single();
 
     if (error) {
+      console.error('Insert error:', error);
       showError("failed to set intention.");
       return;
     }
