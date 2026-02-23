@@ -3,7 +3,29 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Habit } from '@/types/app';
-import { Check, Flame, Trash2, MoreVertical } from 'lucide-react';
+import { 
+  Check, 
+  Flame, 
+  Trash2, 
+  MoreVertical,
+  Sparkles, 
+  Zap, 
+  Heart, 
+  Brain, 
+  BookOpen, 
+  Dumbbell, 
+  Moon, 
+  Coffee, 
+  Timer, 
+  CheckCircle2, 
+  Wind, 
+  Droplets,
+  Smile,
+  Star,
+  Sun,
+  Flame as FlameIcon,
+  LucideIcon
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { 
@@ -19,9 +41,20 @@ interface HabitCardProps {
   onDelete: (id: string) => void;
 }
 
+const ICON_MAP: Record<string, LucideIcon> = {
+  Sparkles, Zap, Heart, Brain, BookOpen, Dumbbell, Moon, Coffee, 
+  Timer, CheckCircle2, Wind, Droplets, Smile, Star, Sun, Flame: FlameIcon
+};
+
 const HabitCard = ({ habit, onToggle, onDelete }: HabitCardProps) => {
   const today = new Date().toISOString().split('T')[0];
   const isCompletedToday = habit.completedDays.includes(today);
+
+  const renderSymbol = () => {
+    const Icon = ICON_MAP[habit.emoji];
+    if (Icon) return <Icon size={24} md-size={28} />;
+    return <span className="text-xl md:text-2xl">{habit.emoji}</span>;
+  };
 
   return (
     <motion.div
@@ -55,7 +88,14 @@ const HabitCard = ({ habit, onToggle, onDelete }: HabitCardProps) => {
               <Check size={24} md-size={28} strokeWidth={3} />
             </motion.div>
           ) : (
-            <span key="emoji" className="text-xl md:text-2xl grayscale hover:grayscale-0 transition-all">{habit.emoji}</span>
+            <motion.div
+              key="symbol"
+              initial={{ scale: 0.5, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="grayscale hover:grayscale-0 transition-all"
+            >
+              {renderSymbol()}
+            </motion.div>
           )}
         </AnimatePresence>
       </button>

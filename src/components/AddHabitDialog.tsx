@@ -7,16 +7,56 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Category, Habit } from '@/types/app';
-import { Plus } from 'lucide-react';
+import { 
+  Plus, 
+  Sparkles, 
+  Zap, 
+  Heart, 
+  Brain, 
+  BookOpen, 
+  Dumbbell, 
+  Moon, 
+  Coffee, 
+  Timer, 
+  CheckCircle2, 
+  Wind, 
+  Droplets,
+  Smile,
+  Star,
+  Sun,
+  Flame,
+  LucideIcon
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface AddHabitDialogProps {
   onAdd: (habit: Omit<Habit, 'id' | 'completedDays' | 'createdAt' | 'streak' | 'longestStreak'>) => void;
 }
 
+const AVAILABLE_ICONS = [
+  { id: 'Sparkles', icon: Sparkles },
+  { id: 'Zap', icon: Zap },
+  { id: 'Heart', icon: Heart },
+  { id: 'Brain', icon: Brain },
+  { id: 'BookOpen', icon: BookOpen },
+  { id: 'Dumbbell', icon: Dumbbell },
+  { id: 'Moon', icon: Moon },
+  { id: 'Coffee', icon: Coffee },
+  { id: 'Timer', icon: Timer },
+  { id: 'CheckCircle2', icon: CheckCircle2 },
+  { id: 'Wind', icon: Wind },
+  { id: 'Droplets', icon: Droplets },
+  { id: 'Smile', icon: Smile },
+  { id: 'Star', icon: Star },
+  { id: 'Sun', icon: Sun },
+  { id: 'Flame', icon: Flame },
+];
+
 const AddHabitDialog = ({ onAdd }: AddHabitDialogProps) => {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState('');
-  const [emoji, setEmoji] = useState('✨');
+  const [selectedIcon, setSelectedIcon] = useState('Sparkles');
   const [category, setCategory] = useState<Category>('Health');
   const [frequency, setFrequency] = useState<'daily' | 'weekdays' | 'weekends'>('daily');
 
@@ -26,27 +66,27 @@ const AddHabitDialog = ({ onAdd }: AddHabitDialogProps) => {
     
     onAdd({
       name,
-      emoji,
+      emoji: selectedIcon, // Storing icon ID in emoji field
       category,
       frequency,
       color: '#ffffff'
     });
     
     setName('');
-    setEmoji('✨');
+    setSelectedIcon('Sparkles');
     setOpen(false);
   };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="rounded-2xl px-8 h-14 font-bold text-xs uppercase tracking-widest bg-white hover:bg-zinc-200 text-black">
+        <Button className="rounded-2xl px-8 h-14 font-bold text-[10px] uppercase tracking-widest bg-white hover:bg-zinc-200 text-black">
           <Plus size={18} className="mr-2" /> new ritual
         </Button>
       </DialogTrigger>
-      <DialogContent className="bg-black border-zinc-800 text-white sm:max-w-[450px] rounded-[2.5rem] p-10">
+      <DialogContent className="bg-black border-zinc-800 text-white sm:max-w-[480px] rounded-[2.5rem] p-8 md:p-10 outline-none">
         <DialogHeader>
-          <DialogTitle className="text-3xl font-black tracking-tighter lowercase">begin a practice.</DialogTitle>
+          <DialogTitle className="text-3xl md:text-4xl font-black tracking-tighter lowercase">begin a practice.</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-8 py-6">
           <div className="space-y-3">
@@ -55,37 +95,52 @@ const AddHabitDialog = ({ onAdd }: AddHabitDialogProps) => {
               value={name} 
               onChange={(e) => setName(e.target.value)} 
               placeholder="meditation..."
-              className="bg-zinc-900 border-zinc-800 h-14 rounded-2xl px-6 focus:ring-white"
+              className="bg-zinc-900 border-zinc-800 h-14 rounded-2xl px-6 focus:ring-white text-lg lowercase font-medium"
             />
           </div>
           
-          <div className="grid grid-cols-2 gap-6">
-            <div className="space-y-3">
-              <Label className="font-bold text-[10px] uppercase tracking-widest text-zinc-500">symbol</Label>
-              <Input 
-                value={emoji} 
-                onChange={(e) => setEmoji(e.target.value)} 
-                className="bg-zinc-900 border-zinc-800 h-14 rounded-2xl text-center text-2xl"
-              />
-            </div>
-            <div className="space-y-3">
-              <Label className="font-bold text-[10px] uppercase tracking-widest text-zinc-500">sphere</Label>
-              <Select value={category} onValueChange={(val: Category) => setCategory(val)}>
-                <SelectTrigger className="bg-zinc-900 border-zinc-800 h-14 rounded-2xl">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="bg-zinc-900 border-zinc-800 rounded-xl">
-                  <SelectItem value="Health">Health</SelectItem>
-                  <SelectItem value="Work">Work</SelectItem>
-                  <SelectItem value="Mindfulness">Mindfulness</SelectItem>
-                  <SelectItem value="Learning">Learning</SelectItem>
-                  <SelectItem value="Custom">Custom</SelectItem>
-                </SelectContent>
-              </Select>
+          <div className="space-y-4">
+            <Label className="font-bold text-[10px] uppercase tracking-widest text-zinc-500">symbol</Label>
+            <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-4">
+              <ScrollArea className="h-32">
+                <div className="grid grid-cols-4 gap-3">
+                  {AVAILABLE_ICONS.map(({ id, icon: Icon }) => (
+                    <button
+                      key={id}
+                      type="button"
+                      onClick={() => setSelectedIcon(id)}
+                      className={cn(
+                        "h-12 w-full rounded-xl flex items-center justify-center transition-all duration-300",
+                        selectedIcon === id 
+                          ? "bg-white text-black scale-105" 
+                          : "text-zinc-500 hover:text-white hover:bg-zinc-800"
+                      )}
+                    >
+                      <Icon size={20} />
+                    </button>
+                  ))}
+                </div>
+              </ScrollArea>
             </div>
           </div>
 
-          <Button type="submit" className="w-full bg-white hover:bg-zinc-200 text-black font-black text-xl h-16 rounded-[1.5rem] tracking-tight lowercase">
+          <div className="space-y-3">
+            <Label className="font-bold text-[10px] uppercase tracking-widest text-zinc-500">sphere</Label>
+            <Select value={category} onValueChange={(val: Category) => setCategory(val)}>
+              <SelectTrigger className="bg-zinc-900 border-zinc-800 h-14 rounded-2xl px-6 text-lg font-medium lowercase">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-zinc-900 border-zinc-800 rounded-xl">
+                <SelectItem value="Health">Health</SelectItem>
+                <SelectItem value="Work">Work</SelectItem>
+                <SelectItem value="Mindfulness">Mindfulness</SelectItem>
+                <SelectItem value="Learning">Learning</SelectItem>
+                <SelectItem value="Custom">Custom</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <Button type="submit" className="w-full bg-white hover:bg-zinc-200 text-black font-black text-xl h-16 rounded-[1.5rem] tracking-tight lowercase mt-4 transition-transform active:scale-95">
             set intention.
           </Button>
         </form>
