@@ -19,7 +19,6 @@ const App = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Busca sessão inicial
     const initAuth = async () => {
       try {
         const { data: { session: initialSession } } = await supabase.auth.getSession();
@@ -33,7 +32,6 @@ const App = () => {
 
     initAuth();
 
-    // Listener para mudanças de auth
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
     });
@@ -56,25 +54,23 @@ const App = () => {
         <PWAInstallPrompt />
         <BrowserRouter>
           <Routes>
-            {/* Root: Se logado vai pro dashboard, senão vai pro login */}
+            {/* Redireciona a raiz sempre para /login */}
             <Route 
               path="/" 
-              element={session ? <Navigate to="/dashboard" replace /> : <Login />} 
+              element={<Navigate to="/login" replace />} 
             />
             
-            {/* Login: Se já logado, redireciona pro dashboard */}
+            {/* O /login decide se mostra o formulário ou vai para o dashboard */}
             <Route 
               path="/login" 
               element={!session ? <Login /> : <Navigate to="/dashboard" replace />} 
             />
             
-            {/* Dashboard: Rota protegida */}
             <Route 
               path="/dashboard" 
               element={session ? <Index /> : <Navigate to="/login" replace />} 
             />
             
-            {/* 404 */}
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
