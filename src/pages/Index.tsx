@@ -11,7 +11,7 @@ import PomodoroTimer from '@/components/PomodoroTimer';
 import { Habit, PomodoroSession } from '@/types/app';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Search, LogOut, Database } from 'lucide-react';
+import { Search, LogOut, Database, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { showSuccess, showError } from '@/utils/toast';
@@ -31,6 +31,7 @@ const Index = () => {
 
   const fetchData = async () => {
     try {
+      setLoading(true);
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
@@ -39,18 +40,22 @@ const Index = () => {
         supabase.from('pomodoro_sessions').select('*').order('timestamp', { ascending: false })
       ]);
 
-      if (habitsRes.error && habitsRes.error.code === 'PGRST116') {
-        setDbError("Table 'habits' not found. Please run the SQL script in Supabase.");
+      if (habitsRes.error) {
+        console.error('Habits fetch error:', habitsRes.error);
+        if (habitsRes.error.message.includes('cache') || habitsRes.error.code === 'PGRST116') {
+          setDbError("the 'habits' table isn't ready in Supabase yet.");
+        }
       } else if (habitsRes.data) {
         setHabits(habitsRes.data.map(h => ({
           ...h,
           completedDays: h.completed_days || []
         })));
+        setDbError(null);
       }
       
       if (sessionsRes.data) setSessions(sessionsRes.data);
     } catch (error) {
-      console.error('Error fetching data:', error);
+      console.error('Unexpected error:', error);
     } finally {
       setLoading(false);
     }
@@ -84,7 +89,7 @@ const Index = () => {
 
     if (error) {
       console.error('Insert error:', error);
-      showError(`failed: ${error.message}`);
+      showError(`database error: ${error.message}`);
       return;
     }
 
@@ -158,13 +163,27 @@ const Index = () => {
   );
 
   if (dbError) return (
-    <div className="min-h-screen bg-black flex flex-col items-center justify-center p-6 text-center space-y-6">
-      <div className="w-16 h-16 bg-white/10 rounded-2xl flex items-center justify-center">
-        <Database className="text-white" size={32} />
+    <div className="min-h-screen bg-black flex flex-col items-center justify-center p-6 text-center space-y-8">
+      <div className="relative">
+        <div className="w-24 h-24 bg-white/5 rounded-[2rem] flex items-center justify-center border border-white/10">
+          <Database className="text-zinc-500" size={40} />
+        </div>
+        <div className="absolute -top-2 -right-2 w-8 h-8 bg-white text-black rounded-full flex items-center justify-center shadow-xl">
+          <AlertCircle size={20} />
+        </div>
       </div>
-      <h2 className="text-3xl font-black tracking-tighter lowercase">setup required.</h2>
-      <p className="text-zinc-500 max-w-md">{dbError}</p>
-      <Button onClick={() => window.location.reload()} className="bg-white text-black rounded-xl">check again</Button>
+      <div className="space-y-3">
+        <h2 className="text-4xl font-black tracking-tighter lowercase">connection lost.</h2>
+        <p className="text-zinc-500 max-w-sm font-medium">the rituals table isn't visible yet. please run the sql script in your supabase console and then try refreshing.</p>
+      </div>
+      <div className="flex flex-col gap-4 w-full max-w-xs">
+        <Button onClick={fetchData} className="bg-white hover:bg-zinc-200 text-black rounded-2xl h-14 font-black text-lg tracking-tight lowercase">
+          try connecting again.
+        </Button>
+        <button onClick={handleLogout} className="text-zinc-500 font-bold text-[10px] uppercase tracking-widest hover:text-white transition-colors">
+          sign out
+        </button>
+      </div>
     </div>
   );
 
