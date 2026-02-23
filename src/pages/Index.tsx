@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Sidebar from '@/components/Sidebar';
 import Dashboard from '@/components/Dashboard';
@@ -10,42 +10,41 @@ import PomodoroTimer from '@/components/PomodoroTimer';
 import { Habit, PomodoroSession } from '@/types/app';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Search } from 'lucide-react';
+import { Search, LogOut } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
+import { showSuccess, showError } from '@/utils/toast';
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'habits' | 'pomodoro'>('dashboard');
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<'All' | 'Completed' | 'Pending'>('All');
-  
-  const [habits, setHabits] = useState<Habit[]>([
-    {
-      id: '1',
-      name: 'evening reflection',
-      emoji: '🌑',
-      color: '#ffffff',
-      category: 'Mindfulness',
-      frequency: 'daily',
-      completedDays: [new Date().toISOString().split('T')[0]],
-      createdAt: new Date().toISOString(),
-      streak: 5,
-      longestStreak: 12
-    },
-    {
-      id: '2',
-      name: 'cold exposure',
-      emoji: '❄️',
-      color: '#ffffff',
-      category: 'Health',
-      frequency: 'daily',
-      completedDays: [],
-      createdAt: new Date().toISOString(),
-      streak: 3,
-      longestStreak: 8
-    }
-  ]);
-
+  const [habits, setHabits] = useState<Habit[]>([]);
   const [sessions, setSessions] = useState<PomodoroSession[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const [habitsRes, sessionsRes] = await Promise.all([
+      supabase.from('habits').select('*').order('created_at', { ascending: false }),
+      supabase.from('pomodoro_sessions').select('*').order('timestamp', { ascending: false })
+    ]);
+
+    if (habitsRes.data) {
+      setHabits(habitsRes.data.map(h => ({
+        ...h,
+        completedDays: h.completed_days || []
+      })));
+    }
+    if (sessionsRes.data) setSessions(sessionsRes.data);
+    setLoading(false);
+  };
 
   const filteredHabits = useMemo(() => {
     return habits.filter(h => {
@@ -59,81 +58,115 @@ const Index = () => {
     });
   }, [habits, search, filter]);
 
-  const handleAddHabit = (newHabit: Omit<Habit, 'id' | 'completedDays' | 'createdAt' | 'streak' | 'longestStreak'>) => {
-    const habit: Habit = {
-      ...newHabit,
-      id: Math.random().toString(36).substr(2, 9),
-      completedDays: [],
-      createdAt: new Date().toISOString(),
-      streak: 0,
-      longestStreak: 0
-    };
-    setHabits([habit, ...habits]);
+  const handleAddHabit = async (newHabit: Omit<Habit, 'id' | 'completedDays' | 'createdAt' | 'streak' | 'longestStreak'>) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { data, error } = await supabase.from('habits').insert({
+      user_id: user.id,
+      name: newHabit.name,
+      emoji: newHabit.emoji,
+      category: newHabit.category,
+      frequency: newHabit.frequency,
+      color: newHabit.color
+    }).select().single();
+
+    if (error) {
+      showError("failed to set intention.");
+      return;
+    }
+
+    setHabits([{ ...data, completedDays: [] }, ...habits]);
+    showSuccess("ritual created.");
   };
 
-  const handleToggleHabit = (id: string) => {
+  const handleToggleHabit = async (id: string) => {
     const today = new Date().toISOString().split('T')[0];
-    setHabits(habits.map(h => {
-      if (h.id === id) {
-        const isCompleted = h.completedDays.includes(today);
-        const newCompletedDays = isCompleted 
-          ? h.completedDays.filter(d => d !== today)
-          : [...h.completedDays, today];
-        
-        return {
-          ...h,
-          completedDays: newCompletedDays,
-          streak: isCompleted ? Math.max(0, h.streak - 1) : h.streak + 1
-        };
-      }
-      return h;
-    }));
+    const habit = habits.find(h => h.id === id);
+    if (!habit) return;
+
+    const isCompleted = habit.completedDays.includes(today);
+    const newCompletedDays = isCompleted 
+      ? habit.completedDays.filter(d => d !== today)
+      : [...habit.completedDays, today];
+    
+    const newStreak = isCompleted ? Math.max(0, habit.streak - 1) : habit.streak + 1;
+
+    const { error } = await supabase.from('habits').update({
+      completed_days: newCompletedDays,
+      streak: newStreak
+    }).eq('id', id);
+
+    if (error) {
+      showError("failed to update ritual.");
+      return;
+    }
+
+    setHabits(habits.map(h => h.id === id ? { ...h, completedDays: newCompletedDays, streak: newStreak } : h));
   };
 
-  const handleDeleteHabit = (id: string) => {
+  const handleDeleteHabit = async (id: string) => {
+    const { error } = await supabase.from('habits').delete().eq('id', id);
+    if (error) {
+      showError("failed to remove ritual.");
+      return;
+    }
     setHabits(habits.filter(h => h.id !== id));
+    showSuccess("ritual removed.");
   };
 
-  const handleCompleteSession = (session: Omit<PomodoroSession, 'id' | 'timestamp'>) => {
-    const newSession: PomodoroSession = {
-      ...session,
-      id: Math.random().toString(36).substr(2, 9),
-      timestamp: new Date().toISOString()
-    };
-    setSessions([newSession, ...sessions]);
+  const handleCompleteSession = async (session: Omit<PomodoroSession, 'id' | 'timestamp'>) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { data, error } = await supabase.from('pomodoro_sessions').insert({
+      user_id: user.id,
+      habit_id: session.habitId === 'none' ? null : session.habitId,
+      duration: session.duration,
+      type: session.type
+    }).select().single();
+
+    if (error) {
+      showError("failed to record focus.");
+      return;
+    }
+
+    setSessions([data, ...sessions]);
+    showSuccess("focus session recorded.");
   };
+
+  const handleLogout = () => supabase.auth.signOut();
+
+  if (loading) return (
+    <div className="min-h-screen bg-black flex items-center justify-center">
+      <div className="w-8 h-8 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+    </div>
+  );
 
   return (
     <div className="flex flex-col lg:flex-row min-h-screen bg-black text-white font-sans selection:bg-white selection:text-black">
-      {/* Subtle Noise Texture */}
       <div className="fixed inset-0 pointer-events-none opacity-[0.02] bg-[url('https://grainy-gradients.vercel.app/noise.svg')] z-50"></div>
 
       <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
 
-      <main className="flex-1 overflow-y-auto p-8 lg:p-16">
+      <main className="flex-1 overflow-y-auto p-8 lg:p-16 relative">
+        <button 
+          onClick={handleLogout}
+          className="absolute top-8 right-8 text-zinc-500 hover:text-white transition-colors"
+        >
+          <LogOut size={20} />
+        </button>
+
         <div className="max-w-6xl mx-auto">
           <AnimatePresence mode="wait">
             {activeTab === 'dashboard' && (
-              <motion.div
-                key="dashboard"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.5 }}
-              >
+              <motion.div key="dashboard" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
                 <Dashboard habits={habits} sessions={sessions} />
               </motion.div>
             )}
 
             {activeTab === 'habits' && (
-              <motion.div
-                key="habits"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.5 }}
-                className="space-y-12"
-              >
+              <motion.div key="habits" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-12">
                 <header className="flex flex-col md:flex-row md:items-end justify-between gap-8">
                   <div className="space-y-3">
                     <h2 className="text-6xl font-black tracking-tighter lowercase">daily rituals.</h2>
@@ -192,13 +225,7 @@ const Index = () => {
             )}
 
             {activeTab === 'pomodoro' && (
-              <motion.div
-                key="pomodoro"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.5 }}
-              >
+              <motion.div key="pomodoro" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
                 <header className="space-y-3 mb-12 text-center">
                   <h2 className="text-6xl font-black tracking-tighter lowercase">deep focus.</h2>
                   <p className="text-zinc-500 text-lg font-medium lowercase">be here now.</p>
@@ -211,10 +238,7 @@ const Index = () => {
                     {sessions.slice(0, 5).map((s) => (
                       <div key={s.id} className="flex items-center justify-between bg-zinc-900 p-6 rounded-[1.5rem] border border-zinc-800">
                         <div className="flex items-center gap-4">
-                          <div className={cn(
-                            "w-3 h-3 rounded-full",
-                            s.type === 'focus' ? "bg-white" : "bg-zinc-600"
-                          )} />
+                          <div className={cn("w-3 h-3 rounded-full", s.type === 'focus' ? "bg-white" : "bg-zinc-600")} />
                           <span className="font-bold tracking-tight lowercase text-zinc-300">{s.type.replace('-', ' ')}</span>
                         </div>
                         <span className="font-mono text-xs text-zinc-500">
@@ -222,11 +246,6 @@ const Index = () => {
                         </span>
                       </div>
                     ))}
-                    {sessions.length === 0 && (
-                      <p className="text-center text-zinc-600 font-bold text-xs uppercase tracking-widest py-12 opacity-30">
-                        no intervals recorded today
-                      </p>
-                    )}
                   </div>
                 </div>
               </motion.div>
