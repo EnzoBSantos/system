@@ -1,14 +1,16 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
-import { motion } from 'framer-motion';
-import { Play, Pause, RotateCcw, Coffee, Zap, Moon } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Play, Pause, RotateCcw, Coffee, Zap, Moon, Settings2, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { PomodoroSession, Habit } from '@/types/app';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
 interface PomodoroTimerProps {
   onComplete: (session: Omit<PomodoroSession, 'id' | 'timestamp'>) => void;
@@ -20,7 +22,15 @@ type Mode = 'focus' | 'short-break' | 'long-break';
 const PomodoroTimer = ({ onComplete, habits }: PomodoroTimerProps) => {
   const isMobile = useIsMobile();
   const [mode, setMode] = useState<Mode>('focus');
-  const [timeLeft, setTimeLeft] = useState(25 * 60);
+  
+  // Custom durations in minutes
+  const [durations, setDurations] = useState({
+    'focus': 25,
+    'short-break': 5,
+    'long-break': 15
+  });
+  
+  const [timeLeft, setTimeLeft] = useState(durations['focus'] * 60);
   const [isActive, setIsActive] = useState(false);
   const [linkedHabitId, setLinkedHabitId] = useState<string | undefined>();
   const [pomodoroCount, setPomodoroCount] = useState(0);
@@ -28,9 +38,9 @@ const PomodoroTimer = ({ onComplete, habits }: PomodoroTimerProps) => {
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   const configs = {
-    'focus': { label: 'focus', time: 25 * 60, icon: Zap, color: 'text-white' },
-    'short-break': { label: 'rest', time: 5 * 60, icon: Coffee, color: 'text-zinc-500' },
-    'long-break': { label: 'deep rest', time: 15 * 60, icon: Moon, color: 'text-zinc-500' },
+    'focus': { label: 'focus', icon: Zap },
+    'short-break': { label: 'rest', icon: Coffee },
+    'long-break': { label: 'deep rest', icon: Moon },
   };
 
   useEffect(() => {
@@ -45,6 +55,13 @@ const PomodoroTimer = ({ onComplete, habits }: PomodoroTimerProps) => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
   }, [isActive, timeLeft]);
+
+  // Update time left when durations change and timer is NOT active
+  useEffect(() => {
+    if (!isActive) {
+      setTimeLeft(durations[mode] * 60);
+    }
+  }, [durations, mode, isActive]);
 
   const handleComplete = () => {
     setIsActive(false);
@@ -66,7 +83,7 @@ const PomodoroTimer = ({ onComplete, habits }: PomodoroTimerProps) => {
 
     onComplete({
       type: mode,
-      duration: configs[mode].time / 60,
+      duration: durations[mode],
       habitId: mode === 'focus' ? linkedHabitId : undefined
     });
 
@@ -75,21 +92,18 @@ const PomodoroTimer = ({ onComplete, habits }: PomodoroTimerProps) => {
       setPomodoroCount(newCount);
       if (newCount % 4 === 0) {
         setMode('long-break');
-        setTimeLeft(15 * 60);
       } else {
         setMode('short-break');
-        setTimeLeft(5 * 60);
       }
     } else {
       setMode('focus');
-      setTimeLeft(25 * 60);
     }
   };
 
   const toggleTimer = () => setIsActive(!isActive);
   const resetTimer = () => {
     setIsActive(false);
-    setTimeLeft(configs[mode].time);
+    setTimeLeft(durations[mode] * 60);
   };
 
   const formatTime = (seconds: number) => {
@@ -98,23 +112,26 @@ const PomodoroTimer = ({ onComplete, habits }: PomodoroTimerProps) => {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const progress = timeLeft / configs[mode].time;
+  const updateDuration = (m: Mode, value: string) => {
+    const mins = parseInt(value) || 1;
+    setDurations(prev => ({ ...prev, [m]: mins }));
+  };
+
+  const progress = timeLeft / (durations[mode] * 60);
   const currentConfig = configs[mode];
   
-  // Dynamic sizing based on device
   const circleSize = isMobile ? 240 : 320;
   const radius = circleSize / 2 - 20;
   const circumference = 2 * Math.PI * radius;
 
   return (
-    <div className="max-w-md mx-auto space-y-8 lg:space-y-12 py-6 lg:py-12">
-      <div className="flex flex-wrap justify-center gap-2 lg:gap-3">
+    <div className="max-w-md mx-auto space-y-8 lg:space-y-12 py-6 lg:py-12 relative">
+      <div className="flex flex-wrap justify-center items-center gap-2 lg:gap-3">
         {(['focus', 'short-break', 'long-break'] as Mode[]).map((m) => (
           <button
             key={m}
             onClick={() => {
               setMode(m);
-              setTimeLeft(configs[m].time);
               setIsActive(false);
             }}
             className={cn(
@@ -127,6 +144,32 @@ const PomodoroTimer = ({ onComplete, habits }: PomodoroTimerProps) => {
             {configs[m].label}
           </button>
         ))}
+
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="ghost" size="icon" className="w-10 h-10 lg:w-12 lg:h-12 rounded-2xl bg-zinc-900 text-zinc-500 hover:text-white border border-zinc-800 ml-1">
+              <Settings2 size={18} />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-64 bg-zinc-950 border-zinc-800 rounded-3xl p-6 shadow-2xl">
+            <div className="space-y-6">
+              <h4 className="text-sm font-black tracking-tighter lowercase text-white">timer settings.</h4>
+              <div className="space-y-4">
+                {(['focus', 'short-break', 'long-break'] as Mode[]).map((m) => (
+                  <div key={m} className="space-y-2">
+                    <Label className="text-[9px] font-bold uppercase tracking-widest text-zinc-500">{configs[m].label} (mins)</Label>
+                    <Input 
+                      type="number" 
+                      value={durations[m]} 
+                      onChange={(e) => updateDuration(m, e.target.value)}
+                      className="bg-zinc-900 border-zinc-800 h-10 rounded-xl focus:ring-white"
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </PopoverContent>
+        </Popover>
       </div>
 
       <div 
@@ -180,7 +223,7 @@ const PomodoroTimer = ({ onComplete, habits }: PomodoroTimerProps) => {
             className="w-12 h-12 lg:w-14 lg:h-14 rounded-2xl border border-zinc-800 text-zinc-500 hover:text-white hover:bg-zinc-900"
             aria-label="Reset timer"
           >
-            <RotateCcw size={20} lg-size={24} />
+            <RotateCcw size={20} />
           </Button>
           
           <Button 
