@@ -22,34 +22,33 @@ const Dashboard = ({ habits, sessions }: DashboardProps) => {
   const totalSessions = sessions.filter(s => s.timestamp.split('T')[0] === today).length;
 
   const stats = [
-    { label: 'Progress', value: `${completionRate}%`, icon: TrendingUp, color: 'text-primary' },
-    { label: 'Habits', value: `${completedToday}/${habitsToday}`, icon: CheckCircle2, color: 'text-primary' },
-    { label: 'Sessions', value: totalSessions, icon: Timer, color: 'text-primary' },
-    { label: 'Total Streak', value: totalStreaks, icon: Flame, color: 'text-primary' },
+    { label: 'progress', value: `${completionRate}%`, icon: TrendingUp },
+    { label: 'rituals', value: `${completedToday}/${habitsToday}`, icon: CheckCircle2 },
+    { label: 'focus', value: totalSessions, icon: Timer },
+    { label: 'streak', value: totalStreaks, icon: Flame },
   ];
 
   return (
-    <div className="space-y-8 max-w-5xl mx-auto">
-      <header className="space-y-2">
-        <p className="text-xs font-mono text-primary uppercase tracking-[0.3em]">Overview</p>
-        <h2 className="text-4xl font-serif text-foreground">Welcome back.</h2>
-        <p className="text-muted-foreground font-sans">It's {format(new Date(), 'EEEE, MMMM do')}.</p>
+    <div className="space-y-12 max-w-5xl mx-auto">
+      <header className="space-y-3">
+        <h2 className="text-6xl font-extrabold tracking-tighter lowercase">good morning.</h2>
+        <p className="text-zinc-500 font-medium text-lg lowercase">{format(new Date(), 'EEEE, MMMM do')}.</p>
       </header>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map((stat, idx) => (
           <motion.div
             key={stat.label}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: idx * 0.1 }}
-            className="bg-card border border-border p-6 rounded-2xl space-y-4 hover:border-primary/30 transition-colors"
+            className="bg-zinc-900 p-8 rounded-[2.5rem] space-y-4 hover:bg-zinc-800 transition-colors border border-transparent hover:border-zinc-700"
           >
             <div className="flex items-center justify-between">
-              <stat.icon className={stat.color} size={20} />
-              <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest">{stat.label}</span>
+              <stat.icon className="text-white" size={24} />
+              <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">{stat.label}</span>
             </div>
-            <p className="text-3xl font-serif">{stat.value}</p>
+            <p className="text-4xl font-extrabold tracking-tighter">{stat.value}</p>
           </motion.div>
         ))}
       </div>
@@ -59,40 +58,38 @@ const Dashboard = ({ habits, sessions }: DashboardProps) => {
           <Heatmap habits={habits} />
         </div>
         
-        <div className="bg-card border border-border rounded-2xl p-6 flex flex-col items-center justify-center space-y-6 relative overflow-hidden">
-          <div className="relative w-40 h-40">
+        <div className="bg-white text-black rounded-[3rem] p-10 flex flex-col items-center justify-center space-y-8 relative overflow-hidden">
+          <div className="relative w-48 h-48">
             <svg className="w-full h-full transform -rotate-90">
               <circle
-                cx="80"
-                cy="80"
-                r="70"
+                cx="96"
+                cy="96"
+                r="84"
                 fill="none"
-                stroke="currentColor"
-                strokeWidth="8"
-                className="text-secondary"
+                stroke="#e5e5e5"
+                strokeWidth="12"
               />
               <motion.circle
-                cx="80"
-                cy="80"
-                r="70"
+                cx="96"
+                cy="96"
+                r="84"
                 fill="none"
-                stroke="currentColor"
-                strokeWidth="8"
-                strokeDasharray="440"
-                initial={{ strokeDashoffset: 440 }}
-                animate={{ strokeDashoffset: 440 - (440 * completionRate) / 100 }}
-                transition={{ duration: 1, ease: "easeOut" }}
-                className="text-primary"
+                stroke="black"
+                strokeWidth="12"
+                strokeDasharray="528"
+                initial={{ strokeDashoffset: 528 }}
+                animate={{ strokeDashoffset: 528 - (528 * completionRate) / 100 }}
+                transition={{ duration: 1, ease: "circOut" }}
               />
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <span className="text-3xl font-serif">{completionRate}%</span>
-              <span className="text-[10px] font-mono text-muted-foreground uppercase">Day Goal</span>
+              <span className="text-4xl font-black tracking-tighter">{completionRate}%</span>
+              <span className="text-[10px] font-bold text-zinc-500 uppercase">daily goal</span>
             </div>
           </div>
-          <div className="text-center space-y-1">
-            <h4 className="font-serif text-lg">Consistent Spirit</h4>
-            <p className="text-xs text-muted-foreground px-4">You're doing better than 80% of your average.</p>
+          <div className="text-center space-y-2">
+            <h4 className="font-bold text-2xl tracking-tight lowercase">keep growing.</h4>
+            <p className="text-sm text-zinc-500 px-6 font-medium">your discipline defines your peace.</p>
           </div>
         </div>
       </div>

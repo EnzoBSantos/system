@@ -23,43 +23,46 @@ const Heatmap = ({ habits }: HeatmapProps) => {
   };
 
   return (
-    <div className="bg-card border border-border rounded-2xl p-6 space-y-4">
+    <div className="bg-zinc-900 border border-zinc-800 rounded-[2.5rem] p-10 space-y-8">
       <div className="flex items-center justify-between">
-        <h3 className="font-serif text-xl">Weekly Energy</h3>
-        <div className="flex items-center space-x-2">
-          <span className="text-[10px] font-mono text-muted-foreground uppercase">Less</span>
-          <div className="flex space-x-1">
-            {[0.2, 0.5, 0.8, 1].map((lvl) => (
+        <h3 className="text-2xl font-bold tracking-tight lowercase">weekly flow.</h3>
+        <div className="flex items-center space-x-3">
+          <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">low</span>
+          <div className="flex space-x-1.5">
+            {[0.2, 0.4, 0.7, 1].map((lvl) => (
               <div 
                 key={lvl} 
-                className="w-3 h-3 rounded-sm" 
-                style={{ backgroundColor: `rgba(240, 165, 0, ${lvl})` }}
+                className="w-4 h-4 rounded-md" 
+                style={{ backgroundColor: `rgba(255, 255, 255, ${lvl})` }}
               />
             ))}
           </div>
-          <span className="text-[10px] font-mono text-muted-foreground uppercase">More</span>
+          <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">high</span>
         </div>
       </div>
 
-      <div className="flex justify-between items-end gap-2 h-32">
+      <div className="flex justify-between items-end gap-4 h-40">
         <TooltipProvider>
           {last7Days.map((day) => {
             const intensity = getIntensity(day);
             return (
               <Tooltip key={day.toISOString()}>
                 <TooltipTrigger asChild>
-                  <div className="flex-1 flex flex-col items-center gap-2 group">
+                  <div className="flex-1 flex flex-col items-center gap-4 group">
                     <div 
-                      className="w-full rounded-t-lg transition-all duration-500 bg-primary/20 hover:bg-primary/40"
-                      style={{ height: `${Math.max(15, intensity * 100)}%`, backgroundColor: intensity > 0 ? `rgba(240, 165, 0, ${0.2 + intensity * 0.8})` : undefined }}
+                      className="w-full rounded-2xl transition-all duration-500 bg-zinc-800 hover:bg-zinc-700"
+                      style={{ 
+                        height: `${Math.max(10, intensity * 100)}%`, 
+                        backgroundColor: intensity > 0 ? `rgba(255, 255, 255, ${0.2 + intensity * 0.8})` : undefined 
+                      }}
                     />
-                    <span className="text-[10px] font-mono text-muted-foreground group-hover:text-foreground">
+                    <span className="text-[10px] font-bold text-zinc-500 group-hover:text-white uppercase tracking-widest">
                       {format(day, 'EEE')}
                     </span>
                   </div>
                 </TooltipTrigger>
-                <TooltipContent className="bg-background border-border text-foreground">
-                  {format(day, 'MMM d')}: {Math.round(intensity * 100)}% Complete
+                <TooltipContent className="bg-black border-zinc-800 text-white rounded-xl">
+                  {format(day, 'MMM d')}: {Math.round(intensity * 100)}% complete
                 </TooltipContent>
               </Tooltip>
             );

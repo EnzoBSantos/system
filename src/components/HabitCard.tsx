@@ -26,50 +26,52 @@ const HabitCard = ({ habit, onToggle, onDelete }: HabitCardProps) => {
   return (
     <motion.div
       layout
-      initial={{ opacity: 0, scale: 0.95 }}
+      initial={{ opacity: 0, scale: 0.98 }}
       animate={{ opacity: 1, scale: 1 }}
       className={cn(
-        "group relative bg-card border border-border p-5 rounded-2xl flex items-center gap-4 transition-all duration-500",
-        isCompletedToday ? "border-primary/20 bg-primary/5" : "hover:border-primary/30"
+        "group relative p-6 rounded-[2rem] flex items-center gap-6 transition-all duration-300 border",
+        isCompletedToday 
+          ? "bg-zinc-900 border-transparent opacity-60" 
+          : "bg-black border-zinc-800 hover:border-zinc-600"
       )}
     >
       <button
         onClick={() => onToggle(habit.id)}
         className={cn(
-          "w-12 h-12 rounded-full flex items-center justify-center border-2 transition-all duration-500",
+          "w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-300",
           isCompletedToday 
-            ? "bg-primary border-primary text-primary-foreground scale-110" 
-            : "border-border text-muted-foreground hover:border-primary/50"
+            ? "bg-white text-black" 
+            : "bg-zinc-900 text-zinc-500 hover:bg-zinc-800 hover:text-white"
         )}
       >
         <AnimatePresence mode="wait">
           {isCompletedToday ? (
             <motion.div
               key="check"
-              initial={{ scale: 0, rotate: -45 }}
-              animate={{ scale: 1, rotate: 0 }}
-              exit={{ scale: 0 }}
+              initial={{ scale: 0.5, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.5, opacity: 0 }}
             >
-              <Check size={24} strokeWidth={3} />
+              <Check size={28} strokeWidth={3} />
             </motion.div>
           ) : (
-            <span key="emoji" className="text-xl group-hover:scale-110 transition-transform">{habit.emoji}</span>
+            <span key="emoji" className="text-2xl grayscale hover:grayscale-0 transition-all">{habit.emoji}</span>
           )}
         </AnimatePresence>
       </button>
 
-      <div className="flex-1 min-w-0 space-y-1">
+      <div className="flex-1 min-w-0">
         <h4 className={cn(
-          "font-serif text-lg truncate transition-all duration-500",
-          isCompletedToday && "text-muted-foreground line-through opacity-60"
+          "text-xl font-bold tracking-tight lowercase transition-all duration-300",
+          isCompletedToday && "text-zinc-500 line-through"
         )}>
           {habit.name}
         </h4>
-        <div className="flex items-center gap-3 text-[10px] font-mono uppercase tracking-wider">
-          <span className="px-2 py-0.5 rounded bg-secondary text-muted-foreground">{habit.category}</span>
-          <div className="flex items-center gap-1 text-primary">
+        <div className="flex items-center gap-4 mt-1">
+          <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">{habit.category}</span>
+          <div className="flex items-center gap-1.5 text-white/80">
             <Flame size={12} fill="currentColor" />
-            <span>{habit.streak} DAY STREAK</span>
+            <span className="text-[10px] font-bold uppercase tracking-widest">{habit.streak} day streak</span>
           </div>
         </div>
       </div>
@@ -77,17 +79,17 @@ const HabitCard = ({ habit, onToggle, onDelete }: HabitCardProps) => {
       <div className="flex items-center gap-2">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
-              <MoreVertical size={16} />
+            <Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl text-zinc-500 hover:text-white hover:bg-zinc-900">
+              <MoreVertical size={20} />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="bg-card border-border">
+          <DropdownMenuContent align="end" className="bg-zinc-900 border-zinc-800 rounded-xl">
             <DropdownMenuItem 
               onClick={() => onDelete(habit.id)}
-              className="text-destructive focus:text-destructive focus:bg-destructive/10 cursor-pointer"
+              className="text-destructive focus:text-destructive focus:bg-destructive/10 cursor-pointer p-3 rounded-lg"
             >
-              <Trash2 size={14} className="mr-2" />
-              Delete Habit
+              <Trash2 size={16} className="mr-2" />
+              Delete ritual
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

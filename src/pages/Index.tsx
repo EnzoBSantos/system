@@ -7,10 +7,10 @@ import Dashboard from '@/components/Dashboard';
 import HabitCard from '@/components/HabitCard';
 import AddHabitDialog from '@/components/AddHabitDialog';
 import PomodoroTimer from '@/components/PomodoroTimer';
-import { Habit, PomodoroSession, Category } from '@/types/app';
+import { Habit, PomodoroSession } from '@/types/app';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Search, Filter } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const Index = () => {
@@ -18,14 +18,13 @@ const Index = () => {
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<'All' | 'Completed' | 'Pending'>('All');
   
-  // State stored in memory (as requested)
   const [habits, setHabits] = useState<Habit[]>([
     {
       id: '1',
-      name: 'Deep Reading',
-      emoji: '📚',
-      color: '#f0a500',
-      category: 'Learning',
+      name: 'evening reflection',
+      emoji: '🌑',
+      color: '#ffffff',
+      category: 'Mindfulness',
       frequency: 'daily',
       completedDays: [new Date().toISOString().split('T')[0]],
       createdAt: new Date().toISOString(),
@@ -34,9 +33,9 @@ const Index = () => {
     },
     {
       id: '2',
-      name: 'Morning Vinyasa',
-      emoji: '🧘',
-      color: '#f0a500',
+      name: 'cold exposure',
+      emoji: '❄️',
+      color: '#ffffff',
       category: 'Health',
       frequency: 'daily',
       completedDays: [],
@@ -105,22 +104,22 @@ const Index = () => {
   };
 
   return (
-    <div className="flex flex-col lg:flex-row min-h-screen bg-background text-foreground font-sans selection:bg-primary/30">
-      {/* Noise Overlay */}
-      <div className="fixed inset-0 pointer-events-none opacity-[0.03] bg-[url('https://grainy-gradients.vercel.app/noise.svg')] z-50"></div>
+    <div className="flex flex-col lg:flex-row min-h-screen bg-black text-white font-sans selection:bg-white selection:text-black">
+      {/* Subtle Noise Texture */}
+      <div className="fixed inset-0 pointer-events-none opacity-[0.02] bg-[url('https://grainy-gradients.vercel.app/noise.svg')] z-50"></div>
 
       <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
 
-      <main className="flex-1 overflow-y-auto p-6 lg:p-12">
+      <main className="flex-1 overflow-y-auto p-8 lg:p-16">
         <div className="max-w-6xl mx-auto">
           <AnimatePresence mode="wait">
             {activeTab === 'dashboard' && (
               <motion.div
                 key="dashboard"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.4 }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.5 }}
               >
                 <Dashboard habits={habits} sessions={sessions} />
               </motion.div>
@@ -129,39 +128,39 @@ const Index = () => {
             {activeTab === 'habits' && (
               <motion.div
                 key="habits"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.4 }}
-                className="space-y-8"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.5 }}
+                className="space-y-12"
               >
-                <header className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-                  <div className="space-y-2">
-                    <p className="text-xs font-mono text-primary uppercase tracking-[0.3em]">Rituals</p>
-                    <h2 className="text-4xl font-serif">Daily Practice</h2>
+                <header className="flex flex-col md:flex-row md:items-end justify-between gap-8">
+                  <div className="space-y-3">
+                    <h2 className="text-6xl font-black tracking-tighter lowercase">daily rituals.</h2>
+                    <p className="text-zinc-500 text-lg font-medium lowercase">discipline is the path to freedom.</p>
                   </div>
                   <AddHabitDialog onAdd={handleAddHabit} />
                 </header>
 
-                <div className="flex flex-col md:flex-row gap-4 items-center justify-between bg-card/50 p-2 rounded-2xl border border-border">
-                  <div className="relative w-full md:w-64">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
+                <div className="flex flex-col md:flex-row gap-6 items-center justify-between bg-zinc-900 p-3 rounded-[2rem] border border-zinc-800">
+                  <div className="relative w-full md:w-80">
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500" size={20} />
                     <Input 
-                      placeholder="Search habits..." 
-                      className="pl-10 bg-transparent border-none focus-visible:ring-0 focus-visible:ring-offset-0"
+                      placeholder="search practices..." 
+                      className="pl-12 bg-transparent border-none focus-visible:ring-0 focus-visible:ring-offset-0 text-lg lowercase font-medium"
                       value={search}
                       onChange={(e) => setSearch(e.target.value)}
                     />
                   </div>
-                  <div className="flex gap-1">
+                  <div className="flex gap-2">
                     {['All', 'Pending', 'Completed'].map((f) => (
                       <Button
                         key={f}
                         variant="ghost"
                         onClick={() => setFilter(f as any)}
                         className={cn(
-                          "px-4 h-9 font-mono text-[10px] uppercase tracking-widest rounded-xl transition-all",
-                          filter === f ? "bg-primary text-primary-foreground shadow-lg shadow-primary/10" : "text-muted-foreground"
+                          "px-6 h-12 font-bold text-xs uppercase tracking-widest rounded-2xl transition-all",
+                          filter === f ? "bg-white text-black" : "text-zinc-500 hover:text-white"
                         )}
                       >
                         {f}
@@ -170,7 +169,7 @@ const Index = () => {
                   </div>
                 </div>
 
-                <div className="grid md:grid-cols-2 gap-4">
+                <div className="grid md:grid-cols-2 gap-6">
                   <AnimatePresence mode="popLayout">
                     {filteredHabits.map((habit) => (
                       <HabitCard 
@@ -184,9 +183,9 @@ const Index = () => {
                 </div>
 
                 {filteredHabits.length === 0 && (
-                  <div className="text-center py-20 space-y-4">
-                    <p className="font-serif text-2xl text-muted-foreground">The space is empty.</p>
-                    <p className="text-muted-foreground font-sans">Time to cultivate a new intention.</p>
+                  <div className="text-center py-32 space-y-4">
+                    <p className="text-4xl font-black tracking-tighter opacity-20 lowercase">void.</p>
+                    <p className="text-zinc-500 font-medium">every habit begins with a single choice.</p>
                   </div>
                 )}
               </motion.div>
@@ -195,37 +194,37 @@ const Index = () => {
             {activeTab === 'pomodoro' && (
               <motion.div
                 key="pomodoro"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.4 }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.5 }}
               >
-                <header className="space-y-2 mb-8 text-center">
-                  <p className="text-xs font-mono text-primary uppercase tracking-[0.3em]">Concentration</p>
-                  <h2 className="text-4xl font-serif">Deep Focus</h2>
+                <header className="space-y-3 mb-12 text-center">
+                  <h2 className="text-6xl font-black tracking-tighter lowercase">deep focus.</h2>
+                  <p className="text-zinc-500 text-lg font-medium lowercase">be here now.</p>
                 </header>
                 <PomodoroTimer habits={habits} onComplete={handleCompleteSession} />
                 
-                <div className="mt-12 max-w-md mx-auto">
-                  <h3 className="font-serif text-xl mb-4 border-b border-border pb-2">Recent Intervals</h3>
-                  <div className="space-y-3">
+                <div className="mt-20 max-w-xl mx-auto space-y-6">
+                  <h3 className="text-2xl font-black tracking-tighter border-b border-zinc-800 pb-4 lowercase">recorded sessions.</h3>
+                  <div className="space-y-4">
                     {sessions.slice(0, 5).map((s) => (
-                      <div key={s.id} className="flex items-center justify-between text-sm bg-card/50 p-3 rounded-xl border border-border">
-                        <div className="flex items-center gap-3">
+                      <div key={s.id} className="flex items-center justify-between bg-zinc-900 p-6 rounded-[1.5rem] border border-zinc-800">
+                        <div className="flex items-center gap-4">
                           <div className={cn(
-                            "w-2 h-2 rounded-full",
-                            s.type === 'focus' ? "bg-primary" : "bg-blue-400"
+                            "w-3 h-3 rounded-full",
+                            s.type === 'focus' ? "bg-white" : "bg-zinc-600"
                           )} />
-                          <span className="capitalize text-foreground/80">{s.type.replace('-', ' ')}</span>
+                          <span className="font-bold tracking-tight lowercase text-zinc-300">{s.type.replace('-', ' ')}</span>
                         </div>
-                        <span className="font-mono text-xs text-muted-foreground">
+                        <span className="font-mono text-xs text-zinc-500">
                           {new Date(s.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </span>
                       </div>
                     ))}
                     {sessions.length === 0 && (
-                      <p className="text-center text-muted-foreground font-mono text-xs uppercase tracking-widest py-8 opacity-50">
-                        No sessions recorded today
+                      <p className="text-center text-zinc-600 font-bold text-xs uppercase tracking-widest py-12 opacity-30">
+                        no intervals recorded today
                       </p>
                     )}
                   </div>

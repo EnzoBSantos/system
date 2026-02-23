@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { Play, Pause, RotateCcw, Coffee, Zap, Moon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -26,9 +26,9 @@ const PomodoroTimer = ({ onComplete, habits }: PomodoroTimerProps) => {
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   const configs = {
-    'focus': { label: 'Focus', time: 25 * 60, icon: Zap, color: 'text-primary' },
-    'short-break': { label: 'Rest', time: 5 * 60, icon: Coffee, color: 'text-blue-400' },
-    'long-break': { label: 'Deep Rest', time: 15 * 60, icon: Moon, color: 'text-indigo-400' },
+    'focus': { label: 'focus', time: 25 * 60, icon: Zap, color: 'text-white' },
+    'short-break': { label: 'rest', time: 5 * 60, icon: Coffee, color: 'text-zinc-500' },
+    'long-break': { label: 'deep rest', time: 15 * 60, icon: Moon, color: 'text-zinc-500' },
   };
 
   useEffect(() => {
@@ -47,7 +47,6 @@ const PomodoroTimer = ({ onComplete, habits }: PomodoroTimerProps) => {
   const handleComplete = () => {
     setIsActive(false);
     
-    // Web Audio API beep
     try {
       const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
       const oscillator = audioCtx.createOscillator();
@@ -98,13 +97,11 @@ const PomodoroTimer = ({ onComplete, habits }: PomodoroTimerProps) => {
   };
 
   const progress = timeLeft / configs[mode].time;
-  const strokeDashoffset = 440 * progress;
-
   const currentConfig = configs[mode];
 
   return (
     <div className="max-w-md mx-auto space-y-12 py-12">
-      <div className="flex justify-center gap-2">
+      <div className="flex justify-center gap-3">
         {(['focus', 'short-break', 'long-break'] as Mode[]).map((m) => (
           <button
             key={m}
@@ -114,10 +111,10 @@ const PomodoroTimer = ({ onComplete, habits }: PomodoroTimerProps) => {
               setIsActive(false);
             }}
             className={cn(
-              "px-4 py-2 rounded-full font-mono text-[10px] uppercase tracking-widest transition-all",
+              "px-6 py-3 rounded-2xl font-bold text-xs uppercase tracking-widest transition-all",
               mode === m 
-                ? "bg-primary text-primary-foreground" 
-                : "bg-secondary text-muted-foreground hover:text-foreground"
+                ? "bg-white text-black" 
+                : "bg-zinc-900 text-zinc-500 hover:text-white"
             )}
           >
             {configs[m].label}
@@ -132,61 +129,59 @@ const PomodoroTimer = ({ onComplete, habits }: PomodoroTimerProps) => {
             cy="160"
             r="140"
             fill="none"
-            stroke="currentColor"
+            stroke="#1c1c1e"
             strokeWidth="4"
-            className="text-secondary/50"
           />
           <motion.circle
             cx="160"
             cy="160"
             r="140"
             fill="none"
-            stroke="currentColor"
-            strokeWidth="8"
+            stroke="white"
+            strokeWidth="6"
             strokeDasharray="880"
             animate={{ strokeDashoffset: 880 * (1 - progress) }}
             transition={{ duration: 1, ease: "linear" }}
-            className={cn("transition-colors duration-500", currentConfig.color)}
           />
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center space-y-2">
-          <currentConfig.icon size={32} className={cn("transition-colors", currentConfig.color)} />
-          <span className="text-7xl font-mono tracking-tighter tabular-nums">{formatTime(timeLeft)}</span>
-          <span className="text-xs font-mono text-muted-foreground uppercase tracking-[0.2em]">
-            {mode === 'focus' ? `Pomodoro ${pomodoroCount + 1} of 4` : 'Resting'}
+          <currentConfig.icon size={32} className="text-zinc-500" />
+          <span className="text-8xl font-black tracking-tighter tabular-nums">{formatTime(timeLeft)}</span>
+          <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+            {mode === 'focus' ? `cycle ${pomodoroCount + 1} / 4` : 'breathing'}
           </span>
         </div>
       </div>
 
-      <div className="flex flex-col items-center gap-8">
-        <div className="flex items-center gap-6">
+      <div className="flex flex-col items-center gap-10">
+        <div className="flex items-center gap-8">
           <Button 
             variant="ghost" 
             size="icon" 
             onClick={resetTimer}
-            className="w-12 h-12 rounded-full border border-border text-muted-foreground hover:text-foreground"
+            className="w-14 h-14 rounded-2xl border border-zinc-800 text-zinc-500 hover:text-white hover:bg-zinc-900"
           >
-            <RotateCcw size={20} />
+            <RotateCcw size={24} />
           </Button>
           
           <Button 
             onClick={toggleTimer}
-            className="w-20 h-20 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground shadow-2xl shadow-primary/20 transition-transform active:scale-95"
+            className="w-24 h-24 rounded-[2rem] bg-white hover:bg-zinc-200 text-black shadow-2xl transition-transform active:scale-95"
           >
-            {isActive ? <Pause size={32} fill="currentColor" /> : <Play size={32} className="ml-1" fill="currentColor" />}
+            {isActive ? <Pause size={40} fill="currentColor" /> : <Play size={40} className="ml-1" fill="currentColor" />}
           </Button>
 
-          <div className="w-12" /> {/* Spacer */}
+          <div className="w-14" />
         </div>
 
         {mode === 'focus' && (
-          <div className="w-full space-y-2">
-            <Label className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground block text-center">Focus on Ritual</Label>
+          <div className="w-full space-y-3">
+            <Label className="font-bold text-[10px] uppercase tracking-widest text-zinc-500 block text-center">link to ritual</Label>
             <Select value={linkedHabitId} onValueChange={setLinkedHabitId}>
-              <SelectTrigger className="bg-card border-border text-foreground font-sans">
+              <SelectTrigger className="bg-zinc-900 border-zinc-800 text-white rounded-2xl h-14 px-6">
                 <SelectValue placeholder="General Focus" />
               </SelectTrigger>
-              <SelectContent className="bg-card border-border">
+              <SelectContent className="bg-zinc-900 border-zinc-800 rounded-xl">
                 <SelectItem value="none">None</SelectItem>
                 {habits.map(habit => (
                   <SelectItem key={habit.id} value={habit.id}>
