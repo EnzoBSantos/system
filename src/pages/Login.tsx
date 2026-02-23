@@ -9,11 +9,13 @@ const Login = () => {
   return (
     <div className="min-h-screen bg-black flex flex-col items-center justify-center p-6">
       <div className="w-full max-w-[400px] space-y-8">
-        <div className="flex flex-col items-center space-y-4">
-          <div className="w-16 h-16 bg-white rounded-[2rem] flex items-center justify-center">
-            <Bird className="text-black" size={32} />
+        <div className="flex flex-col items-center space-y-6">
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center">
+              <Bird className="text-black" size={28} />
+            </div>
+            <h1 className="text-5xl font-black tracking-tighter lowercase text-white">aura.</h1>
           </div>
-          <h1 className="text-4xl font-black tracking-tighter lowercase text-white">aura.</h1>
           <p className="text-zinc-500 font-medium text-center">master your mind, one ritual at a time.</p>
         </div>
         
