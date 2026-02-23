@@ -11,6 +11,7 @@ import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/react";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
+import Landing from "./pages/Landing";
 import NotFound from "./pages/NotFound";
 import PWAInstallPrompt from "./components/PWAInstallPrompt";
 
@@ -53,10 +54,10 @@ const App = () => {
         <PWAInstallPrompt />
         <BrowserRouter>
           <Routes>
-            {/* Handle Root Path */}
+            {/* Landing Page as the main entry point */}
             <Route 
               path="/" 
-              element={<Navigate to={session ? "/home" : "/login"} replace />} 
+              element={session ? <Navigate to="/home" replace /> : <Landing />} 
             />
             
             {/* Protected Home Route */}
