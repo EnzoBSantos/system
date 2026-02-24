@@ -38,14 +38,14 @@ const GoalMindMap = ({ goal, onAddRequirement, onEditNode, onDeleteRequirement }
         centerOnInit
         minScale={0.3}
         maxScale={2}
-        limitToBounds={false} // Prevents snapping back to center
+        limitToBounds={false}
         centerZoomedOut={true}
       >
         {({ zoomIn, zoomOut, resetTransform }) => (
           <>
             <TransformComponent 
               wrapperClass="!w-full !h-full" 
-              contentClass="!w-auto !h-auto" // Let the content define its size
+              contentClass="!w-auto !h-auto"
             >
               <div className="relative w-[2000px] h-[2000px] flex items-center justify-center select-none">
                 {/* Connection Lines */}
@@ -84,6 +84,7 @@ const GoalMindMap = ({ goal, onAddRequirement, onEditNode, onDeleteRequirement }
                   <div className="relative group -translate-x-1/2 -translate-y-1/2">
                     <button 
                       onClick={() => setShowGoalContent(!showGoalContent)}
+                      onMouseDown={(e) => e.stopPropagation()} // Prevent drag start
                       className={cn(
                         "w-44 h-44 rounded-full flex flex-col items-center justify-center p-6 text-center shadow-2xl transition-all duration-500",
                         showGoalContent 
@@ -98,6 +99,7 @@ const GoalMindMap = ({ goal, onAddRequirement, onEditNode, onDeleteRequirement }
                     <div className="absolute -top-4 -right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                       <Button 
                         size="icon" 
+                        onMouseDown={(e) => e.stopPropagation()} // Prevent drag start
                         onClick={(e) => { e.stopPropagation(); onEditNode('goal'); }}
                         className="w-10 h-10 rounded-full bg-zinc-900 border border-zinc-800 text-white hover:bg-white hover:text-black"
                       >
@@ -144,6 +146,7 @@ const GoalMindMap = ({ goal, onAddRequirement, onEditNode, onDeleteRequirement }
                           >
                             <button 
                               onClick={(e) => toggleNodeVisibility(req.id, e)}
+                              onMouseDown={(e) => e.stopPropagation()} // Prevent drag start
                               className="absolute -top-3 -left-3 w-8 h-8 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-500 hover:text-white hover:bg-zinc-800 z-10"
                             >
                               {isHidden ? <Eye size={12} /> : <EyeOff size={12} />}
@@ -159,14 +162,16 @@ const GoalMindMap = ({ goal, onAddRequirement, onEditNode, onDeleteRequirement }
                                  <div className="flex gap-2">
                                   <Button 
                                     size="icon" 
-                                    onClick={() => onEditNode('requirement', req.id)}
+                                    onMouseDown={(e) => e.stopPropagation()} // Prevent drag start
+                                    onClick={(e) => { e.stopPropagation(); onEditNode('requirement', req.id); }}
                                     className="w-10 h-10 rounded-xl bg-zinc-900 border border-zinc-800 text-white hover:bg-white hover:text-black"
                                   >
                                     <Edit2 size={16} />
                                   </Button>
                                   <Button 
                                     size="icon" 
-                                    onClick={() => onDeleteRequirement(req.id)}
+                                    onMouseDown={(e) => e.stopPropagation()} // Prevent drag start
+                                    onClick={(e) => { e.stopPropagation(); onDeleteRequirement(req.id); }}
                                     className="w-10 h-10 rounded-xl bg-red-950/30 border border-red-900/50 text-red-500 hover:bg-red-600 hover:text-white"
                                   >
                                     <Trash2 size={16} />
@@ -209,6 +214,7 @@ const GoalMindMap = ({ goal, onAddRequirement, onEditNode, onDeleteRequirement }
       <div className="fixed bottom-12 right-12 z-[60]">
         <Button 
           onClick={onAddRequirement}
+          onMouseDown={(e) => e.stopPropagation()} // Prevent drag start
           className="h-16 px-8 rounded-3xl bg-white text-black hover:bg-zinc-200 shadow-2xl font-black lowercase gap-3 text-lg"
         >
           <Plus size={24} /> add vision pilar
