@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Goal, GoalRequirement } from '@/types/goals';
-import { Edit2, Target, Rocket, CheckCircle2, Trash2, Maximize2, Minimize2, ZoomIn, ZoomOut, Maximize, Move, Calendar, Info, Plus } from 'lucide-react';
+import { Edit2, Target, Rocket, CheckCircle2, Trash2, Maximize2, Minimize2, ZoomIn, ZoomOut, Maximize, Move, Info, Plus, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
@@ -49,9 +49,9 @@ const GoalMindMap = ({ goal, onEditNode, onCreateChild, onDeleteRequirement }: G
             x1={parentX} y1={parentY}
             x2={currentX} y2={currentY}
             stroke="white"
-            strokeWidth="1.5"
-            strokeOpacity="0.15"
-            strokeDasharray="8,8"
+            strokeWidth="2"
+            strokeOpacity="0.2"
+            strokeDasharray="10,10"
           />
         </svg>
 
@@ -67,32 +67,32 @@ const GoalMindMap = ({ goal, onEditNode, onCreateChild, onDeleteRequirement }: G
             <motion.div 
               layout
               className={cn(
-                "rounded-[3.5rem] border-2 flex flex-col p-8 transition-all duration-500 relative",
+                "rounded-[3.5rem] border-2 flex flex-col transition-all duration-500 relative overflow-hidden",
                 req.is_completed 
                   ? "bg-zinc-900/50 border-white/10" 
-                  : "bg-black border-zinc-800 group-hover:border-white/40 shadow-2xl",
-                isExpanded ? "w-[400px] min-h-[300px]" : "w-52 h-52 items-center justify-center text-center",
+                  : "bg-black border-zinc-800 hover:border-white/40 shadow-[0_0_50px_rgba(0,0,0,0.5)]",
+                isExpanded ? "w-[400px] min-h-[300px] p-8" : "w-56 h-56 p-6 items-center justify-center text-center",
                 level > 0 && "scale-90"
               )}
             >
               <button 
                 onClick={(e) => toggleNodeExpansion(req.id, e)}
                 onMouseDown={(e) => e.stopPropagation()}
-                className="absolute -top-3 -left-3 w-12 h-12 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-800 z-[60] shadow-xl transition-colors"
+                className="absolute top-4 left-4 w-10 h-10 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-500 hover:text-white z-[60] transition-colors"
               >
-                {isExpanded ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
+                {isExpanded ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
               </button>
 
               <div className={cn("flex flex-col h-full", !isExpanded && "items-center justify-center")}>
                 {req.is_completed ? (
-                  <CheckCircle2 size={isExpanded ? 32 : 36} className={cn(isExpanded ? "mb-4" : "mb-2", "text-white/50")} />
+                  <CheckCircle2 size={isExpanded ? 32 : 40} className={cn(isExpanded ? "mb-4" : "mb-3", "text-white/50")} />
                 ) : (
-                  <Rocket size={isExpanded ? 32 : 36} className={cn(isExpanded ? "mb-4" : "mb-2", "text-zinc-600")} />
+                  <Rocket size={isExpanded ? 32 : 40} className={cn(isExpanded ? "mb-4" : "mb-3", "text-zinc-600")} />
                 )}
                 
                 <h4 className={cn(
-                  "font-black lowercase leading-tight mb-2",
-                  isExpanded ? "text-2xl text-left" : "text-sm line-clamp-3"
+                  "font-black lowercase leading-tight",
+                  isExpanded ? "text-2xl text-left" : "text-sm line-clamp-3 px-2"
                 )}>
                   {req.title}
                 </h4>
@@ -101,21 +101,22 @@ const GoalMindMap = ({ goal, onEditNode, onCreateChild, onDeleteRequirement }: G
                   <motion.div 
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="mt-4 space-y-6 flex-1"
+                    className="mt-6 space-y-6 flex-1"
                   >
-                    {req.first_action && (
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-2 text-zinc-500">
-                          <Info size={12} />
-                          <span className="text-[10px] font-bold uppercase tracking-widest">pillar intent</span>
-                        </div>
-                        <p className="text-zinc-400 text-sm leading-relaxed lowercase">{req.first_action}</p>
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 text-zinc-500">
+                        <Info size={12} />
+                        <span className="text-[10px] font-bold uppercase tracking-widest">pillar strategy</span>
                       </div>
-                    )}
+                      <p className="text-zinc-400 text-sm leading-relaxed lowercase">
+                        {req.first_action || "no strategy defined yet."}
+                      </p>
+                    </div>
                     
                     <div className="pt-6 mt-auto flex gap-3 border-t border-white/5">
                       <Button 
                         size="sm" 
+                        variant="ghost"
                         onMouseDown={(e) => e.stopPropagation()}
                         onClick={(e) => { e.stopPropagation(); onEditNode('requirement', req.id); }}
                         className="flex-1 h-12 rounded-2xl bg-zinc-900 border border-zinc-800 text-white hover:bg-white hover:text-black font-bold lowercase gap-2"
@@ -124,29 +125,41 @@ const GoalMindMap = ({ goal, onEditNode, onCreateChild, onDeleteRequirement }: G
                       </Button>
                       <Button 
                         size="icon" 
+                        variant="ghost"
                         onMouseDown={(e) => e.stopPropagation()}
-                        onClick={(e) => onCreateChild(e, req.id)}
-                        className="w-12 h-12 rounded-2xl bg-white text-black hover:bg-zinc-200 shadow-lg"
+                        onClick={(e) => { e.stopPropagation(); onDeleteRequirement(req.id); }}
+                        className="w-12 h-12 rounded-2xl bg-zinc-900/50 text-zinc-600 hover:text-red-500 hover:bg-red-500/10"
                       >
-                        <Plus size={20} />
+                        <Trash2 size={18} />
                       </Button>
                     </div>
                   </motion.div>
                 )}
               </div>
 
-              {!isExpanded && (
-                <div className="absolute -bottom-4 -right-4 z-50">
-                   <Button 
-                      size="icon" 
-                      onMouseDown={(e) => e.stopPropagation()}
-                      onClick={(e) => onCreateChild(e, req.id)}
-                      className="w-12 h-12 rounded-2xl bg-white text-black hover:bg-zinc-200 shadow-2xl border-4 border-black"
-                    >
-                      <Plus size={20} />
-                    </Button>
-                </div>
-              )}
+              {/* Action Floating Buttons - ALWAYS VISIBLE */}
+              <div className="absolute top-4 right-4 flex flex-col gap-2 z-[60]">
+                <Button 
+                  size="icon" 
+                  onMouseDown={(e) => e.stopPropagation()}
+                  onClick={(e) => onCreateChild(e, req.id)}
+                  className="w-10 h-10 rounded-xl bg-white text-black hover:bg-zinc-200 shadow-xl border-2 border-black/10"
+                  title="Add sub-pillar"
+                >
+                  <Plus size={20} />
+                </Button>
+                {!isExpanded && (
+                  <Button 
+                    size="icon" 
+                    variant="ghost"
+                    onMouseDown={(e) => e.stopPropagation()}
+                    onClick={(e) => { e.stopPropagation(); onEditNode('requirement', req.id); }}
+                    className="w-10 h-10 rounded-xl bg-zinc-900/80 backdrop-blur-sm border border-zinc-800 text-zinc-400 hover:text-white"
+                  >
+                    <Edit2 size={16} />
+                  </Button>
+                )}
+              </div>
             </motion.div>
           </div>
         </motion.div>
@@ -154,9 +167,12 @@ const GoalMindMap = ({ goal, onEditNode, onCreateChild, onDeleteRequirement }: G
         {children.map((child, cidx) => {
           const totalChildren = children.length;
           const spreadAngle = Math.PI / 1.5; 
-          const startAngle = Math.atan2(y, x) - (spreadAngle / 2);
-          const angle = startAngle + (cidx * (spreadAngle / Math.max(1, totalChildren - 1)));
-          const distance = 450;
+          const baseAngle = Math.atan2(y, x);
+          const angle = totalChildren === 1 
+            ? baseAngle 
+            : baseAngle - (spreadAngle / 2) + (cidx * (spreadAngle / (totalChildren - 1)));
+          
+          const distance = 500 + (level * 100);
           const cx = x + Math.cos(angle) * distance;
           const cy = y + Math.sin(angle) * distance;
           
@@ -169,9 +185,12 @@ const GoalMindMap = ({ goal, onEditNode, onCreateChild, onDeleteRequirement }: G
   const rootPillars = getPillars(null);
 
   return (
-    <div className="relative w-full h-full bg-black/50 overflow-hidden cursor-grab active:cursor-grabbing">
+    <div className="relative w-full h-full bg-black overflow-hidden cursor-grab active:cursor-grabbing">
+      {/* Background Grid Pattern */}
+      <div className="absolute inset-0 bg-[radial-gradient(#1c1c1e_1px,transparent_1px)] [background-size:40px_40px] opacity-20 pointer-events-none" />
+
       <TransformWrapper
-        initialScale={0.7}
+        initialScale={0.6}
         minScale={0.1}
         maxScale={2}
         centerOnInit={true}
@@ -185,6 +204,7 @@ const GoalMindMap = ({ goal, onEditNode, onCreateChild, onDeleteRequirement }: G
               contentClass="!w-auto !h-auto"
             >
               <div className="relative w-[4000px] h-[4000px] flex items-center justify-center select-none">
+                {/* Central Goal Node */}
                 <motion.div 
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
@@ -196,33 +216,41 @@ const GoalMindMap = ({ goal, onEditNode, onCreateChild, onDeleteRequirement }: G
                       onClick={() => setShowGoalContent(!showGoalContent)}
                       onMouseDown={(e) => e.stopPropagation()}
                       className={cn(
-                        "w-56 h-56 rounded-full flex flex-col items-center justify-center p-10 text-center shadow-[0_0_50px_rgba(255,255,255,0.1)] transition-all duration-500",
+                        "w-64 h-64 rounded-full flex flex-col items-center justify-center p-12 text-center shadow-[0_0_80px_rgba(255,255,255,0.15)] transition-all duration-700 relative z-10",
                         showGoalContent 
                           ? "bg-white text-black scale-100" 
-                          : "bg-zinc-900 text-white scale-90 border border-zinc-800"
+                          : "bg-zinc-900 text-white scale-90 border-2 border-zinc-800"
                       )}
                     >
-                      <Target size={40} className={cn("mb-3 transition-transform", !showGoalContent && "rotate-180")} />
-                      <span className="text-base font-black leading-tight lowercase px-2 line-clamp-3">{goal.title}</span>
+                      <Target size={48} className={cn("mb-4 transition-transform duration-700", !showGoalContent && "rotate-180")} />
+                      <span className="text-lg font-black leading-tight lowercase px-4 line-clamp-3">{goal.title}</span>
                     </button>
                     
-                    <div className="absolute -bottom-2 -right-2">
-                       <Button 
-                          size="icon" 
-                          onMouseDown={(e) => e.stopPropagation()}
-                          onClick={(e) => onCreateChild(e)}
-                          className="w-14 h-14 rounded-full bg-white text-black hover:bg-zinc-200 shadow-2xl border-4 border-black"
-                        >
-                          <Plus size={24} />
-                        </Button>
+                    {/* Main Create Button - Pulsing and ALWAYS VISIBLE */}
+                    <div className="absolute -bottom-4 -right-4 z-20">
+                       <motion.div
+                        animate={{ scale: [1, 1.1, 1] }}
+                        transition={{ repeat: Infinity, duration: 3 }}
+                       >
+                         <Button 
+                            size="icon" 
+                            onMouseDown={(e) => e.stopPropagation()}
+                            onClick={(e) => onCreateChild(e)}
+                            className="w-16 h-16 rounded-full bg-white text-black hover:bg-zinc-200 shadow-[0_0_30px_rgba(255,255,255,0.3)] border-4 border-black"
+                            title="New primary pillar"
+                          >
+                            <Plus size={32} />
+                          </Button>
+                       </motion.div>
                     </div>
                   </div>
                 </motion.div>
 
+                {/* Sub-Pillars Recursive Rendering */}
                 <AnimatePresence>
                   {showGoalContent && rootPillars.map((req, idx) => {
                     const angle = (idx / (rootPillars.length || 1)) * 2 * Math.PI;
-                    const distance = 550;
+                    const distance = 650;
                     const x = Math.cos(angle) * distance;
                     const y = Math.sin(angle) * distance;
                     
@@ -232,17 +260,28 @@ const GoalMindMap = ({ goal, onEditNode, onCreateChild, onDeleteRequirement }: G
               </div>
             </TransformComponent>
 
-            <div className="fixed bottom-12 left-1/2 -translate-x-1/2 z-[70] flex items-center gap-2 bg-zinc-900/80 backdrop-blur-2xl border border-zinc-800 p-2.5 rounded-[1.5rem] shadow-2xl">
-              <Button variant="ghost" size="icon" onMouseDown={(e) => e.stopPropagation()} onClick={() => zoomIn()} className="rounded-xl hover:bg-white hover:text-black">
-                <ZoomIn size={20} />
+            {/* Navigation Overlay */}
+            <div className="fixed top-8 left-8 z-[70] bg-zinc-900/50 backdrop-blur-xl border border-zinc-800 p-4 rounded-3xl space-y-1">
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">architecture</p>
+              <h3 className="text-xl font-black lowercase tracking-tighter">{goal.title}</h3>
+            </div>
+
+            {/* Controls */}
+            <div className="fixed bottom-12 left-1/2 -translate-x-1/2 z-[70] flex items-center gap-2 bg-zinc-950/90 backdrop-blur-2xl border border-white/5 p-3 rounded-[2rem] shadow-2xl">
+              <Button variant="ghost" size="icon" onMouseDown={(e) => e.stopPropagation()} onClick={() => zoomIn()} className="w-12 h-12 rounded-2xl hover:bg-white hover:text-black transition-all">
+                <ZoomIn size={22} />
               </Button>
-              <Button variant="ghost" size="icon" onMouseDown={(e) => e.stopPropagation()} onClick={() => zoomOut()} className="rounded-xl hover:bg-white hover:text-black">
-                <ZoomOut size={20} />
+              <Button variant="ghost" size="icon" onMouseDown={(e) => e.stopPropagation()} onClick={() => zoomOut()} className="w-12 h-12 rounded-2xl hover:bg-white hover:text-black transition-all">
+                <ZoomOut size={22} />
               </Button>
-              <div className="w-px h-8 bg-zinc-800 mx-1" />
-              <Button variant="ghost" size="icon" onMouseDown={(e) => e.stopPropagation()} onClick={() => resetTransform()} className="rounded-xl hover:bg-white hover:text-black">
-                <Maximize size={20} />
+              <div className="w-px h-10 bg-zinc-800 mx-2" />
+              <Button variant="ghost" size="icon" onMouseDown={(e) => e.stopPropagation()} onClick={() => resetTransform()} className="w-12 h-12 rounded-2xl hover:bg-white hover:text-black transition-all">
+                <Maximize size={22} />
               </Button>
+              <div className="flex items-center gap-3 px-6 border-l border-zinc-800 ml-2">
+                <Move size={18} className="text-zinc-600" />
+                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">pan canvas</span>
+              </div>
             </div>
           </>
         )}
