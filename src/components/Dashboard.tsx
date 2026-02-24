@@ -16,11 +16,13 @@ interface DashboardProps {
 const Dashboard = ({ habits, sessions, onToggleHabit }: DashboardProps) => {
   const today = new Date().toISOString().split('T')[0];
   const habitsToday = habits.length;
-  const completedToday = habits.filter(h => h.completedDays.includes(today)).length;
+  
+  // Added safety checks with optional chaining and nullish coalescing
+  const completedToday = habits.filter(h => h.completedDays?.includes(today)).length;
   const completionRate = habitsToday > 0 ? Math.round((completedToday / habitsToday) * 100) : 0;
   
-  const totalStreaks = habits.reduce((acc, h) => acc + h.streak, 0);
-  const totalSessions = sessions.filter(s => s.timestamp.split('T')[0] === today).length;
+  const totalStreaks = habits.reduce((acc, h) => acc + (h.streak ?? 0), 0);
+  const totalSessions = sessions.filter(s => s.timestamp?.split('T')[0] === today).length;
 
   const getGreeting = () => {
     const hour = new Date().getHours();

@@ -26,30 +26,57 @@ const Index = () => {
     const { data: habitsData } = await supabase.from('habits').select('*');
     const { data: sessionsData } = await supabase.from('pomodoro_sessions').select('*');
     
-    if (habitsData) setHabits(habitsData);
-    if (sessionsData) setSessions(sessionsData);
+    if (habitsData) {
+      // Map snake_case from DB to camelCase for App
+      const mappedHabits: Habit[] = habitsData.map(h => ({
+        id: h.id,
+        name: h.name,
+        emoji: h.emoji,
+        color: h.color,
+        category: h.category,
+        frequency: h.frequency,
+        completedDays: h.completed_days || [],
+        createdAt: h.created_at,
+        streak: h.streak || 0,
+        longestStreak: h.longest_streak || 0
+      }));
+      setHabits(mappedHabits);
+    }
+
+    if (sessionsData) {
+      const mappedSessions: PomodoroSession[] = sessionsData.map(s => ({
+        id: s.id,
+        timestamp: s.timestamp,
+        duration: s.duration,
+        type: s.type as any,
+        habitId: s.habit_id
+      }));
+      setSessions(mappedSessions);
+    }
   };
 
   const handleToggleHabit = async (habitId: string, date: string) => {
     const habit = habits.find(h => h.id === habitId);
     if (!habit) return;
 
-    let newCompletedDays = [...habit.completedDays];
+    let newCompletedDays = [...(habit.completedDays || [])];
     if (newCompletedDays.includes(date)) {
       newCompletedDays = newCompletedDays.filter(d => d !== date);
     } else {
       newCompletedDays.push(date);
     }
 
+    // Update DB using snake_case
     const { error } = await supabase
       .from('habits')
-      .update({ completedDays: newCompletedDays })
+      .update({ completed_days: newCompletedDays })
       .eq('id', habitId);
 
     if (error) {
+      console.error("Error updating habit:", error);
       toast({ title: "Error updating ritual", variant: "destructive" });
     } else {
-      setHabits(habits.map(h => h.id === habitId ? { ...h, completedDays: newCompletedDays } : h));
+      setHabits(prev => prev.map(h => h.id === habitId ? { ...h, completedDays: newCompletedDays } : h));
     }
   };
 
