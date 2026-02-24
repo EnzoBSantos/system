@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { ArrowRight, ArrowLeft, Target, Heart, Search, Ruler, Footprints, Anchor, Calendar, Rocket, Sparkles } from 'lucide-react';
+import { ArrowRight, ArrowLeft, Target, Heart, Search, Ruler, Footprints, Anchor, Calendar, Rocket, Sparkles, Lightbulb } from 'lucide-react';
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import confetti from 'canvas-confetti';
@@ -114,6 +114,16 @@ const GoalCreationFlow = ({ onClose, onSuccess }: GoalCreationFlowProps) => {
     </motion.div>
   );
 
+  const StepTip = ({ title, text }: { title: string, text: string }) => (
+    <div className="bg-white/5 border border-white/5 p-4 rounded-2xl flex gap-3 mt-6">
+      <Lightbulb className="text-zinc-400 shrink-0" size={16} />
+      <div className="space-y-1">
+        <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-300">{title}</p>
+        <p className="text-xs text-zinc-500 font-medium lowercase">{text}</p>
+      </div>
+    </div>
+  );
+
   return (
     <div className="fixed inset-0 z-[100] bg-black flex flex-col">
       {/* Header / Progress Bar */}
@@ -152,14 +162,24 @@ const GoalCreationFlow = ({ onClose, onSuccess }: GoalCreationFlowProps) => {
                     <Target size={32} className="text-black" />
                   </div>
                   <h2 className="text-5xl font-black tracking-tighter lowercase">what is your main goal?</h2>
-                  <p className="text-zinc-500 font-medium">start with the end in mind. be bold.</p>
+                  <p className="text-zinc-500 font-medium">start with the end in mind. be bold and concise.</p>
                 </div>
-                <Input 
-                  value={formData.title}
-                  onChange={(e) => setFormData({...formData, title: e.target.value})}
-                  placeholder="e.g. launch my startup, run a marathon..."
-                  className="h-20 text-3xl font-bold bg-transparent border-b-2 border-t-0 border-x-0 border-zinc-800 focus:border-white rounded-none px-0 lowercase tracking-tight outline-none ring-0 focus-visible:ring-0"
+                
+                <div className="space-y-2">
+                  <Input 
+                    value={formData.title}
+                    onChange={(e) => setFormData({...formData, title: e.target.value})}
+                    placeholder="e.g. launch my startup"
+                    className="h-20 text-3xl font-bold bg-transparent border-b-2 border-t-0 border-x-0 border-zinc-800 focus:border-white rounded-none px-0 lowercase tracking-tight outline-none ring-0 focus-visible:ring-0"
+                  />
+                  <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest pt-2">examples: run a marathon, learn 1000 kanji, save $10k</p>
+                </div>
+
+                <StepTip 
+                  title="pro tip" 
+                  text="the best goals are specific. instead of 'be healthy', try 'run a 5k in under 25 minutes'." 
                 />
+
                 <Button 
                   disabled={!formData.title}
                   onClick={nextStep}
@@ -186,6 +206,12 @@ const GoalCreationFlow = ({ onClose, onSuccess }: GoalCreationFlowProps) => {
                   placeholder="this goal matters to me because..."
                   className="min-h-[200px] text-xl bg-zinc-900/50 border-zinc-800 rounded-3xl p-8 focus:border-white lowercase"
                 />
+
+                <StepTip 
+                  title="think deeper" 
+                  text="don't just say 'to make money'. ask yourself why that money matters—is it for freedom? for your family? connect to your identity." 
+                />
+
                 <div className="flex gap-4">
                   <Button variant="ghost" onClick={prevStep} className="h-16 px-8 rounded-2xl text-zinc-500 font-bold lowercase">back</Button>
                   <Button disabled={!formData.why} onClick={nextStep} className="flex-1 h-16 rounded-2xl bg-white text-black hover:bg-zinc-200 text-xl font-bold lowercase">continue</Button>
@@ -216,6 +242,11 @@ const GoalCreationFlow = ({ onClose, onSuccess }: GoalCreationFlowProps) => {
                   />
                 </div>
 
+                <StepTip 
+                  title="deadlines create focus" 
+                  text="give yourself enough time to be realistic, but not so much that you lose the sense of urgency. parkinson's law says work expands to fill the time available." 
+                />
+
                 <div className="flex gap-4">
                   <Button variant="ghost" onClick={prevStep} className="h-16 px-8 rounded-2xl text-zinc-500 font-bold lowercase">back</Button>
                   <Button disabled={!formData.deadline} onClick={nextStep} className="flex-1 h-16 rounded-2xl bg-white text-black hover:bg-zinc-200 text-xl font-bold lowercase">continue</Button>
@@ -231,7 +262,7 @@ const GoalCreationFlow = ({ onClose, onSuccess }: GoalCreationFlowProps) => {
                     <Sparkles size={32} className="text-white" />
                   </div>
                   <h2 className="text-5xl font-black tracking-tighter lowercase">pillars of success.</h2>
-                  <p className="text-zinc-500 font-medium">what must be true for this goal to happen?</p>
+                  <p className="text-zinc-500 font-medium">what big milestones must be true for this goal to happen?</p>
                 </div>
 
                 <div className="space-y-4">
@@ -240,7 +271,7 @@ const GoalCreationFlow = ({ onClose, onSuccess }: GoalCreationFlowProps) => {
                       <Input 
                         value={req.title}
                         onChange={(e) => updateRequirement(idx, 'title', e.target.value)}
-                        placeholder="requirement name (e.g. save $5k)"
+                        placeholder="e.g. finish first draft, run 10km, find a mentor"
                         className="h-14 bg-zinc-900 border-zinc-800 rounded-2xl px-6 focus:border-white lowercase"
                       />
                       <Button 
@@ -263,6 +294,11 @@ const GoalCreationFlow = ({ onClose, onSuccess }: GoalCreationFlowProps) => {
                     + add requirement
                   </Button>
                 </div>
+
+                <StepTip 
+                  title="break it down" 
+                  text="think of the 3-5 'big rocks' that make up the goal. if the goal is to 'start a business', pillars might be 'validate idea', 'build MVP', and 'get 5 users'." 
+                />
 
                 <div className="flex gap-4">
                   <Button variant="ghost" onClick={prevStep} className="h-16 px-8 rounded-2xl text-zinc-500 font-bold lowercase">back</Button>
@@ -292,16 +328,17 @@ const GoalCreationFlow = ({ onClose, onSuccess }: GoalCreationFlowProps) => {
                           <Input 
                             value={req.first_action} 
                             onChange={(e) => updateRequirement(idx, 'first_action', e.target.value)}
-                            placeholder="what is the very first step?"
+                            placeholder="e.g. buy running shoes, open new doc"
                             className="h-12 bg-zinc-800 border-zinc-700 rounded-xl px-4 lowercase"
                           />
+                          <p className="text-[10px] text-zinc-600 font-bold uppercase tracking-widest px-1">make it so simple you can't fail.</p>
                         </div>
                         <div className="space-y-2">
                           <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest px-1">weekly commitment</label>
                           <Input 
                             value={req.weekly_commitment} 
                             onChange={(e) => updateRequirement(idx, 'weekly_commitment', e.target.value)}
-                            placeholder="how many hours/units per week?"
+                            placeholder="e.g. 5 hours, 3 sessions, 20 pages"
                             className="h-12 bg-zinc-800 border-zinc-700 rounded-xl px-4 lowercase"
                           />
                         </div>
