@@ -11,7 +11,7 @@ import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 interface GoalMindMapProps {
   goal: Goal;
   onEditNode: (type: 'goal' | 'requirement', id?: string) => void;
-  onCreateChild: (e: React.MouseEvent, parentId: string) => void;
+  onCreateChild: (e: React.MouseEvent, parentId?: string) => void;
   onDeleteRequirement: (id: string) => void;
 }
 
@@ -42,7 +42,6 @@ const GoalMindMap = ({ goal, onEditNode, onCreateChild, onDeleteRequirement }: G
 
     return (
       <React.Fragment key={req.id}>
-        {/* Connection Line to parent */}
         <svg className="absolute inset-0 w-full h-full pointer-events-none overflow-visible">
           <motion.line
             initial={{ pathLength: 0, opacity: 0 }}
@@ -128,7 +127,6 @@ const GoalMindMap = ({ goal, onEditNode, onCreateChild, onDeleteRequirement }: G
                         onMouseDown={(e) => e.stopPropagation()}
                         onClick={(e) => onCreateChild(e, req.id)}
                         className="w-12 h-12 rounded-2xl bg-white text-black hover:bg-zinc-200 shadow-lg"
-                        title="Add sub-pillar"
                       >
                         <Plus size={20} />
                       </Button>
@@ -138,36 +136,24 @@ const GoalMindMap = ({ goal, onEditNode, onCreateChild, onDeleteRequirement }: G
               </div>
 
               {!isExpanded && (
-                <div className="absolute inset-0 bg-black/95 rounded-[3.5rem] flex flex-col items-center justify-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity p-4">
-                   <div className="flex gap-2">
-                    <Button 
-                      size="icon" 
-                      onMouseDown={(e) => e.stopPropagation()}
-                      onClick={(e) => { e.stopPropagation(); onEditNode('requirement', req.id); }}
-                      className="w-12 h-12 rounded-2xl bg-zinc-900 border border-zinc-800 text-white hover:bg-white hover:text-black shadow-xl"
-                    >
-                      <Edit2 size={18} />
-                    </Button>
-                    <Button 
+                <div className="absolute -bottom-4 -right-4 z-50">
+                   <Button 
                       size="icon" 
                       onMouseDown={(e) => e.stopPropagation()}
                       onClick={(e) => onCreateChild(e, req.id)}
-                      className="w-12 h-12 rounded-2xl bg-white text-black hover:bg-zinc-200 shadow-xl"
+                      className="w-12 h-12 rounded-2xl bg-white text-black hover:bg-zinc-200 shadow-2xl border-4 border-black"
                     >
                       <Plus size={20} />
                     </Button>
-                   </div>
-                   <p className="text-[9px] font-black uppercase tracking-widest text-zinc-600 mt-1">pillar actions</p>
                 </div>
               )}
             </motion.div>
           </div>
         </motion.div>
 
-        {/* Render children recursively */}
         {children.map((child, cidx) => {
           const totalChildren = children.length;
-          const spreadAngle = Math.PI / 1.5; // 120 degrees spread
+          const spreadAngle = Math.PI / 1.5; 
           const startAngle = Math.atan2(y, x) - (spreadAngle / 2);
           const angle = startAngle + (cidx * (spreadAngle / Math.max(1, totalChildren - 1)));
           const distance = 450;
@@ -199,7 +185,6 @@ const GoalMindMap = ({ goal, onEditNode, onCreateChild, onDeleteRequirement }: G
               contentClass="!w-auto !h-auto"
             >
               <div className="relative w-[4000px] h-[4000px] flex items-center justify-center select-none">
-                {/* Central Node */}
                 <motion.div 
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
@@ -220,10 +205,20 @@ const GoalMindMap = ({ goal, onEditNode, onCreateChild, onDeleteRequirement }: G
                       <Target size={40} className={cn("mb-3 transition-transform", !showGoalContent && "rotate-180")} />
                       <span className="text-base font-black leading-tight lowercase px-2 line-clamp-3">{goal.title}</span>
                     </button>
+                    
+                    <div className="absolute -bottom-2 -right-2">
+                       <Button 
+                          size="icon" 
+                          onMouseDown={(e) => e.stopPropagation()}
+                          onClick={(e) => onCreateChild(e)}
+                          className="w-14 h-14 rounded-full bg-white text-black hover:bg-zinc-200 shadow-2xl border-4 border-black"
+                        >
+                          <Plus size={24} />
+                        </Button>
+                    </div>
                   </div>
                 </motion.div>
 
-                {/* Root Pillars Rendering */}
                 <AnimatePresence>
                   {showGoalContent && rootPillars.map((req, idx) => {
                     const angle = (idx / (rootPillars.length || 1)) * 2 * Math.PI;
@@ -237,7 +232,6 @@ const GoalMindMap = ({ goal, onEditNode, onCreateChild, onDeleteRequirement }: G
               </div>
             </TransformComponent>
 
-            {/* Manual Controls */}
             <div className="fixed bottom-12 left-1/2 -translate-x-1/2 z-[70] flex items-center gap-2 bg-zinc-900/80 backdrop-blur-2xl border border-zinc-800 p-2.5 rounded-[1.5rem] shadow-2xl">
               <Button variant="ghost" size="icon" onMouseDown={(e) => e.stopPropagation()} onClick={() => zoomIn()} className="rounded-xl hover:bg-white hover:text-black">
                 <ZoomIn size={20} />
@@ -249,10 +243,6 @@ const GoalMindMap = ({ goal, onEditNode, onCreateChild, onDeleteRequirement }: G
               <Button variant="ghost" size="icon" onMouseDown={(e) => e.stopPropagation()} onClick={() => resetTransform()} className="rounded-xl hover:bg-white hover:text-black">
                 <Maximize size={20} />
               </Button>
-              <div className="flex items-center gap-3 px-4 border-l border-zinc-800 ml-1">
-                <Move size={16} className="text-zinc-600" />
-                <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500">drag to navigate</span>
-              </div>
             </div>
           </>
         )}
