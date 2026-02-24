@@ -5,17 +5,32 @@ import { format, startOfWeek, addDays, isToday } from 'date-fns';
 import { Habit } from '@/types/app';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { 
+  Sparkles, Zap, Heart, Brain, BookOpen, Dumbbell, Moon, Coffee, 
+  Timer, CheckCircle2, Wind, Droplets, Smile, Star, Sun, Flame,
+  LucideIcon
+} from 'lucide-react';
 
 interface HeatmapProps {
   habits: Habit[];
   onToggleHabit: (habitId: string, date: string) => void;
 }
 
+const ICON_MAP: Record<string, LucideIcon> = {
+  Sparkles, Zap, Heart, Brain, BookOpen, Dumbbell, Moon, Coffee, 
+  Timer, CheckCircle2, Wind, Droplets, Smile, Star, Sun, Flame
+};
+
 const Heatmap = ({ habits, onToggleHabit }: HeatmapProps) => {
-  // Configura a semana para começar na segunda-feira (ISO week)
   const monday = startOfWeek(new Date(), { weekStartsOn: 1 });
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(monday, i));
   const dayInitials = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+
+  const renderSymbol = (emoji: string) => {
+    const Icon = ICON_MAP[emoji];
+    if (Icon) return <Icon size={20} className="md:size-6" />;
+    return <span className="text-xl">{emoji}</span>;
+  };
 
   return (
     <div className="bg-zinc-900 border border-zinc-800 rounded-[2.5rem] p-8 md:p-10 space-y-8 h-full">
@@ -29,7 +44,6 @@ const Heatmap = ({ habits, onToggleHabit }: HeatmapProps) => {
 
       <div className="w-full">
         <div className="space-y-6">
-          {/* Header row with day initials */}
           <div className="grid grid-cols-[40px_1fr] md:grid-cols-[60px_1fr] gap-4 items-center">
             <span className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest text-center">rit</span>
             <div className="grid grid-cols-7 gap-1 md:gap-4">
@@ -49,7 +63,6 @@ const Heatmap = ({ habits, onToggleHabit }: HeatmapProps) => {
             </div>
           </div>
 
-          {/* Habit rows */}
           <div className="space-y-4">
             {habits.length === 0 ? (
               <div className="py-12 text-center border border-dashed border-zinc-800 rounded-3xl">
@@ -65,9 +78,9 @@ const Heatmap = ({ habits, onToggleHabit }: HeatmapProps) => {
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <span className="text-xl md:text-2xl cursor-default hover:scale-110 transition-transform">
-                            {habit.emoji || '✨'}
-                          </span>
+                          <div className="text-zinc-400 hover:text-white transition-colors">
+                            {renderSymbol(habit.emoji)}
+                          </div>
                         </TooltipTrigger>
                         <TooltipContent className="bg-black border-zinc-800 text-white rounded-xl text-[10px] font-bold uppercase tracking-widest">
                           {habit.name}
