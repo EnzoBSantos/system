@@ -1,27 +1,22 @@
-export type Category = 'Health' | 'Work' | 'Mindfulness' | 'Learning' | 'Custom';
-
-export type Habit = {
+export interface Habit {
   id: string;
+  user_id: string;
   name: string;
   emoji: string;
-  color: string;
-  category: Category;
-  frequency: 'daily' | 'weekdays' | 'weekends';
-  completedDays: string[]; // ISO dates
-  createdAt: string;
+  category?: string;
+  frequency?: string;
+  color?: string;
+  completed_days: string[];
   streak: number;
-  longestStreak: number;
-};
+  longest_streak?: number;
+  created_at?: string;
+}
 
-export type PomodoroSession = {
+export interface PomodoroSession {
   id: string;
-  timestamp: string;
+  user_id: string;
+  habit_id?: string;
   duration: number;
-  type: 'focus' | 'short-break' | 'long-break';
-  habitId?: string;
-};
-
-export type AppState = {
-  habits: Habit[];
-  sessions: PomodoroSession[];
-};
+  type: 'work' | 'short-break' | 'long-break';
+  timestamp: string;
+}

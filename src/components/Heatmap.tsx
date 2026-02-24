@@ -92,7 +92,7 @@ const Heatmap = ({ habits, onToggleHabit }: HeatmapProps) => {
                   <div className="grid grid-cols-7 gap-1 md:gap-4">
                     {weekDays.map((day) => {
                       const dateStr = day.toISOString().split('T')[0];
-                      const isCompleted = habit.completedDays?.includes(dateStr);
+                      const isCompleted = habit.completed_days?.includes(dateStr);
                       
                       return (
                         <div key={dateStr} className="flex justify-center">
