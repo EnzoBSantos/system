@@ -36,13 +36,18 @@ const GoalMindMap = ({ goal, onAddRequirement, onEditNode, onDeleteRequirement }
         initialPositionX={0}
         initialPositionY={0}
         centerOnInit
-        minScale={0.4}
+        minScale={0.3}
         maxScale={2}
+        limitToBounds={false} // Prevents snapping back to center
+        centerZoomedOut={true}
       >
         {({ zoomIn, zoomOut, resetTransform }) => (
           <>
-            <TransformComponent wrapperClass="!w-full !h-full" contentClass="!w-full !h-full">
-              <div className="relative min-w-[1500px] min-h-[1500px] flex items-center justify-center p-20 select-none">
+            <TransformComponent 
+              wrapperClass="!w-full !h-full" 
+              contentClass="!w-auto !h-auto" // Let the content define its size
+            >
+              <div className="relative w-[2000px] h-[2000px] flex items-center justify-center select-none">
                 {/* Connection Lines */}
                 <svg className="absolute inset-0 w-full h-full pointer-events-none overflow-visible">
                   {requirements.map((req, idx) => {
@@ -50,15 +55,15 @@ const GoalMindMap = ({ goal, onAddRequirement, onEditNode, onDeleteRequirement }
                     
                     const angle = (idx / (requirements.length || 1)) * 2 * Math.PI;
                     const distance = 350;
-                    const x2 = 750 + Math.cos(angle) * distance;
-                    const y2 = 750 + Math.sin(angle) * distance;
+                    const x2 = 1000 + Math.cos(angle) * distance;
+                    const y2 = 1000 + Math.sin(angle) * distance;
                     
                     return (
                       <motion.line
                         key={`line-${req.id}`}
                         initial={{ pathLength: 0, opacity: 0 }}
                         animate={{ pathLength: 1, opacity: 1 }}
-                        x1="750" y1="750"
+                        x1="1000" y1="1000"
                         x2={x2} y2={y2}
                         stroke="white"
                         strokeWidth="1.5"
@@ -74,7 +79,7 @@ const GoalMindMap = ({ goal, onAddRequirement, onEditNode, onDeleteRequirement }
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
                   className="relative z-50"
-                  style={{ position: 'absolute', left: 750, top: 750, transform: 'translate(-50%, -50%)' }}
+                  style={{ position: 'absolute', left: 1000, top: 1000, transform: 'translate(-50%, -50%)' }}
                 >
                   <div className="relative group -translate-x-1/2 -translate-y-1/2">
                     <button 
@@ -124,7 +129,7 @@ const GoalMindMap = ({ goal, onAddRequirement, onEditNode, onDeleteRequirement }
                         exit={{ opacity: 0, scale: 0 }}
                         transition={{ type: "spring", damping: 15, stiffness: 100 }}
                         className="absolute z-40"
-                        style={{ left: 750, top: 750 }}
+                        style={{ left: 1000, top: 1000 }}
                       >
                         <div className="group relative -translate-x-1/2 -translate-y-1/2">
                           <div 
@@ -179,7 +184,7 @@ const GoalMindMap = ({ goal, onAddRequirement, onEditNode, onDeleteRequirement }
               </div>
             </TransformComponent>
 
-            {/* Manual Controls using render props */}
+            {/* Manual Controls */}
             <div className="fixed bottom-12 left-1/2 -translate-x-1/2 z-[70] flex items-center gap-2 bg-zinc-900/80 backdrop-blur-xl border border-zinc-800 p-2 rounded-2xl shadow-2xl">
               <Button variant="ghost" size="icon" onClick={() => zoomIn()} className="rounded-xl hover:bg-white hover:text-black">
                 <ZoomIn size={18} />
@@ -193,7 +198,7 @@ const GoalMindMap = ({ goal, onAddRequirement, onEditNode, onDeleteRequirement }
               </Button>
               <div className="flex items-center gap-2 px-3 border-l border-zinc-800 ml-1">
                 <Move size={14} className="text-zinc-500" />
-                <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">drag to navigate</span>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">drag to explore</span>
               </div>
             </div>
           </>
