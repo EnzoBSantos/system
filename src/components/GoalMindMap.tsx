@@ -3,71 +3,28 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Goal } from '@/types/goals';
-import { Plus, Edit2, Target, Rocket, CheckCircle2, Trash2, Eye, EyeOff, ZoomIn, ZoomOut, Maximize, Move } from 'lucide-react';
+import { Edit2, Target, Rocket, CheckCircle2, Trash2, Eye, EyeOff, ZoomIn, ZoomOut, Maximize, Move } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
-import RequirementDialog from './RequirementDialog';
 
 interface GoalMindMapProps {
   goal: Goal;
-  onUpdateGoal: (updatedGoal: Goal) => void;
+  onAddRequirement: (e: React.MouseEvent) => void;
+  onEditNode: (type: 'goal' | 'requirement', id?: string) => void;
+  onDeleteRequirement: (id: string) => void;
 }
 
-const GoalMindMap = ({ goal, onUpdateGoal }: GoalMindMapProps) => {
+const GoalMindMap = ({ goal, onAddRequirement, onEditNode, onDeleteRequirement }: GoalMindMapProps) => {
   const [hiddenNodes, setHiddenNodes] = useState<string[]>([]);
   const [showGoalContent, setShowGoalContent] = useState(true);
-  const [dialogState, setDialogState] = useState<{
-    isOpen: boolean;
-    mode: 'create' | 'edit';
-    editingId?: string;
-  }>({ isOpen: false, mode: 'create' });
 
   const toggleNodeVisibility = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
+    e.preventDefault();
     setHiddenNodes(prev => 
       prev.includes(id) ? prev.filter(nodeId => nodeId !== id) : [...prev, id]
     );
-  };
-
-  const handleOpenCreate = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setDialogState({ isOpen: true, mode: 'create' });
-  };
-
-  const handleOpenEdit = (id: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    setDialogState({ isOpen: true, mode: 'edit', editingId: id });
-  };
-
-  const handleDialogSubmit = (data: { title: string }) => {
-    if (dialogState.mode === 'create') {
-      const newRequirement = {
-        id: Math.random().toString(36).substr(2, 9),
-        title: data.title,
-        is_completed: false
-      };
-      onUpdateGoal({
-        ...goal,
-        requirements: [...(goal.requirements || []), newRequirement]
-      });
-    } else if (dialogState.editingId) {
-      onUpdateGoal({
-        ...goal,
-        requirements: (goal.requirements || []).map(req => 
-          req.id === dialogState.editingId ? { ...req, title: data.title } : req
-        )
-      });
-    }
-    setDialogState({ ...dialogState, isOpen: false });
-  };
-
-  const handleDelete = (id: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    onUpdateGoal({
-      ...goal,
-      requirements: (goal.requirements || []).filter(req => req.id !== id)
-    });
   };
 
   const isNodeHidden = (id: string) => hiddenNodes.includes(id);
@@ -76,15 +33,12 @@ const GoalMindMap = ({ goal, onUpdateGoal }: GoalMindMapProps) => {
   return (
     <div className="relative w-full h-full bg-black/50 overflow-hidden cursor-grab active:cursor-grabbing">
       <TransformWrapper
-        initialScale={0.8}
-        initialPositionX={0}
-        initialPositionY={0}
-        centerOnInit
+        initialScale={0.7}
         minScale={0.2}
         maxScale={2}
+        centerOnInit={true}
         limitToBounds={false}
         doubleClick={{ disabled: true }}
-        panning={{ velocityDisabled: true }}
       >
         {({ zoomIn, zoomOut, resetTransform }) => (
           <>
@@ -129,7 +83,7 @@ const GoalMindMap = ({ goal, onUpdateGoal }: GoalMindMapProps) => {
                   <div className="relative group -translate-x-1/2 -translate-y-1/2">
                     <button 
                       onClick={() => setShowGoalContent(!showGoalContent)}
-                      onPointerDown={(e) => e.stopPropagation()}
+                      onMouseDown={(e) => e.stopPropagation()}
                       className={cn(
                         "w-48 h-48 rounded-full flex flex-col items-center justify-center p-8 text-center shadow-2xl transition-all duration-500",
                         showGoalContent 
@@ -140,6 +94,17 @@ const GoalMindMap = ({ goal, onUpdateGoal }: GoalMindMapProps) => {
                       <Target size={32} className={cn("mb-2 transition-transform", !showGoalContent && "rotate-180")} />
                       <span className="text-sm font-black leading-tight lowercase px-2 line-clamp-3">{goal.title}</span>
                     </button>
+                    
+                    <div className="absolute -top-4 -right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Button 
+                        size="icon" 
+                        onMouseDown={(e) => e.stopPropagation()}
+                        onClick={(e) => { e.stopPropagation(); onEditNode('goal'); }}
+                        className="w-12 h-12 rounded-2xl bg-zinc-900 border border-zinc-800 text-white hover:bg-white hover:text-black"
+                      >
+                        <Edit2 size={18} />
+                      </Button>
+                    </div>
                   </div>
                 </motion.div>
 
@@ -180,7 +145,7 @@ const GoalMindMap = ({ goal, onUpdateGoal }: GoalMindMapProps) => {
                           >
                             <button 
                               onClick={(e) => toggleNodeVisibility(req.id, e)}
-                              onPointerDown={(e) => e.stopPropagation()}
+                              onMouseDown={(e) => e.stopPropagation()}
                               className="absolute -top-3 -left-3 w-10 h-10 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-500 hover:text-white hover:bg-zinc-800 z-10"
                             >
                               {isHidden ? <Eye size={14} /> : <EyeOff size={14} />}
@@ -196,16 +161,16 @@ const GoalMindMap = ({ goal, onUpdateGoal }: GoalMindMapProps) => {
                                  <div className="flex gap-2">
                                   <Button 
                                     size="icon" 
-                                    onPointerDown={(e) => e.stopPropagation()}
-                                    onClick={(e) => handleOpenEdit(req.id, e)}
+                                    onMouseDown={(e) => e.stopPropagation()}
+                                    onClick={(e) => { e.stopPropagation(); onEditNode('requirement', req.id); }}
                                     className="w-12 h-12 rounded-2xl bg-zinc-900 border border-zinc-800 text-white hover:bg-white hover:text-black"
                                   >
                                     <Edit2 size={18} />
                                   </Button>
                                   <Button 
                                     size="icon" 
-                                    onPointerDown={(e) => e.stopPropagation()}
-                                    onClick={(e) => handleDelete(req.id, e)}
+                                    onMouseDown={(e) => e.stopPropagation()}
+                                    onClick={(e) => { e.stopPropagation(); onDeleteRequirement(req.id); }}
                                     className="w-12 h-12 rounded-2xl bg-red-950/20 border border-red-900/30 text-red-500 hover:bg-red-600 hover:text-white"
                                   >
                                     <Trash2 size={18} />
@@ -243,30 +208,6 @@ const GoalMindMap = ({ goal, onUpdateGoal }: GoalMindMapProps) => {
           </>
         )}
       </TransformWrapper>
-
-      {/* Fixed Add Button */}
-      <div className="fixed bottom-12 right-12 z-[60]">
-        <Button 
-          onClick={handleOpenCreate}
-          onPointerDown={(e) => e.stopPropagation()}
-          className="h-16 px-10 rounded-[2rem] bg-white text-black hover:bg-zinc-200 shadow-2xl font-black lowercase gap-4 text-xl border-4 border-black/10"
-        >
-          <Plus size={28} /> add vision pilar
-        </Button>
-      </div>
-
-      {/* Pillar Dialog */}
-      <RequirementDialog
-        isOpen={dialogState.isOpen}
-        onClose={() => setDialogState({ ...dialogState, isOpen: false })}
-        mode={dialogState.mode}
-        onSubmit={handleDialogSubmit}
-        initialData={
-          dialogState.mode === 'edit' 
-            ? { title: (goal.requirements || []).find(r => r.id === dialogState.editingId)?.title || '' }
-            : undefined
-        }
-      />
     </div>
   );
 };

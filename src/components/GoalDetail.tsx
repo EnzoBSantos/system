@@ -2,16 +2,15 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Goal, GoalRequirement } from '@/types/goals';
+import { Goal } from '@/types/goals';
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from '@/components/ui/button';
-import { Check, X, Calendar, Flame, Target, Trash2, ArrowLeft, LayoutList, Share2, Plus, Loader2, Edit2 } from 'lucide-react';
+import { Check, Calendar, Target, Trash2, ArrowLeft, LayoutList, Share2, Plus, Edit2 } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
 import { cn } from '@/lib/utils';
 import confetti from 'canvas-confetti';
 import GoalMindMap from './GoalMindMap';
-import { Input } from './ui/input';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
+import RequirementDialog from './RequirementDialog';
 
 interface GoalDetailProps {
   goalId: string;
@@ -22,10 +21,14 @@ interface GoalDetailProps {
 const GoalDetail = ({ goalId, onClose, onUpdate }: GoalDetailProps) => {
   const [goal, setGoal] = useState<Goal | null>(null);
   const [loading, setLoading] = useState(true);
-  const [actionLoading, setActionLoading] = useState(false);
   const [view, setView] = useState<'list' | 'mindmap'>('list');
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [editNodeData, setEditNodeData] = useState<{type: 'goal' | 'requirement', id?: string, title: string}>({type: 'goal', title: ''});
+  const [dialogState, setDialogState] = useState<{
+    isOpen: boolean;
+    mode: 'create' | 'edit';
+    type: 'goal' | 'requirement';
+    editingId?: string;
+  }>({ isOpen: false, mode: 'create', type: 'requirement' });
+
   const { toast } = useToast();
 
   const fetchGoal = async () => {
@@ -68,52 +71,50 @@ const GoalDetail = ({ goalId, onClose, onUpdate }: GoalDetailProps) => {
     }
   };
 
-  const handleEditNode = (type: 'goal' | 'requirement', id?: string) => {
-    const title = type === 'goal' 
-      ? goal?.title || '' 
-      : goal?.requirements?.find(r => r.id === id)?.title || '';
-    
-    setEditNodeData({ type, id, title });
-    setIsEditModalOpen(true);
-  };
-
-  const saveNodeEdit = async () => {
-    try {
-      if (editNodeData.type === 'goal') {
-        await supabase.from('goals').update({ title: editNodeData.title }).eq('id', goalId);
-      } else {
-        await supabase.from('goal_requirements').update({ title: editNodeData.title }).eq('id', editNodeData.id);
-      }
-      toast({ title: "updated." });
-      setIsEditModalOpen(false);
-      fetchGoal();
-      onUpdate();
-    } catch (e) {
-      toast({ title: "failed to update", variant: "destructive" });
-    }
-  };
-
-  const addNewPillar = async (e?: React.MouseEvent) => {
+  const handleOpenCreate = (e?: React.MouseEvent) => {
     if (e) {
       e.preventDefault();
       e.stopPropagation();
     }
-    
-    if (actionLoading) return;
-    
-    setActionLoading(true);
-    const { error } = await supabase.from('goal_requirements').insert({
-      goal_id: goalId,
-      title: 'new vision pilar',
-      is_completed: false
+    setDialogState({ isOpen: true, mode: 'create', type: 'requirement' });
+  };
+
+  const handleOpenEdit = (type: 'goal' | 'requirement', id?: string) => {
+    setDialogState({ 
+      isOpen: true, 
+      mode: 'edit', 
+      type, 
+      editingId: id 
     });
-    
-    if (!error) {
-      await fetchGoal();
+  };
+
+  const handleDialogSubmit = async (data: { title: string }) => {
+    try {
+      if (dialogState.mode === 'create') {
+        const { error } = await supabase.from('goal_requirements').insert({
+          goal_id: goalId,
+          title: data.title,
+          is_completed: false
+        });
+        if (error) throw error;
+        toast({ title: "pilar added." });
+      } else {
+        if (dialogState.type === 'goal') {
+          const { error } = await supabase.from('goals').update({ title: data.title }).eq('id', goalId);
+          if (error) throw error;
+        } else {
+          const { error } = await supabase.from('goal_requirements').update({ title: data.title }).eq('id', dialogState.editingId);
+          if (error) throw error;
+        }
+        toast({ title: "updated." });
+      }
+      
+      setDialogState({ ...dialogState, isOpen: false });
+      fetchGoal();
       onUpdate();
-      toast({ title: "pilar created." });
+    } catch (e: any) {
+      toast({ title: "failed to save", description: e.message, variant: "destructive" });
     }
-    setActionLoading(false);
   };
 
   const deleteRequirement = async (id: string) => {
@@ -137,8 +138,7 @@ const GoalDetail = ({ goalId, onClose, onUpdate }: GoalDetailProps) => {
     }
   };
 
-  if (loading) return null;
-  if (!goal) return null;
+  if (loading || !goal) return null;
 
   const completedCount = goal.requirements?.filter(r => r.is_completed).length || 0;
   const totalCount = goal.requirements?.length || 0;
@@ -191,14 +191,25 @@ const GoalDetail = ({ goalId, onClose, onUpdate }: GoalDetailProps) => {
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
-                className="h-full w-full"
+                className="h-full w-full relative"
               >
                 <GoalMindMap 
                   goal={goal} 
-                  onAddRequirement={addNewPillar}
-                  onEditNode={handleEditNode}
+                  onAddRequirement={handleOpenCreate}
+                  onEditNode={handleOpenEdit}
                   onDeleteRequirement={deleteRequirement}
                 />
+                
+                {/* Fixed Add Button for Mind Map */}
+                <div className="absolute bottom-12 right-12 z-[60]">
+                  <Button 
+                    onClick={handleOpenCreate}
+                    onMouseDown={(e) => e.stopPropagation()}
+                    className="h-16 px-10 rounded-[2rem] bg-white text-black hover:bg-zinc-200 shadow-2xl font-black lowercase gap-4 text-xl border-4 border-black/10"
+                  >
+                    <Plus size={28} /> add vision pilar
+                  </Button>
+                </div>
               </motion.div>
             ) : (
               <motion.div 
@@ -222,7 +233,7 @@ const GoalDetail = ({ goalId, onClose, onUpdate }: GoalDetailProps) => {
                   <div className="space-y-8">
                     <div className="flex items-center justify-between px-2 border-b border-zinc-900 pb-4">
                       <h3 className="text-[10px] font-bold uppercase tracking-[0.3em] text-zinc-600">architecture pilars</h3>
-                      <Button variant="ghost" size="sm" onClick={() => addNewPillar()} className="text-[10px] font-bold uppercase tracking-widest hover:text-white">
+                      <Button variant="ghost" size="sm" onClick={() => handleOpenCreate()} className="text-[10px] font-bold uppercase tracking-widest hover:text-white">
                         <Plus size={14} className="mr-1" /> new pilar
                       </Button>
                     </div>
@@ -253,7 +264,7 @@ const GoalDetail = ({ goalId, onClose, onUpdate }: GoalDetailProps) => {
                             <Button 
                               size="icon" 
                               variant="ghost" 
-                              onClick={(e) => { e.stopPropagation(); handleEditNode('requirement', req.id); }}
+                              onClick={(e) => { e.stopPropagation(); handleOpenEdit('requirement', req.id); }}
                               className="w-10 h-10 rounded-full text-zinc-500 hover:text-white"
                             >
                               <Edit2 size={16} />
@@ -288,20 +299,6 @@ const GoalDetail = ({ goalId, onClose, onUpdate }: GoalDetailProps) => {
                         />
                       </div>
                     </div>
-                    
-                    <div className="space-y-4 pt-4 border-t border-zinc-800">
-                       <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">vision analytics</p>
-                       <div className="grid grid-cols-2 gap-4">
-                          <div className="p-4 bg-black rounded-2xl border border-zinc-800">
-                             <p className="text-2xl font-black">{totalCount}</p>
-                             <p className="text-[8px] font-bold uppercase text-zinc-500">total pilars</p>
-                          </div>
-                          <div className="p-4 bg-black rounded-2xl border border-zinc-800">
-                             <p className="text-2xl font-black">{completedCount}</p>
-                             <p className="text-[8px] font-bold uppercase text-zinc-500">achieved</p>
-                          </div>
-                       </div>
-                    </div>
                   </div>
                 </aside>
               </motion.div>
@@ -310,25 +307,21 @@ const GoalDetail = ({ goalId, onClose, onUpdate }: GoalDetailProps) => {
         </div>
       </div>
 
-      <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
-        <DialogContent className="bg-zinc-950 border-zinc-900 rounded-[2.5rem] p-8 max-w-sm">
-          <DialogHeader>
-            <DialogTitle className="text-2xl font-black lowercase tracking-tight">edit vision pilar.</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-6 py-4">
-            <Input 
-              value={editNodeData.title}
-              onChange={(e) => setEditNodeData({...editNodeData, title: e.target.value})}
-              className="h-14 bg-zinc-900 border-zinc-800 rounded-2xl px-6 focus:border-white lowercase text-lg"
-              autoFocus
-              onKeyDown={(e) => e.key === 'Enter' && saveNodeEdit()}
-            />
-            <Button onClick={saveNodeEdit} className="w-full h-14 bg-white text-black hover:bg-zinc-200 font-bold rounded-2xl lowercase">
-              save vision
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <RequirementDialog
+        isOpen={dialogState.isOpen}
+        onClose={() => setDialogState({ ...dialogState, isOpen: false })}
+        mode={dialogState.mode}
+        onSubmit={handleDialogSubmit}
+        initialData={
+          dialogState.mode === 'edit' 
+            ? { 
+                title: dialogState.type === 'goal' 
+                  ? goal.title 
+                  : goal.requirements?.find(r => r.id === dialogState.editingId)?.title || '' 
+              }
+            : undefined
+        }
+      />
     </motion.div>
   );
 };
