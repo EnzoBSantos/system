@@ -31,8 +31,28 @@ const Goals = ({ onOpenFlow, onSelectGoal, refreshTrigger }: GoalsProps) => {
     fetchGoals();
   }, [refreshTrigger]);
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20, scale: 0.98 },
+    visible: { 
+      opacity: 1, 
+      y: 0, 
+      scale: 1,
+      transition: { type: "spring", damping: 25, stiffness: 200 }
+    }
+  };
+
   return (
-    <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <div className="space-y-12">
       <header className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div className="space-y-2">
           <h2 className="text-sm font-bold text-zinc-500 uppercase tracking-[0.3em]">architecture</h2>
@@ -46,7 +66,12 @@ const Goals = ({ onOpenFlow, onSelectGoal, refreshTrigger }: GoalsProps) => {
         </Button>
       </header>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+      <motion.div 
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+        className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"
+      >
         {goals.map((goal) => {
           const completed = goal.requirements?.filter(r => r.is_completed).length || 0;
           const total = goal.requirements?.length || 0;
@@ -56,6 +81,7 @@ const Goals = ({ onOpenFlow, onSelectGoal, refreshTrigger }: GoalsProps) => {
             <motion.div
               layoutId={goal.id}
               key={goal.id}
+              variants={itemVariants}
               onClick={() => onSelectGoal(goal.id)}
               className="group bg-zinc-900 border border-zinc-800 p-10 rounded-[3rem] space-y-8 cursor-pointer hover:border-white/20 transition-all hover:translate-y-[-4px]"
             >
@@ -72,7 +98,7 @@ const Goals = ({ onOpenFlow, onSelectGoal, refreshTrigger }: GoalsProps) => {
               <div className="space-y-2">
                 <h3 className="text-2xl font-black tracking-tight lowercase line-clamp-2 leading-tight">{goal.title}</h3>
                 <div className="flex items-center gap-4 text-zinc-500 text-[10px] font-bold uppercase tracking-widest">
-                  <span className="flex items-center gap-1.5"><Clock size={12} /> 90 days left</span>
+                  <span className="flex items-center gap-1.5"><Clock size={12} /> active</span>
                   <span className="flex items-center gap-1.5"><Star size={12} /> {total} pillars</span>
                 </div>
               </div>
@@ -87,6 +113,7 @@ const Goals = ({ onOpenFlow, onSelectGoal, refreshTrigger }: GoalsProps) => {
                     className="h-full bg-white" 
                     initial={{ width: 0 }}
                     animate={{ width: `${progress}%` }}
+                    transition={{ duration: 1, ease: "circOut" }}
                   />
                 </div>
               </div>
@@ -95,7 +122,8 @@ const Goals = ({ onOpenFlow, onSelectGoal, refreshTrigger }: GoalsProps) => {
         })}
 
         {goals.length === 0 && !loading && (
-          <div 
+          <motion.div 
+            variants={itemVariants}
             onClick={onOpenFlow}
             className="col-span-full py-32 border-2 border-dashed border-zinc-900 rounded-[3rem] flex flex-col items-center justify-center gap-6 group cursor-pointer hover:border-zinc-700 transition-all"
           >
@@ -106,9 +134,9 @@ const Goals = ({ onOpenFlow, onSelectGoal, refreshTrigger }: GoalsProps) => {
               <p className="text-zinc-500 font-bold uppercase tracking-widest text-xs">the horizon is clear.</p>
               <p className="text-zinc-700 font-medium text-sm">click to define your first major goal.</p>
             </div>
-          </div>
+          </motion.div>
         )}
-      </div>
+      </motion.div>
     </div>
   );
 };

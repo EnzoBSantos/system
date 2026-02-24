@@ -27,7 +27,7 @@ const GoalDetail = ({ goalId, onClose, onUpdate }: GoalDetailProps) => {
     mode: 'create' | 'edit';
     type: 'goal' | 'requirement';
     editingId?: string;
-    parentId?: string; // Track which pillar we are adding a child to
+    parentId?: string;
   }>({ isOpen: false, mode: 'create', type: 'requirement' });
 
   const { toast } = useToast();
@@ -158,9 +158,10 @@ const GoalDetail = ({ goalId, onClose, onUpdate }: GoalDetailProps) => {
 
   return (
     <motion.div 
-      initial={{ opacity: 0, x: '100%' }}
-      animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: '100%' }}
+      initial={{ opacity: 0, scale: 0.95, filter: "blur(10px)" }}
+      animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
+      exit={{ opacity: 0, scale: 1.05, filter: "blur(10px)" }}
+      transition={{ type: "spring", damping: 30, stiffness: 200 }}
       className="fixed inset-0 z-[40] bg-black overflow-hidden h-screen w-screen"
     >
       <div className="w-full h-full flex flex-col">
@@ -200,9 +201,9 @@ const GoalDetail = ({ goalId, onClose, onUpdate }: GoalDetailProps) => {
             {view === 'mindmap' ? (
               <motion.div 
                 key="mindmap"
-                initial={{ opacity: 0, scale: 0.95 }}
+                initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
+                exit={{ opacity: 0, scale: 1.1 }}
                 className="h-full w-full relative"
               >
                 <GoalMindMap 
@@ -211,27 +212,24 @@ const GoalDetail = ({ goalId, onClose, onUpdate }: GoalDetailProps) => {
                   onCreateChild={handleOpenCreate}
                   onDeleteRequirement={deleteRequirement}
                 />
-                
-                <div className="absolute bottom-12 right-12 z-[100]">
-                  <Button 
-                    onClick={(e) => handleOpenCreate(e)}
-                    className="h-16 px-10 rounded-[2rem] bg-white text-black hover:bg-zinc-200 shadow-2xl font-black lowercase gap-4 text-xl border-4 border-black/10"
-                  >
-                    <Plus size={28} /> add vision pillar
-                  </Button>
-                </div>
               </motion.div>
             ) : (
               <motion.div 
                 key="list"
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 20 }}
+                exit={{ opacity: 0, y: -30 }}
+                transition={{ duration: 0.5, ease: "circOut" }}
                 className="h-full overflow-y-auto px-8 md:px-16 py-12"
               >
                 <div className="grid lg:grid-cols-[1fr_400px] gap-16 max-w-[1800px] mx-auto">
                   <div className="space-y-12">
-                    <div className="space-y-4">
+                    <motion.div 
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.2 }}
+                      className="space-y-4"
+                    >
                       <div className="flex items-center gap-4">
                         <span className="bg-white/10 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest text-zinc-400">
                           active architecture
@@ -249,7 +247,7 @@ const GoalDetail = ({ goalId, onClose, onUpdate }: GoalDetailProps) => {
                         </Button>
                       </div>
                       <p className="text-3xl text-zinc-500 font-medium lowercase leading-relaxed max-w-3xl">"{goal.why}"</p>
-                    </div>
+                    </motion.div>
 
                     <div className="space-y-8">
                       <div className="flex items-center justify-between px-2 border-b border-zinc-900 pb-4">
@@ -258,9 +256,23 @@ const GoalDetail = ({ goalId, onClose, onUpdate }: GoalDetailProps) => {
                           <Plus size={14} className="mr-1" /> new pillar
                         </Button>
                       </div>
-                      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                      <motion.div 
+                        initial="hidden"
+                        animate="visible"
+                        variants={{
+                          visible: { transition: { staggerChildren: 0.05 } }
+                        }}
+                        className="grid grid-cols-1 xl:grid-cols-2 gap-6"
+                      >
                         {goal.requirements?.filter(r => !r.parent_id).map((req: any) => (
-                          <div key={req.id} className="group relative">
+                          <motion.div 
+                            key={req.id} 
+                            variants={{
+                              hidden: { opacity: 0, y: 20 },
+                              visible: { opacity: 1, y: 0 }
+                            }}
+                            className="group relative"
+                          >
                             <button
                               onClick={() => toggleRequirement(req.id, req.is_completed)}
                               className={cn(
@@ -302,14 +314,19 @@ const GoalDetail = ({ goalId, onClose, onUpdate }: GoalDetailProps) => {
                                 <Trash2 size={20} />
                               </Button>
                             </div>
-                          </div>
+                          </motion.div>
                         ))}
-                      </div>
+                      </motion.div>
                     </div>
                   </div>
 
                   <aside className="space-y-8">
-                    <div className="bg-zinc-900/50 p-12 rounded-[3.5rem] space-y-12 border border-zinc-800/50 sticky top-0">
+                    <motion.div 
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.4 }}
+                      className="bg-zinc-900/50 p-12 rounded-[3.5rem] space-y-12 border border-zinc-800/50 sticky top-0"
+                    >
                       <div className="space-y-8">
                         <div className="flex justify-between items-end">
                           <p className="text-[11px] font-bold uppercase tracking-widest text-zinc-500">total completion</p>
@@ -324,7 +341,7 @@ const GoalDetail = ({ goalId, onClose, onUpdate }: GoalDetailProps) => {
                           />
                         </div>
                       </div>
-                    </div>
+                    </motion.div>
                   </aside>
                 </div>
               </motion.div>
