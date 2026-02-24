@@ -52,7 +52,7 @@ const ICON_MAP: Record<string, LucideIcon> = {
 const HabitCard = ({ habit, onToggle, onDelete, onUpdate }: HabitCardProps) => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const today = new Date().toISOString().split('T')[0];
-  const isCompletedToday = habit.completedDays.includes(today);
+  const isCompletedToday = habit.completed_days.includes(today);
 
   const renderSymbol = () => {
     const Icon = ICON_MAP[habit.emoji];

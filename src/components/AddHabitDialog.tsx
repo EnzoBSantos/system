@@ -24,14 +24,13 @@ import {
   Smile,
   Star,
   Sun,
-  Flame,
-  LucideIcon
+  Flame
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface AddHabitDialogProps {
-  onAdd: (habit: Omit<Habit, 'id' | 'completedDays' | 'createdAt' | 'streak' | 'longestStreak'>) => void;
+  onAdd: (habit: Omit<Habit, 'id' | 'completed_days' | 'created_at' | 'streak' | 'longest_streak' | 'user_id'>) => void;
 }
 
 const AVAILABLE_ICONS = [
@@ -66,7 +65,7 @@ const AddHabitDialog = ({ onAdd }: AddHabitDialogProps) => {
     
     onAdd({
       name,
-      emoji: selectedIcon, // Storing icon ID in emoji field
+      emoji: selectedIcon,
       category,
       frequency,
       color: '#ffffff'

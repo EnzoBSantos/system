@@ -17,8 +17,7 @@ const Dashboard = ({ habits, sessions, onToggleHabit }: DashboardProps) => {
   const today = new Date().toISOString().split('T')[0];
   const habitsToday = habits.length;
   
-  // Added safety checks with optional chaining and nullish coalescing
-  const completedToday = habits.filter(h => h.completedDays?.includes(today)).length;
+  const completedToday = habits.filter(h => h.completed_days?.includes(today)).length;
   const completionRate = habitsToday > 0 ? Math.round((completedToday / habitsToday) * 100) : 0;
   
   const totalStreaks = habits.reduce((acc, h) => acc + (h.streak ?? 0), 0);
@@ -38,7 +37,6 @@ const Dashboard = ({ habits, sessions, onToggleHabit }: DashboardProps) => {
     { label: 'streak', value: totalStreaks, icon: Flame },
   ];
 
-  // Progress ring constants
   const size = 200;
   const strokeWidth = 12;
   const radius = (size - strokeWidth) / 2;
@@ -52,7 +50,6 @@ const Dashboard = ({ habits, sessions, onToggleHabit }: DashboardProps) => {
         <p className="text-zinc-500 font-medium text-lg lowercase">{format(new Date(), 'EEEE, MMMM do')}.</p>
       </header>
 
-      {/* Mobile-only Inspiration Quote Card */}
       <motion.div 
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -64,7 +61,6 @@ const Dashboard = ({ habits, sessions, onToggleHabit }: DashboardProps) => {
         <p className="text-sm font-medium leading-relaxed italic text-zinc-300">"what you think, you become."</p>
       </motion.div>
 
-      {/* Stats Grid - Moved above the graph */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
         {stats.map((stat, idx) => (
           <motion.div
@@ -88,7 +84,6 @@ const Dashboard = ({ habits, sessions, onToggleHabit }: DashboardProps) => {
           <Heatmap habits={habits} onToggleHabit={onToggleHabit} />
         </div>
         
-        {/* Daily Goal Progress Ring */}
         <div className="bg-white text-black rounded-[2.5rem] md:rounded-[3rem] p-8 md:p-10 flex flex-col items-center justify-center space-y-6 md:space-y-8 relative overflow-hidden min-h-[360px]">
           <div className="relative w-48 h-48 md:w-56 md:h-56">
             <svg className="w-full h-full transform -rotate-90" viewBox={`0 0 ${size} ${size}`}>

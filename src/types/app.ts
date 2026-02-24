@@ -1,9 +1,13 @@
+"use client";
+
+export type Category = 'Health' | 'Work' | 'Mindfulness' | 'Learning' | 'Custom';
+
 export interface Habit {
   id: string;
   user_id: string;
   name: string;
   emoji: string;
-  category?: string;
+  category: Category;
   frequency?: string;
   color?: string;
   completed_days: string[];
