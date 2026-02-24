@@ -21,6 +21,13 @@ const Dashboard = ({ habits, sessions }: DashboardProps) => {
   const totalStreaks = habits.reduce((acc, h) => acc + h.streak, 0);
   const totalSessions = sessions.filter(s => s.timestamp.split('T')[0] === today).length;
 
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour >= 5 && hour < 12) return "good morning.";
+    if (hour >= 12 && hour < 18) return "good afternoon.";
+    return "good evening.";
+  };
+
   const stats = [
     { label: 'progress', value: `${completionRate}%`, icon: TrendingUp },
     { label: 'rituals', value: `${completedToday}/${habitsToday}`, icon: CheckCircle2 },
@@ -38,7 +45,7 @@ const Dashboard = ({ habits, sessions }: DashboardProps) => {
   return (
     <div className="space-y-8 md:space-y-12 max-w-5xl mx-auto">
       <header className="space-y-3">
-        <h2 className="text-5xl md:text-6xl font-extrabold tracking-tighter lowercase">good morning.</h2>
+        <h2 className="text-5xl md:text-6xl font-extrabold tracking-tighter lowercase">{getGreeting()}</h2>
         <p className="text-zinc-500 font-medium text-lg lowercase">{format(new Date(), 'EEEE, MMMM do')}.</p>
       </header>
 
