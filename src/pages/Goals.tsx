@@ -19,7 +19,7 @@ const Goals = () => {
   const fetchGoals = async () => {
     const { data, error } = await supabase
       .from('goals')
-      .select('*, goal_requirements(*)');
+      .select('*, requirements:goal_requirements(*)');
 
     if (!error) setGoals(data || []);
     setLoading(false);

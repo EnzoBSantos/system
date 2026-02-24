@@ -24,7 +24,7 @@ const GoalDetail = ({ goalId, onClose, onUpdate }: GoalDetailProps) => {
   const fetchGoal = async () => {
     const { data, error } = await supabase
       .from('goals')
-      .select('*, goal_requirements(*)')
+      .select('*, requirements:goal_requirements(*)')
       .eq('id', goalId)
       .single();
 
@@ -75,8 +75,8 @@ const GoalDetail = ({ goalId, onClose, onUpdate }: GoalDetailProps) => {
   if (loading) return null;
   if (!goal) return null;
 
-  const completedCount = goal.goal_requirements?.filter(r => r.is_completed).length || 0;
-  const totalCount = goal.goal_requirements?.length || 0;
+  const completedCount = goal.requirements?.filter(r => r.is_completed).length || 0;
+  const totalCount = goal.requirements?.length || 0;
   const progress = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
 
   return (
@@ -117,7 +117,7 @@ const GoalDetail = ({ goalId, onClose, onUpdate }: GoalDetailProps) => {
                 <span className="text-[10px] font-bold text-zinc-600 uppercase">{completedCount} / {totalCount}</span>
               </div>
               <div className="space-y-4">
-                {goal.goal_requirements?.map((req: any) => (
+                {goal.requirements?.map((req: any) => (
                   <button
                     key={req.id}
                     onClick={() => toggleRequirement(req.id, req.is_completed)}
