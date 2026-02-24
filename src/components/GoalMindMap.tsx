@@ -30,7 +30,6 @@ const GoalMindMap = ({ goal, onEditNode, onCreateChild, onDeleteRequirement }: G
   const isNodeExpanded = (id: string) => expandedNodes.includes(id);
   const requirements = goal.requirements || [];
   
-  // Helper to get nodes at a certain level or by parent
   const getPillars = (parentId: string | null = null) => {
     return requirements.filter(r => r.parent_id === parentId);
   };
@@ -38,20 +37,24 @@ const GoalMindMap = ({ goal, onEditNode, onCreateChild, onDeleteRequirement }: G
   const renderPillarNode = (req: GoalRequirement, x: number, y: number, parentX: number, parentY: number, level: number) => {
     const isExpanded = isNodeExpanded(req.id);
     const children = getPillars(req.id);
+    const currentX = 2000 + x;
+    const currentY = 2000 + y;
 
     return (
       <React.Fragment key={req.id}>
-        {/* Connection to parent */}
-        <motion.line
-          initial={{ pathLength: 0, opacity: 0 }}
-          animate={{ pathLength: 1, opacity: 1 }}
-          x1={parentX} y1={parentY}
-          x2={2000 + x} y2={2000 + y}
-          stroke="white"
-          strokeWidth="1"
-          strokeOpacity="0.1"
-          strokeDasharray="4,4"
-        />
+        {/* Connection Line to parent */}
+        <svg className="absolute inset-0 w-full h-full pointer-events-none overflow-visible">
+          <motion.line
+            initial={{ pathLength: 0, opacity: 0 }}
+            animate={{ pathLength: 1, opacity: 1 }}
+            x1={parentX} y1={parentY}
+            x2={currentX} y2={currentY}
+            stroke="white"
+            strokeWidth="1.5"
+            strokeOpacity="0.15"
+            strokeDasharray="8,8"
+          />
+        </svg>
 
         <motion.div
           layout
@@ -105,7 +108,7 @@ const GoalMindMap = ({ goal, onEditNode, onCreateChild, onDeleteRequirement }: G
                       <div className="space-y-2">
                         <div className="flex items-center gap-2 text-zinc-500">
                           <Info size={12} />
-                          <span className="text-[10px] font-bold uppercase tracking-widest">architecture detail</span>
+                          <span className="text-[10px] font-bold uppercase tracking-widest">pillar intent</span>
                         </div>
                         <p className="text-zinc-400 text-sm leading-relaxed lowercase">{req.first_action}</p>
                       </div>
@@ -125,7 +128,7 @@ const GoalMindMap = ({ goal, onEditNode, onCreateChild, onDeleteRequirement }: G
                         onMouseDown={(e) => e.stopPropagation()}
                         onClick={(e) => onCreateChild(e, req.id)}
                         className="w-12 h-12 rounded-2xl bg-white text-black hover:bg-zinc-200 shadow-lg"
-                        title="Add child pillar"
+                        title="Add sub-pillar"
                       >
                         <Plus size={20} />
                       </Button>
@@ -141,7 +144,7 @@ const GoalMindMap = ({ goal, onEditNode, onCreateChild, onDeleteRequirement }: G
                       size="icon" 
                       onMouseDown={(e) => e.stopPropagation()}
                       onClick={(e) => { e.stopPropagation(); onEditNode('requirement', req.id); }}
-                      className="w-12 h-12 rounded-2xl bg-zinc-900 border border-zinc-800 text-white hover:bg-white hover:text-black"
+                      className="w-12 h-12 rounded-2xl bg-zinc-900 border border-zinc-800 text-white hover:bg-white hover:text-black shadow-xl"
                     >
                       <Edit2 size={18} />
                     </Button>
@@ -149,12 +152,12 @@ const GoalMindMap = ({ goal, onEditNode, onCreateChild, onDeleteRequirement }: G
                       size="icon" 
                       onMouseDown={(e) => e.stopPropagation()}
                       onClick={(e) => onCreateChild(e, req.id)}
-                      className="w-12 h-12 rounded-2xl bg-white text-black hover:bg-zinc-200"
+                      className="w-12 h-12 rounded-2xl bg-white text-black hover:bg-zinc-200 shadow-xl"
                     >
                       <Plus size={20} />
                     </Button>
                    </div>
-                   <p className="text-[9px] font-black uppercase tracking-widest text-zinc-600 mt-1">pilar actions</p>
+                   <p className="text-[9px] font-black uppercase tracking-widest text-zinc-600 mt-1">pillar actions</p>
                 </div>
               )}
             </motion.div>
@@ -163,14 +166,15 @@ const GoalMindMap = ({ goal, onEditNode, onCreateChild, onDeleteRequirement }: G
 
         {/* Render children recursively */}
         {children.map((child, cidx) => {
-          // Calculate child position relative to parent
-          // This is a simplified tree layout
-          const childAngle = ((cidx / (children.length || 1)) * Math.PI) - (Math.PI / 2) + Math.atan2(y, x);
-          const childDist = 450;
-          const cx = x + Math.cos(childAngle) * childDist;
-          const cy = y + Math.sin(childAngle) * childDist;
+          const totalChildren = children.length;
+          const spreadAngle = Math.PI / 1.5; // 120 degrees spread
+          const startAngle = Math.atan2(y, x) - (spreadAngle / 2);
+          const angle = startAngle + (cidx * (spreadAngle / Math.max(1, totalChildren - 1)));
+          const distance = 450;
+          const cx = x + Math.cos(angle) * distance;
+          const cy = y + Math.sin(angle) * distance;
           
-          return renderPillarNode(child, cx, cy, 2000 + x, 2000 + y, level + 1);
+          return renderPillarNode(child, cx, cy, currentX, currentY, level + 1);
         })}
       </React.Fragment>
     );
@@ -219,11 +223,11 @@ const GoalMindMap = ({ goal, onEditNode, onCreateChild, onDeleteRequirement }: G
                   </div>
                 </motion.div>
 
-                {/* Root Pillars */}
+                {/* Root Pillars Rendering */}
                 <AnimatePresence>
                   {showGoalContent && rootPillars.map((req, idx) => {
                     const angle = (idx / (rootPillars.length || 1)) * 2 * Math.PI;
-                    const distance = 500;
+                    const distance = 550;
                     const x = Math.cos(angle) * distance;
                     const y = Math.sin(angle) * distance;
                     
