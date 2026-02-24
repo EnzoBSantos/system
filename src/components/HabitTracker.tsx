@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { Habit } from '@/types/app';
-import { Plus, Trash2, CheckCircle2 } from 'lucide-react';
+import { Plus, Trash2, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { supabase } from "@/integrations/supabase/client";
@@ -15,30 +15,49 @@ interface HabitTrackerProps {
 
 const HabitTracker = ({ habits, onUpdate }: HabitTrackerProps) => {
   const [newHabit, setNewHabit] = useState('');
+  const [isAdding, setIsAdding] = useState(false);
   const { toast } = useToast();
 
   const addHabit = async () => {
     if (!newHabit.trim()) return;
 
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-
-    const { error } = await supabase.from('habits').insert([
-      { 
-        name: newHabit, 
-        user_id: user.id,
-        emoji: '✨',
-        completed_days: [],
-        streak: 0
+    try {
+      setIsAdding(true);
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      
+      if (authError || !user) {
+        toast({ 
+          title: "Authentication error", 
+          description: "Please sign in to add rituals.",
+          variant: "destructive" 
+        });
+        return;
       }
-    ]);
 
-    if (error) {
-      toast({ title: "Error creating ritual", variant: "destructive" });
-    } else {
+      const { error } = await supabase.from('habits').insert([
+        { 
+          name: newHabit, 
+          user_id: user.id,
+          emoji: 'Sparkles', // Usando um nome de ícone compatível com o Heatmap
+          completed_days: [],
+          streak: 0
+        }
+      ]);
+
+      if (error) throw error;
+
       setNewHabit('');
       onUpdate();
       toast({ title: "Ritual created" });
+    } catch (error: any) {
+      console.error("Error creating habit:", error);
+      toast({ 
+        title: "Error creating ritual", 
+        description: error.message,
+        variant: "destructive" 
+      });
+    } finally {
+      setIsAdding(false);
     }
   };
 
@@ -64,13 +83,15 @@ const HabitTracker = ({ habits, onUpdate }: HabitTrackerProps) => {
           onChange={(e) => setNewHabit(e.target.value)}
           placeholder="new ritual name..."
           className="h-14 rounded-2xl bg-zinc-900 border-zinc-800 focus:border-white transition-all text-lg lowercase"
-          onKeyDown={(e) => e.key === 'Enter' && addHabit()}
+          onKeyDown={(e) => e.key === 'Enter' && !isAdding && addHabit()}
+          disabled={isAdding}
         />
         <Button 
           onClick={addHabit}
-          className="h-14 px-8 rounded-2xl bg-white text-black hover:bg-zinc-200 transition-all"
+          disabled={isAdding || !newHabit.trim()}
+          className="h-14 px-8 rounded-2xl bg-white text-black hover:bg-zinc-200 transition-all disabled:opacity-50"
         >
-          <Plus size={24} />
+          {isAdding ? <Loader2 className="animate-spin" size={24} /> : <Plus size={24} />}
         </Button>
       </div>
 
