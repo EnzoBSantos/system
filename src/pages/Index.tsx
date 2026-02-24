@@ -6,10 +6,11 @@ import Heatmap from '@/components/Heatmap';
 import HabitTracker from '@/components/HabitTracker';
 import PomodoroTimer from '@/components/PomodoroTimer';
 import DashboardStats from '@/components/DashboardStats';
+import CompletionChart from '@/components/CompletionChart';
 import { Habit } from '@/types/app';
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
-import { format, isYesterday, isToday, parseISO, subDays } from 'date-fns';
+import { format, parseISO, subDays } from 'date-fns';
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'habits' | 'pomodoro'>('dashboard');
@@ -47,7 +48,6 @@ const Index = () => {
     let currentStreak = 0;
     let checkDate = new Date();
     
-    // Se não completou hoje, começa a checar a partir de ontem
     const todayStr = format(new Date(), 'yyyy-MM-dd');
     if (!completedDays.includes(todayStr)) {
       checkDate = subDays(checkDate, 1);
@@ -81,7 +81,6 @@ const Index = () => {
 
     const newStreak = calculateStreak(newCompletedDays);
 
-    // Atualização Otimista
     setHabits(prev => prev.map(h => 
       h.id === habitId 
         ? { ...h, completed_days: newCompletedDays, streak: newStreak } 
@@ -104,7 +103,6 @@ const Index = () => {
         description: "could not save progress.", 
         variant: "destructive" 
       });
-      // Reverter em caso de erro
       fetchHabits();
     }
   };
@@ -128,9 +126,8 @@ const Index = () => {
                 <div className="xl:col-span-2">
                   <Heatmap habits={habits} onToggleHabit={handleToggleHabit} />
                 </div>
-                <div className="bg-zinc-900 border border-zinc-800 rounded-[2.5rem] p-8 flex flex-col justify-center">
-                  <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-4">focus session</p>
-                  <PomodoroTimer mini />
+                <div className="h-full">
+                  <CompletionChart habits={habits} />
                 </div>
               </div>
             </div>
