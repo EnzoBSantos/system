@@ -1,8 +1,9 @@
 "use client";
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { LayoutDashboard, CheckCircle2, Timer, Bird } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { QUOTES } from '@/lib/quotes';
 
 type Tab = 'dashboard' | 'habits' | 'pomodoro';
 
@@ -12,6 +13,13 @@ interface SidebarProps {
 }
 
 const Sidebar = ({ activeTab, setActiveTab }: SidebarProps) => {
+  const [quote, setQuote] = useState(QUOTES[0]);
+
+  useEffect(() => {
+    const randomIndex = Math.floor(Math.random() * QUOTES.length);
+    setQuote(QUOTES[randomIndex]);
+  }, []);
+
   const navItems = [
     { id: 'dashboard', label: 'daily', icon: LayoutDashboard },
     { id: 'habits', label: 'rituals', icon: CheckCircle2 },
@@ -50,9 +58,12 @@ const Sidebar = ({ activeTab, setActiveTab }: SidebarProps) => {
       </nav>
 
       <div className="pt-8 border-t border-border">
-        <div className="bg-zinc-900 p-6 rounded-3xl space-y-3">
+        <div className="bg-zinc-900 p-6 rounded-[2rem] space-y-4">
           <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">inspiration</p>
-          <p className="text-sm font-medium leading-relaxed italic">"what you think, you become."</p>
+          <div className="space-y-2">
+            <p className="text-sm font-medium leading-relaxed italic text-zinc-100">"{quote.text}"</p>
+            <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest">— {quote.author}</p>
+          </div>
         </div>
       </div>
     </div>
