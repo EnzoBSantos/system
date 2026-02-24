@@ -1,12 +1,12 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Goal, GoalRequirement } from '@/types/goals';
-import { Edit2, Target, Rocket, CheckCircle2, Trash2, Maximize2, Minimize2, ZoomIn, ZoomOut, Maximize, Move, Info, Plus, X } from 'lucide-react';
+import { Edit2, Target, Rocket, CheckCircle2, Trash2, ZoomIn, ZoomOut, Maximize, Move, Info, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
+import { TransformWrapper, TransformComponent, ReactZoomPanPinchRef } from "react-zoom-pan-pinch";
 
 interface GoalMindMapProps {
   goal: Goal;
@@ -18,10 +18,18 @@ interface GoalMindMapProps {
 const GoalMindMap = ({ goal, onEditNode, onCreateChild, onDeleteRequirement }: GoalMindMapProps) => {
   const [expandedNodes, setExpandedNodes] = useState<string[]>([]);
   const [showGoalContent, setShowGoalContent] = useState(true);
+  const transformRef = useRef<ReactZoomPanPinchRef>(null);
 
-  const toggleNodeExpansion = (id: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    e.preventDefault();
+  // Centraliza o mapa sempre que o objetivo mudar ou o componente montar
+  useEffect(() => {
+    if (transformRef.current) {
+      setTimeout(() => {
+        transformRef.current?.centerView(0.7);
+      }, 100);
+    }
+  }, [goal.id]);
+
+  const toggleNodeExpansion = (id: string) => {
     setExpandedNodes(prev => 
       prev.includes(id) ? prev.filter(nodeId => nodeId !== id) : [...prev, id]
     );
@@ -50,7 +58,7 @@ const GoalMindMap = ({ goal, onEditNode, onCreateChild, onDeleteRequirement }: G
             x2={currentX} y2={currentY}
             stroke="white"
             strokeWidth="2"
-            strokeOpacity="0.2"
+            strokeOpacity="0.15"
             strokeDasharray="10,10"
           />
         </svg>
@@ -66,8 +74,9 @@ const GoalMindMap = ({ goal, onEditNode, onCreateChild, onDeleteRequirement }: G
           <div className="group relative -translate-x-1/2 -translate-y-1/2">
             <motion.div 
               layout
+              onClick={() => toggleNodeExpansion(req.id)}
               className={cn(
-                "rounded-[3.5rem] border-2 flex flex-col transition-all duration-500 relative overflow-hidden",
+                "rounded-[3.5rem] border-2 flex flex-col transition-all duration-500 relative overflow-hidden cursor-pointer",
                 req.is_completed 
                   ? "bg-zinc-900/50 border-white/10" 
                   : "bg-black border-zinc-800 hover:border-white/40 shadow-[0_0_50px_rgba(0,0,0,0.5)]",
@@ -75,15 +84,7 @@ const GoalMindMap = ({ goal, onEditNode, onCreateChild, onDeleteRequirement }: G
                 level > 0 && "scale-90"
               )}
             >
-              <button 
-                onClick={(e) => toggleNodeExpansion(req.id, e)}
-                onMouseDown={(e) => e.stopPropagation()}
-                className="absolute top-4 left-4 w-10 h-10 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-500 hover:text-white z-[60] transition-colors"
-              >
-                {isExpanded ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
-              </button>
-
-              <div className={cn("flex flex-col h-full", !isExpanded && "items-center justify-center")}>
+              <div className={cn("flex flex-col h-full pointer-events-none", !isExpanded && "items-center justify-center")}>
                 {req.is_completed ? (
                   <CheckCircle2 size={isExpanded ? 32 : 40} className={cn(isExpanded ? "mb-4" : "mb-3", "text-white/50")} />
                 ) : (
@@ -119,7 +120,7 @@ const GoalMindMap = ({ goal, onEditNode, onCreateChild, onDeleteRequirement }: G
                         variant="ghost"
                         onMouseDown={(e) => e.stopPropagation()}
                         onClick={(e) => { e.stopPropagation(); onEditNode('requirement', req.id); }}
-                        className="flex-1 h-12 rounded-2xl bg-zinc-900 border border-zinc-800 text-white hover:bg-white hover:text-black font-bold lowercase gap-2"
+                        className="flex-1 h-12 rounded-2xl bg-zinc-900 border border-zinc-800 text-white hover:bg-white hover:text-black font-bold lowercase gap-2 pointer-events-auto"
                       >
                         <Edit2 size={14} /> refine
                       </Button>
@@ -128,7 +129,7 @@ const GoalMindMap = ({ goal, onEditNode, onCreateChild, onDeleteRequirement }: G
                         variant="ghost"
                         onMouseDown={(e) => e.stopPropagation()}
                         onClick={(e) => { e.stopPropagation(); onDeleteRequirement(req.id); }}
-                        className="w-12 h-12 rounded-2xl bg-zinc-900/50 text-zinc-600 hover:text-red-500 hover:bg-red-500/10"
+                        className="w-12 h-12 rounded-2xl bg-zinc-900/50 text-zinc-600 hover:text-red-500 hover:bg-red-500/10 pointer-events-auto"
                       >
                         <Trash2 size={18} />
                       </Button>
@@ -137,13 +138,13 @@ const GoalMindMap = ({ goal, onEditNode, onCreateChild, onDeleteRequirement }: G
                 )}
               </div>
 
-              {/* Action Floating Buttons - ALWAYS VISIBLE */}
+              {/* Action Floating Buttons */}
               <div className="absolute top-4 right-4 flex flex-col gap-2 z-[60]">
                 <Button 
                   size="icon" 
                   onMouseDown={(e) => e.stopPropagation()}
-                  onClick={(e) => onCreateChild(e, req.id)}
-                  className="w-10 h-10 rounded-xl bg-white text-black hover:bg-zinc-200 shadow-xl border-2 border-black/10"
+                  onClick={(e) => { e.stopPropagation(); onCreateChild(e, req.id); }}
+                  className="w-10 h-10 rounded-xl bg-white text-black hover:bg-zinc-200 shadow-xl border-2 border-black/10 pointer-events-auto"
                   title="Add sub-pillar"
                 >
                   <Plus size={20} />
@@ -154,7 +155,7 @@ const GoalMindMap = ({ goal, onEditNode, onCreateChild, onDeleteRequirement }: G
                     variant="ghost"
                     onMouseDown={(e) => e.stopPropagation()}
                     onClick={(e) => { e.stopPropagation(); onEditNode('requirement', req.id); }}
-                    className="w-10 h-10 rounded-xl bg-zinc-900/80 backdrop-blur-sm border border-zinc-800 text-zinc-400 hover:text-white"
+                    className="w-10 h-10 rounded-xl bg-zinc-900/80 backdrop-blur-sm border border-zinc-800 text-zinc-400 hover:text-white pointer-events-auto"
                   >
                     <Edit2 size={16} />
                   </Button>
@@ -186,11 +187,11 @@ const GoalMindMap = ({ goal, onEditNode, onCreateChild, onDeleteRequirement }: G
 
   return (
     <div className="relative w-full h-full bg-black overflow-hidden cursor-grab active:cursor-grabbing">
-      {/* Background Grid Pattern */}
       <div className="absolute inset-0 bg-[radial-gradient(#1c1c1e_1px,transparent_1px)] [background-size:40px_40px] opacity-20 pointer-events-none" />
 
       <TransformWrapper
-        initialScale={0.6}
+        ref={transformRef}
+        initialScale={0.7}
         minScale={0.1}
         maxScale={2}
         centerOnInit={true}
@@ -226,7 +227,6 @@ const GoalMindMap = ({ goal, onEditNode, onCreateChild, onDeleteRequirement }: G
                       <span className="text-lg font-black leading-tight lowercase px-4 line-clamp-3">{goal.title}</span>
                     </button>
                     
-                    {/* Main Create Button - Pulsing and ALWAYS VISIBLE */}
                     <div className="absolute -bottom-4 -right-4 z-20">
                        <motion.div
                         animate={{ scale: [1, 1.1, 1] }}
@@ -237,7 +237,6 @@ const GoalMindMap = ({ goal, onEditNode, onCreateChild, onDeleteRequirement }: G
                             onMouseDown={(e) => e.stopPropagation()}
                             onClick={(e) => onCreateChild(e)}
                             className="w-16 h-16 rounded-full bg-white text-black hover:bg-zinc-200 shadow-[0_0_30px_rgba(255,255,255,0.3)] border-4 border-black"
-                            title="New primary pillar"
                           >
                             <Plus size={32} />
                           </Button>
@@ -246,7 +245,6 @@ const GoalMindMap = ({ goal, onEditNode, onCreateChild, onDeleteRequirement }: G
                   </div>
                 </motion.div>
 
-                {/* Sub-Pillars Recursive Rendering */}
                 <AnimatePresence>
                   {showGoalContent && rootPillars.map((req, idx) => {
                     const angle = (idx / (rootPillars.length || 1)) * 2 * Math.PI;
@@ -259,12 +257,6 @@ const GoalMindMap = ({ goal, onEditNode, onCreateChild, onDeleteRequirement }: G
                 </AnimatePresence>
               </div>
             </TransformComponent>
-
-            {/* Navigation Overlay */}
-            <div className="fixed top-8 left-8 z-[70] bg-zinc-900/50 backdrop-blur-xl border border-zinc-800 p-4 rounded-3xl space-y-1">
-              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">architecture</p>
-              <h3 className="text-xl font-black lowercase tracking-tighter">{goal.title}</h3>
-            </div>
 
             {/* Controls */}
             <div className="fixed bottom-12 left-1/2 -translate-x-1/2 z-[70] flex items-center gap-2 bg-zinc-950/90 backdrop-blur-2xl border border-white/5 p-3 rounded-[2rem] shadow-2xl">
