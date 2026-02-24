@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Goal } from '@/types/goals';
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from '@/components/ui/button';
-import { Check, Calendar, Target, Trash2, ArrowLeft, LayoutList, Share2, Plus, Edit2 } from 'lucide-react';
+import { Check, Target, Trash2, ArrowLeft, LayoutList, Share2, Plus, Edit2 } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
 import { cn } from '@/lib/utils';
 import confetti from 'canvas-confetti';
@@ -99,7 +99,7 @@ const GoalDetail = ({ goalId, onClose, onUpdate }: GoalDetailProps) => {
           is_completed: false
         });
         if (error) throw error;
-        toast({ title: "pilar added." });
+        toast({ title: "pillar added." });
       } else {
         if (dialogState.type === 'goal') {
           const { error } = await supabase.from('goals').update({ title: data.title }).eq('id', goalId);
@@ -115,7 +115,7 @@ const GoalDetail = ({ goalId, onClose, onUpdate }: GoalDetailProps) => {
         toast({ title: "updated." });
       }
       
-      setDialogState({ ...dialogState, isOpen: false });
+      setDialogState(prev => ({ ...prev, isOpen: false }));
       fetchGoal();
       onUpdate();
     } catch (e: any) {
@@ -124,13 +124,13 @@ const GoalDetail = ({ goalId, onClose, onUpdate }: GoalDetailProps) => {
   };
 
   const deleteRequirement = async (id: string) => {
-    if (!confirm("remove this pilar from your vision?")) return;
+    if (!confirm("remove this pillar from your vision?")) return;
     
     const { error } = await supabase.from('goal_requirements').delete().eq('id', id);
     if (!error) {
       fetchGoal();
       onUpdate();
-      toast({ title: "pilar removed." });
+      toast({ title: "pillar removed." });
     }
   };
 
@@ -159,7 +159,7 @@ const GoalDetail = ({ goalId, onClose, onUpdate }: GoalDetailProps) => {
       initial={{ opacity: 0, x: '100%' }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: '100%' }}
-      className="fixed inset-0 z-[1000] bg-black overflow-y-auto h-screen w-screen"
+      className="fixed inset-0 z-[40] bg-black overflow-y-auto h-screen w-screen"
     >
       <div className="max-w-7xl mx-auto px-6 py-12 md:py-16 space-y-12 h-full flex flex-col">
         <header className="flex items-center justify-between shrink-0">
@@ -209,11 +209,9 @@ const GoalDetail = ({ goalId, onClose, onUpdate }: GoalDetailProps) => {
                   onDeleteRequirement={deleteRequirement}
                 />
                 
-                {/* Fixed Add Button for Mind Map */}
                 <div className="absolute bottom-12 right-12 z-[100]">
                   <Button 
-                    onClick={handleOpenCreate}
-                    onMouseDown={(e) => e.stopPropagation()}
+                    onClick={(e) => handleOpenCreate(e)}
                     className="h-16 px-10 rounded-[2rem] bg-white text-black hover:bg-zinc-200 shadow-2xl font-black lowercase gap-4 text-xl border-4 border-black/10"
                   >
                     <Plus size={28} /> add vision pillar
@@ -252,7 +250,7 @@ const GoalDetail = ({ goalId, onClose, onUpdate }: GoalDetailProps) => {
                   <div className="space-y-8">
                     <div className="flex items-center justify-between px-2 border-b border-zinc-900 pb-4">
                       <h3 className="text-[10px] font-bold uppercase tracking-[0.3em] text-zinc-600">architecture pillars</h3>
-                      <Button variant="ghost" size="sm" onClick={() => handleOpenCreate()} className="text-[10px] font-bold uppercase tracking-widest hover:text-white">
+                      <Button variant="ghost" size="sm" onClick={(e) => handleOpenCreate(e)} className="text-[10px] font-bold uppercase tracking-widest hover:text-white">
                         <Plus size={14} className="mr-1" /> new pillar
                       </Button>
                     </div>
@@ -331,7 +329,7 @@ const GoalDetail = ({ goalId, onClose, onUpdate }: GoalDetailProps) => {
 
       <RequirementDialog
         isOpen={dialogState.isOpen}
-        onClose={() => setDialogState({ ...dialogState, isOpen: false })}
+        onClose={() => setDialogState(prev => ({ ...prev, isOpen: false }))}
         mode={dialogState.mode}
         onSubmit={handleDialogSubmit}
         initialData={
@@ -344,7 +342,7 @@ const GoalDetail = ({ goalId, onClose, onUpdate }: GoalDetailProps) => {
                     weekly_commitment: currentRequirement?.weekly_commitment || ''
                   }
               )
-            : undefined
+            : { title: '', first_action: '', weekly_commitment: '' }
         }
       />
     </motion.div>
