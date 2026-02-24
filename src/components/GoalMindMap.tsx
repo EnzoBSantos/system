@@ -10,12 +10,11 @@ import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 
 interface GoalMindMapProps {
   goal: Goal;
-  onAddRequirement: (e: React.MouseEvent) => void;
   onEditNode: (type: 'goal' | 'requirement', id?: string) => void;
   onDeleteRequirement: (id: string) => void;
 }
 
-const GoalMindMap = ({ goal, onAddRequirement, onEditNode, onDeleteRequirement }: GoalMindMapProps) => {
+const GoalMindMap = ({ goal, onEditNode, onDeleteRequirement }: GoalMindMapProps) => {
   const [hiddenNodes, setHiddenNodes] = useState<string[]>([]);
   const [showGoalContent, setShowGoalContent] = useState(true);
 
@@ -100,7 +99,7 @@ const GoalMindMap = ({ goal, onAddRequirement, onEditNode, onDeleteRequirement }
                         size="icon" 
                         onMouseDown={(e) => e.stopPropagation()}
                         onClick={(e) => { e.stopPropagation(); onEditNode('goal'); }}
-                        className="w-12 h-12 rounded-2xl bg-zinc-900 border border-zinc-800 text-white hover:bg-white hover:text-black"
+                        className="w-12 h-12 rounded-2xl bg-zinc-900 border border-zinc-800 text-white hover:bg-white hover:text-black shadow-xl"
                       >
                         <Edit2 size={18} />
                       </Button>
@@ -146,7 +145,7 @@ const GoalMindMap = ({ goal, onAddRequirement, onEditNode, onDeleteRequirement }
                             <button 
                               onClick={(e) => toggleNodeVisibility(req.id, e)}
                               onMouseDown={(e) => e.stopPropagation()}
-                              className="absolute -top-3 -left-3 w-10 h-10 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-500 hover:text-white hover:bg-zinc-800 z-10"
+                              className="absolute -top-3 -left-3 w-10 h-10 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-500 hover:text-white hover:bg-zinc-800 z-10 shadow-lg"
                             >
                               {isHidden ? <Eye size={14} /> : <EyeOff size={14} />}
                             </button>
@@ -163,7 +162,7 @@ const GoalMindMap = ({ goal, onAddRequirement, onEditNode, onDeleteRequirement }
                                     size="icon" 
                                     onMouseDown={(e) => e.stopPropagation()}
                                     onClick={(e) => { e.stopPropagation(); onEditNode('requirement', req.id); }}
-                                    className="w-12 h-12 rounded-2xl bg-zinc-900 border border-zinc-800 text-white hover:bg-white hover:text-black"
+                                    className="w-12 h-12 rounded-2xl bg-zinc-900 border border-zinc-800 text-white hover:bg-white hover:text-black shadow-xl"
                                   >
                                     <Edit2 size={18} />
                                   </Button>
@@ -171,7 +170,7 @@ const GoalMindMap = ({ goal, onAddRequirement, onEditNode, onDeleteRequirement }
                                     size="icon" 
                                     onMouseDown={(e) => e.stopPropagation()}
                                     onClick={(e) => { e.stopPropagation(); onDeleteRequirement(req.id); }}
-                                    className="w-12 h-12 rounded-2xl bg-red-950/20 border border-red-900/30 text-red-500 hover:bg-red-600 hover:text-white"
+                                    className="w-12 h-12 rounded-2xl bg-red-950/20 border border-red-900/30 text-red-500 hover:bg-red-600 hover:text-white shadow-xl"
                                   >
                                     <Trash2 size={18} />
                                   </Button>
@@ -190,14 +189,14 @@ const GoalMindMap = ({ goal, onAddRequirement, onEditNode, onDeleteRequirement }
 
             {/* Manual Controls */}
             <div className="fixed bottom-12 left-1/2 -translate-x-1/2 z-[70] flex items-center gap-2 bg-zinc-900/80 backdrop-blur-2xl border border-zinc-800 p-2.5 rounded-[1.5rem] shadow-2xl">
-              <Button variant="ghost" size="icon" onClick={() => zoomIn()} className="rounded-xl hover:bg-white hover:text-black">
+              <Button variant="ghost" size="icon" onMouseDown={(e) => e.stopPropagation()} onClick={() => zoomIn()} className="rounded-xl hover:bg-white hover:text-black">
                 <ZoomIn size={20} />
               </Button>
-              <Button variant="ghost" size="icon" onClick={() => zoomOut()} className="rounded-xl hover:bg-white hover:text-black">
+              <Button variant="ghost" size="icon" onMouseDown={(e) => e.stopPropagation()} onClick={() => zoomOut()} className="rounded-xl hover:bg-white hover:text-black">
                 <ZoomOut size={20} />
               </Button>
               <div className="w-px h-8 bg-zinc-800 mx-1" />
-              <Button variant="ghost" size="icon" onClick={() => resetTransform()} className="rounded-xl hover:bg-white hover:text-black">
+              <Button variant="ghost" size="icon" onMouseDown={(e) => e.stopPropagation()} onClick={() => resetTransform()} className="rounded-xl hover:bg-white hover:text-black">
                 <Maximize size={20} />
               </Button>
               <div className="flex items-center gap-3 px-4 border-l border-zinc-800 ml-1">

@@ -88,12 +88,14 @@ const GoalDetail = ({ goalId, onClose, onUpdate }: GoalDetailProps) => {
     });
   };
 
-  const handleDialogSubmit = async (data: { title: string }) => {
+  const handleDialogSubmit = async (data: any) => {
     try {
       if (dialogState.mode === 'create') {
         const { error } = await supabase.from('goal_requirements').insert({
           goal_id: goalId,
           title: data.title,
+          first_action: data.first_action || '',
+          weekly_commitment: data.weekly_commitment || '',
           is_completed: false
         });
         if (error) throw error;
@@ -103,7 +105,11 @@ const GoalDetail = ({ goalId, onClose, onUpdate }: GoalDetailProps) => {
           const { error } = await supabase.from('goals').update({ title: data.title }).eq('id', goalId);
           if (error) throw error;
         } else {
-          const { error } = await supabase.from('goal_requirements').update({ title: data.title }).eq('id', dialogState.editingId);
+          const { error } = await supabase.from('goal_requirements').update({ 
+            title: data.title,
+            first_action: data.first_action || '',
+            weekly_commitment: data.weekly_commitment || ''
+          }).eq('id', dialogState.editingId);
           if (error) throw error;
         }
         toast({ title: "updated." });
@@ -143,6 +149,10 @@ const GoalDetail = ({ goalId, onClose, onUpdate }: GoalDetailProps) => {
   const completedCount = goal.requirements?.filter(r => r.is_completed).length || 0;
   const totalCount = goal.requirements?.length || 0;
   const progress = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
+
+  const currentRequirement = dialogState.editingId 
+    ? goal.requirements?.find(r => r.id === dialogState.editingId) 
+    : null;
 
   return (
     <motion.div 
@@ -195,7 +205,6 @@ const GoalDetail = ({ goalId, onClose, onUpdate }: GoalDetailProps) => {
               >
                 <GoalMindMap 
                   goal={goal} 
-                  onAddRequirement={handleOpenCreate}
                   onEditNode={handleOpenEdit}
                   onDeleteRequirement={deleteRequirement}
                 />
@@ -203,10 +212,11 @@ const GoalDetail = ({ goalId, onClose, onUpdate }: GoalDetailProps) => {
                 {/* Fixed Add Button for Mind Map */}
                 <div className="absolute bottom-12 right-12 z-[100]">
                   <Button 
-                    onMouseDown={(e) => handleOpenCreate(e)}
+                    onClick={handleOpenCreate}
+                    onMouseDown={(e) => e.stopPropagation()}
                     className="h-16 px-10 rounded-[2rem] bg-white text-black hover:bg-zinc-200 shadow-2xl font-black lowercase gap-4 text-xl border-4 border-black/10"
                   >
-                    <Plus size={28} /> add vision pilar
+                    <Plus size={28} /> add vision pillar
                   </Button>
                 </div>
               </motion.div>
@@ -225,15 +235,25 @@ const GoalDetail = ({ goalId, onClose, onUpdate }: GoalDetailProps) => {
                         active architecture
                       </span>
                     </div>
-                    <h1 className="text-7xl font-black tracking-tighter lowercase leading-[0.9]">{goal.title}</h1>
+                    <div className="flex items-center gap-4 group">
+                      <h1 className="text-7xl font-black tracking-tighter lowercase leading-[0.9]">{goal.title}</h1>
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        onClick={() => handleOpenEdit('goal')}
+                        className="opacity-0 group-hover:opacity-100 transition-opacity rounded-full"
+                      >
+                        <Edit2 size={24} />
+                      </Button>
+                    </div>
                     <p className="text-2xl text-zinc-500 font-medium lowercase leading-relaxed max-w-2xl">"{goal.why}"</p>
                   </div>
 
                   <div className="space-y-8">
                     <div className="flex items-center justify-between px-2 border-b border-zinc-900 pb-4">
-                      <h3 className="text-[10px] font-bold uppercase tracking-[0.3em] text-zinc-600">architecture pilars</h3>
+                      <h3 className="text-[10px] font-bold uppercase tracking-[0.3em] text-zinc-600">architecture pillars</h3>
                       <Button variant="ghost" size="sm" onClick={() => handleOpenCreate()} className="text-[10px] font-bold uppercase tracking-widest hover:text-white">
-                        <Plus size={14} className="mr-1" /> new pilar
+                        <Plus size={14} className="mr-1" /> new pillar
                       </Button>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -242,7 +262,7 @@ const GoalDetail = ({ goalId, onClose, onUpdate }: GoalDetailProps) => {
                           <button
                             onClick={() => toggleRequirement(req.id, req.is_completed)}
                             className={cn(
-                              "w-full p-8 rounded-[3rem] border flex items-center gap-6 transition-all text-left",
+                              "w-full p-8 rounded-[3rem] border flex items-center gap-6 transition-all text-left h-full",
                               req.is_completed 
                                 ? "bg-zinc-900/30 border-transparent opacity-60" 
                                 : "bg-black border-zinc-800 hover:border-white/20"
@@ -256,6 +276,9 @@ const GoalDetail = ({ goalId, onClose, onUpdate }: GoalDetailProps) => {
                             </div>
                             <div className="flex-1 pr-8">
                               <h4 className={cn("text-xl font-bold lowercase leading-tight", req.is_completed && "line-through text-zinc-500")}>{req.title}</h4>
+                              {req.weekly_commitment && (
+                                <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 mt-2">{req.weekly_commitment}</p>
+                              )}
                             </div>
                           </button>
                           
@@ -313,11 +336,14 @@ const GoalDetail = ({ goalId, onClose, onUpdate }: GoalDetailProps) => {
         onSubmit={handleDialogSubmit}
         initialData={
           dialogState.mode === 'edit' 
-            ? { 
-                title: dialogState.type === 'goal' 
-                  ? goal.title 
-                  : goal.requirements?.find(r => r.id === dialogState.editingId)?.title || '' 
-              }
+            ? (dialogState.type === 'goal' 
+                ? { title: goal.title } 
+                : { 
+                    title: currentRequirement?.title || '',
+                    first_action: currentRequirement?.first_action || '',
+                    weekly_commitment: currentRequirement?.weekly_commitment || ''
+                  }
+              )
             : undefined
         }
       />
