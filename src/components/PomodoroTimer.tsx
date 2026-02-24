@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Play, Pause, RotateCcw, Coffee, Brain } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import TimerSettings from './TimerSettings';
 
 interface PomodoroTimerProps {
   mini?: boolean;
@@ -11,6 +12,8 @@ interface PomodoroTimerProps {
 }
 
 const PomodoroTimer = ({ mini = false, onSessionComplete }: PomodoroTimerProps) => {
+  const [workTime, setWorkTime] = useState(25);
+  const [breakTime, setBreakTime] = useState(5);
   const [timeLeft, setTimeLeft] = useState(25 * 60);
   const [isActive, setIsActive] = useState(false);
   const [type, setType] = useState<'work' | 'break'>('work');
@@ -23,16 +26,24 @@ const PomodoroTimer = ({ mini = false, onSessionComplete }: PomodoroTimerProps) 
       }, 1000);
     } else if (timeLeft === 0) {
       setIsActive(false);
-      onSessionComplete?.(type === 'work' ? 25 : 5);
-      // Logic for switching could go here
+      onSessionComplete?.(type === 'work' ? workTime : breakTime);
     }
     return () => clearInterval(interval);
-  }, [isActive, timeLeft, type, onSessionComplete]);
+  }, [isActive, timeLeft, type, onSessionComplete, workTime, breakTime]);
 
   const toggle = () => setIsActive(!isActive);
+  
   const reset = () => {
     setIsActive(false);
-    setTimeLeft(type === 'work' ? 25 * 60 : 5 * 60);
+    setTimeLeft((type === 'work' ? workTime : breakTime) * 60);
+  };
+
+  const updateTimes = (newWork: number, newBreak: number) => {
+    setWorkTime(newWork);
+    setBreakTime(newBreak);
+    if (!isActive) {
+      setTimeLeft((type === 'work' ? newWork : newBreak) * 60);
+    }
   };
 
   const formatTime = (seconds: number) => {
@@ -45,34 +56,39 @@ const PomodoroTimer = ({ mini = false, onSessionComplete }: PomodoroTimerProps) 
     return (
       <div className="flex items-center justify-between gap-4">
         <div className="space-y-1">
-          <h4 className="text-3xl font-bold tracking-tighter">{formatTime(timeLeft)}</h4>
+          <h4 className="text-3xl font-bold tracking-tighter tabular-nums">{formatTime(timeLeft)}</h4>
           <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">{type}</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-1">
           <Button size="icon" onClick={toggle} className="rounded-full bg-white text-black hover:bg-zinc-200">
             {isActive ? <Pause size={18} /> : <Play size={18} />}
           </Button>
           <Button size="icon" variant="ghost" onClick={reset} className="rounded-full text-zinc-500 hover:text-white">
             <RotateCcw size={18} />
           </Button>
+          <TimerSettings workTime={workTime} breakTime={breakTime} onSave={updateTimes} />
         </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-md mx-auto bg-zinc-900 border border-zinc-800 rounded-[3rem] p-12 text-center space-y-8">
+    <div className="max-w-md mx-auto bg-zinc-900 border border-zinc-800 rounded-[3rem] p-12 text-center space-y-8 relative">
+      <div className="absolute top-8 right-8">
+        <TimerSettings workTime={workTime} breakTime={breakTime} onSave={updateTimes} />
+      </div>
+
       <div className="flex justify-center gap-4">
         <Button 
           variant="ghost" 
-          onClick={() => { setType('work'); setTimeLeft(25 * 60); }}
+          onClick={() => { setType('work'); setTimeLeft(workTime * 60); setIsActive(false); }}
           className={cn("rounded-2xl lowercase font-bold", type === 'work' ? "bg-white/10 text-white" : "text-zinc-500")}
         >
           <Brain size={18} className="mr-2" /> focus
         </Button>
         <Button 
           variant="ghost" 
-          onClick={() => { setType('break'); setTimeLeft(5 * 60); }}
+          onClick={() => { setType('break'); setTimeLeft(breakTime * 60); setIsActive(false); }}
           className={cn("rounded-2xl lowercase font-bold", type === 'break' ? "bg-white/10 text-white" : "text-zinc-500")}
         >
           <Coffee size={18} className="mr-2" /> break
