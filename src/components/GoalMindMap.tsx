@@ -22,11 +22,12 @@ const GoalMindMap = ({ goal, onEditNode, onCreateChild, onDeleteRequirement }: G
 
   // Centraliza o mapa sempre que o objetivo mudar ou o componente montar
   useEffect(() => {
-    if (transformRef.current) {
-      setTimeout(() => {
-        transformRef.current?.centerView(0.7);
-      }, 100);
-    }
+    const timer = setTimeout(() => {
+      if (transformRef.current) {
+        transformRef.current.centerView(0.8);
+      }
+    }, 300); // Delay maior para garantir que o container esteja pronto
+    return () => clearTimeout(timer);
   }, [goal.id]);
 
   const toggleNodeExpansion = (id: string) => {
@@ -51,13 +52,13 @@ const GoalMindMap = ({ goal, onEditNode, onCreateChild, onDeleteRequirement }: G
     return (
       <React.Fragment key={req.id}>
         <svg className="absolute inset-0 w-full h-full pointer-events-none overflow-visible">
-          <motion.line
+          <motion.path
             initial={{ pathLength: 0, opacity: 0 }}
             animate={{ pathLength: 1, opacity: 1 }}
-            x1={parentX} y1={parentY}
-            x2={currentX} y2={currentY}
+            d={`M ${parentX} ${parentY} C ${parentX} ${(parentY + currentY) / 2}, ${currentX} ${(parentY + currentY) / 2}, ${currentX} ${currentY}`}
             stroke="white"
             strokeWidth="2"
+            fill="none"
             strokeOpacity="0.15"
             strokeDasharray="10,10"
           />
@@ -65,8 +66,8 @@ const GoalMindMap = ({ goal, onEditNode, onCreateChild, onDeleteRequirement }: G
 
         <motion.div
           layout
-          initial={{ opacity: 0, scale: 0 }}
-          animate={{ opacity: 1, scale: 1, x: x, y: y }}
+          initial={{ opacity: 0, y: y - 50 }}
+          animate={{ opacity: 1, x: x, y: y }}
           transition={{ type: "spring", damping: 25, stiffness: 120 }}
           className="absolute z-40"
           style={{ left: 2000, top: 2000 }}
@@ -167,15 +168,10 @@ const GoalMindMap = ({ goal, onEditNode, onCreateChild, onDeleteRequirement }: G
 
         {children.map((child, cidx) => {
           const totalChildren = children.length;
-          const spreadAngle = Math.PI / 1.5; 
-          const baseAngle = Math.atan2(y, x);
-          const angle = totalChildren === 1 
-            ? baseAngle 
-            : baseAngle - (spreadAngle / 2) + (cidx * (spreadAngle / (totalChildren - 1)));
-          
-          const distance = 500 + (level * 100);
-          const cx = x + Math.cos(angle) * distance;
-          const cy = y + Math.sin(angle) * distance;
+          const spread = 600; // Espaçamento horizontal total
+          const startX = -(spread * (totalChildren - 1)) / 2;
+          const cx = x + startX + (cidx * spread);
+          const cy = y + 450; // Sempre abaixo (vertical)
           
           return renderPillarNode(child, cx, cy, currentX, currentY, level + 1);
         })}
@@ -191,7 +187,7 @@ const GoalMindMap = ({ goal, onEditNode, onCreateChild, onDeleteRequirement }: G
 
       <TransformWrapper
         ref={transformRef}
-        initialScale={0.7}
+        initialScale={0.8}
         minScale={0.1}
         maxScale={2}
         centerOnInit={true}
@@ -247,10 +243,11 @@ const GoalMindMap = ({ goal, onEditNode, onCreateChild, onDeleteRequirement }: G
 
                 <AnimatePresence>
                   {showGoalContent && rootPillars.map((req, idx) => {
-                    const angle = (idx / (rootPillars.length || 1)) * 2 * Math.PI;
-                    const distance = 650;
-                    const x = Math.cos(angle) * distance;
-                    const y = Math.sin(angle) * distance;
+                    const totalRootPillars = rootPillars.length;
+                    const spread = 700; // Espaçamento horizontal para o primeiro nível
+                    const startX = -(spread * (totalRootPillars - 1)) / 2;
+                    const x = startX + (idx * spread);
+                    const y = 500; // Começa abaixo do objetivo central
                     
                     return renderPillarNode(req, x, y, 2000, 2000, 0);
                   })}
