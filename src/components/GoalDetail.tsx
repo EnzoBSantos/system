@@ -127,7 +127,7 @@ const GoalDetail = ({ goalId, onClose, onUpdate }: GoalDetailProps) => {
       initial={{ opacity: 0, x: '100%' }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: '100%' }}
-      className="fixed inset-0 z-[110] bg-black overflow-y-auto"
+      className="fixed inset-0 z-[1000] bg-black overflow-y-auto h-screen w-screen"
     >
       <div className="max-w-6xl mx-auto px-6 py-12 md:py-20 space-y-12">
         <header className="flex items-center justify-between">

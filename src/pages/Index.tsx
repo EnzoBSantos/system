@@ -9,15 +9,24 @@ import PomodoroTimer from '@/components/PomodoroTimer';
 import DashboardStats from '@/components/DashboardStats';
 import CompletionChart from '@/components/CompletionChart';
 import Goals from '@/pages/Goals';
+import GoalCreationFlow from '@/components/GoalCreationFlow';
+import GoalDetail from '@/components/GoalDetail';
 import { Habit } from '@/types/app';
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { format, parseISO, subDays } from 'date-fns';
+import { AnimatePresence } from 'framer-motion';
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'habits' | 'pomodoro' | 'goals'>('dashboard');
   const [habits, setHabits] = useState<Habit[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  
+  // Vision states
+  const [isFlowOpen, setIsFlowOpen] = useState(false);
+  const [selectedGoalId, setSelectedGoalId] = useState<string | null>(null);
+  const [refreshGoals, setRefreshGoals] = useState(0);
+
   const { toast } = useToast();
 
   const fetchHabits = async () => {
@@ -143,7 +152,11 @@ const Index = () => {
 
           {activeTab === 'goals' && (
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
-              <Goals />
+              <Goals 
+                onOpenFlow={() => setIsFlowOpen(true)}
+                onSelectGoal={(id) => setSelectedGoalId(id)}
+                refreshTrigger={refreshGoals}
+              />
             </div>
           )}
 
@@ -156,6 +169,29 @@ const Index = () => {
       </main>
 
       <MobileNav activeTab={activeTab} setActiveTab={setActiveTab} />
+
+      {/* Global Overlays (Cover everything) */}
+      <AnimatePresence>
+        {isFlowOpen && (
+          <GoalCreationFlow 
+            onClose={() => setIsFlowOpen(false)} 
+            onSuccess={() => {
+              setRefreshGoals(prev => prev + 1);
+              setIsFlowOpen(false);
+            }} 
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {selectedGoalId && (
+          <GoalDetail 
+            goalId={selectedGoalId} 
+            onClose={() => setSelectedGoalId(null)}
+            onUpdate={() => setRefreshGoals(prev => prev + 1)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 };

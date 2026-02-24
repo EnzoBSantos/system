@@ -5,15 +5,17 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from '@/components/ui/button';
 import { Target, Plus, Rocket, Star, Clock, Trophy } from 'lucide-react';
-import GoalCreationFlow from '@/components/GoalCreationFlow';
-import GoalDetail from '@/components/GoalDetail';
 import { Goal } from '@/types/goals';
 import { cn } from '@/lib/utils';
 
-const Goals = () => {
+interface GoalsProps {
+  onOpenFlow: () => void;
+  onSelectGoal: (id: string) => void;
+  refreshTrigger: number;
+}
+
+const Goals = ({ onOpenFlow, onSelectGoal, refreshTrigger }: GoalsProps) => {
   const [goals, setGoals] = useState<Goal[]>([]);
-  const [isFlowOpen, setIsFlowOpen] = useState(false);
-  const [selectedGoalId, setSelectedGoalId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   const fetchGoals = async () => {
@@ -27,7 +29,7 @@ const Goals = () => {
 
   useEffect(() => {
     fetchGoals();
-  }, []);
+  }, [refreshTrigger]);
 
   return (
     <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -37,7 +39,7 @@ const Goals = () => {
           <h1 className="text-6xl font-extrabold tracking-tighter lowercase">the vision.</h1>
         </div>
         <Button 
-          onClick={() => setIsFlowOpen(true)}
+          onClick={onOpenFlow}
           className="h-16 px-8 rounded-[2rem] bg-white text-black hover:bg-zinc-200 text-lg font-bold lowercase gap-3 transition-transform active:scale-95 shadow-lg"
         >
           <Plus size={24} /> new goal
@@ -54,7 +56,7 @@ const Goals = () => {
             <motion.div
               layoutId={goal.id}
               key={goal.id}
-              onClick={() => setSelectedGoalId(goal.id)}
+              onClick={() => onSelectGoal(goal.id)}
               className="group bg-zinc-900 border border-zinc-800 p-10 rounded-[3rem] space-y-8 cursor-pointer hover:border-white/20 transition-all hover:translate-y-[-4px]"
             >
               <div className="flex justify-between items-start">
@@ -94,7 +96,7 @@ const Goals = () => {
 
         {goals.length === 0 && !loading && (
           <div 
-            onClick={() => setIsFlowOpen(true)}
+            onClick={onOpenFlow}
             className="col-span-full py-32 border-2 border-dashed border-zinc-900 rounded-[3rem] flex flex-col items-center justify-center gap-6 group cursor-pointer hover:border-zinc-700 transition-all"
           >
             <div className="w-20 h-20 bg-zinc-950 rounded-full flex items-center justify-center text-zinc-800 group-hover:text-white transition-colors">
@@ -107,28 +109,6 @@ const Goals = () => {
           </div>
         )}
       </div>
-
-      <AnimatePresence>
-        {isFlowOpen && (
-          <GoalCreationFlow 
-            onClose={() => setIsFlowOpen(false)} 
-            onSuccess={() => {
-              fetchGoals();
-              setIsFlowOpen(false);
-            }} 
-          />
-        )}
-      </AnimatePresence>
-
-      <AnimatePresence>
-        {selectedGoalId && (
-          <GoalDetail 
-            goalId={selectedGoalId} 
-            onClose={() => setSelectedGoalId(null)}
-            onUpdate={fetchGoals}
-          />
-        )}
-      </AnimatePresence>
     </div>
   );
 };
