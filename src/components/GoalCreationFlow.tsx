@@ -1,0 +1,386 @@
+"use client";
+
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { ArrowRight, ArrowLeft, Target, Heart, Search, Ruler, Footprints, Anchor, Calendar, Rocket, Sparkles } from 'lucide-react';
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/components/ui/use-toast";
+import confetti from 'canvas-confetti';
+
+interface GoalCreationFlowProps {
+  onClose: () => void;
+  onSuccess: () => void;
+}
+
+const GoalCreationFlow = ({ onClose, onSuccess }: GoalCreationFlowProps) => {
+  const [step, setStep] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const { toast } = useToast();
+
+  const [formData, setFormData] = useState({
+    title: '',
+    why: '',
+    specific: '',
+    measurable: '',
+    achievable: '',
+    relevant: '',
+    deadline: '',
+    requirements: [] as any[]
+  });
+
+  const nextStep = () => setStep(s => s + 1);
+  const prevStep = () => setStep(s => s - 1);
+
+  const addRequirement = () => {
+    setFormData(prev => ({
+      ...prev,
+      requirements: [...prev.requirements, { title: '', first_action: '', weekly_commitment: '', deadline: '' }]
+    }));
+  };
+
+  const updateRequirement = (index: number, field: string, value: string) => {
+    const updated = [...formData.requirements];
+    updated[index] = { ...updated[index], [field]: value };
+    setFormData(prev => ({ ...prev, requirements: updated }));
+  };
+
+  const handleComplete = async () => {
+    try {
+      setLoading(true);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: goalData, error: goalError } = await supabase
+        .from('goals')
+        .insert([{
+          user_id: user.id,
+          title: formData.title,
+          why: formData.why,
+          specific: formData.specific,
+          measurable: formData.measurable,
+          achievable: formData.achievable,
+          relevant: formData.relevant,
+          deadline: formData.deadline || null,
+          xp: 100
+        }])
+        .select()
+        .single();
+
+      if (goalError) throw goalError;
+
+      if (formData.requirements.length > 0) {
+        const reqs = formData.requirements.map(r => ({
+          goal_id: goalData.id,
+          title: r.title,
+          first_action: r.first_action,
+          weekly_commitment: r.weekly_commitment,
+          deadline: r.deadline || null
+        }));
+
+        const { error: reqError } = await supabase.from('goal_requirements').insert(reqs);
+        if (reqError) throw reqError;
+      }
+
+      confetti({
+        particleCount: 150,
+        spread: 70,
+        origin: { y: 0.6 },
+        colors: ['#ffffff', '#a1a1aa']
+      });
+
+      toast({ title: "plan activated.", description: "your future starts now." });
+      onSuccess();
+    } catch (error: any) {
+      toast({ title: "failed to save goal", description: error.message, variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const totalSteps = 6;
+  const progress = (step / totalSteps) * 100;
+
+  return (
+    <div className="fixed inset-0 z-[100] bg-black flex flex-col">
+      {/* Header / Progress Bar */}
+      <div className="p-6 md:p-10">
+        <div className="max-w-3xl mx-auto flex items-center gap-6">
+          <Button variant="ghost" size="icon" onClick={onClose} className="rounded-full text-zinc-500 hover:text-white">
+            <ArrowLeft size={24} />
+          </Button>
+          <div className="flex-1 h-3 bg-zinc-900 rounded-full overflow-hidden">
+            <motion.div 
+              className="h-full bg-white" 
+              initial={{ width: 0 }}
+              animate={{ width: `${progress}%` }}
+              transition={{ type: "spring", bounce: 0, duration: 0.5 }}
+            />
+          </div>
+          <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 w-12 text-right">
+            {step}/{totalSteps}
+          </span>
+        </div>
+      </div>
+
+      <div className="flex-1 overflow-y-auto px-6 pb-20">
+        <div className="max-w-2xl mx-auto py-10">
+          <AnimatePresence mode="wait">
+            {step === 1 && (
+              <motion.div 
+                key="step1"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                className="space-y-10"
+              >
+                <div className="space-y-4">
+                  <div className="w-16 h-16 bg-white rounded-[1.5rem] flex items-center justify-center">
+                    <Target size={32} className="text-black" />
+                  </div>
+                  <h2 className="text-5xl font-black tracking-tighter lowercase">what is your main goal?</h2>
+                  <p className="text-zinc-500 font-medium">start with the end in mind. be bold.</p>
+                </div>
+                <Input 
+                  value={formData.title}
+                  onChange={(e) => setFormData({...formData, title: e.target.value})}
+                  placeholder="e.g. launch my startup, run a marathon..."
+                  className="h-20 text-3xl font-bold bg-transparent border-b-2 border-t-0 border-x-0 border-zinc-800 focus:border-white rounded-none px-0 lowercase tracking-tight outline-none ring-0 focus-visible:ring-0"
+                />
+                <Button 
+                  disabled={!formData.title}
+                  onClick={nextStep}
+                  className="w-full h-16 rounded-2xl bg-white text-black hover:bg-zinc-200 text-xl font-bold lowercase"
+                >
+                  continue
+                </Button>
+              </motion.div>
+            )}
+
+            {step === 2 && (
+              <motion.div key="step2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-10">
+                <div className="space-y-4">
+                  <div className="w-16 h-16 bg-white/5 rounded-[1.5rem] flex items-center justify-center">
+                    <Heart size={32} className="text-white" />
+                  </div>
+                  <h2 className="text-5xl font-black tracking-tighter lowercase">why does this matter?</h2>
+                  <p className="text-zinc-500 font-medium">strong reasons create strong execution.</p>
+                </div>
+                <Textarea 
+                  value={formData.why}
+                  onChange={(e) => setFormData({...formData, why: e.target.value})}
+                  placeholder="this goal matters to me because..."
+                  className="min-h-[200px] text-xl bg-zinc-900/50 border-zinc-800 rounded-3xl p-8 focus:border-white lowercase"
+                />
+                <div className="flex gap-4">
+                  <Button variant="ghost" onClick={prevStep} className="h-16 px-8 rounded-2xl text-zinc-500 font-bold lowercase">back</Button>
+                  <Button disabled={!formData.why} onClick={nextStep} className="flex-1 h-16 rounded-2xl bg-white text-black hover:bg-zinc-200 text-xl font-bold lowercase">continue</Button>
+                </div>
+              </motion.div>
+            )}
+
+            {step === 3 && (
+              <motion.div key="step3" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-12">
+                <div className="space-y-4 text-center">
+                  <h2 className="text-4xl font-black tracking-tighter lowercase">the smart framework.</h2>
+                  <p className="text-zinc-500 font-medium">precision is the mother of success.</p>
+                </div>
+                
+                <div className="space-y-10">
+                  <div className="space-y-4">
+                    <label className="flex items-center gap-3 text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500">
+                      <Search size={14} /> specific
+                    </label>
+                    <Input 
+                      value={formData.specific} 
+                      onChange={(e) => setFormData({...formData, specific: e.target.value})}
+                      placeholder="what exactly does success look like?"
+                      className="h-14 bg-zinc-900 border-zinc-800 rounded-2xl px-6 focus:border-white lowercase"
+                    />
+                  </div>
+
+                  <div className="space-y-4">
+                    <label className="flex items-center gap-3 text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500">
+                      <Ruler size={14} /> measurable
+                    </label>
+                    <Input 
+                      value={formData.measurable} 
+                      onChange={(e) => setFormData({...formData, measurable: e.target.value})}
+                      placeholder="how will you track completion?"
+                      className="h-14 bg-zinc-900 border-zinc-800 rounded-2xl px-6 focus:border-white lowercase"
+                    />
+                  </div>
+
+                  <div className="space-y-4">
+                    <label className="flex items-center gap-3 text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500">
+                      <Footprints size={14} /> achievable
+                    </label>
+                    <Input 
+                      value={formData.achievable} 
+                      onChange={(e) => setFormData({...formData, achievable: e.target.value})}
+                      placeholder="is this realistic for your current life?"
+                      className="h-14 bg-zinc-900 border-zinc-800 rounded-2xl px-6 focus:border-white lowercase"
+                    />
+                  </div>
+
+                  <div className="space-y-4">
+                    <label className="flex items-center gap-3 text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500">
+                      <Anchor size={14} /> relevant
+                    </label>
+                    <Input 
+                      value={formData.relevant} 
+                      onChange={(e) => setFormData({...formData, relevant: e.target.value})}
+                      placeholder="why is this aligned with your vision?"
+                      className="h-14 bg-zinc-900 border-zinc-800 rounded-2xl px-6 focus:border-white lowercase"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex gap-4">
+                  <Button variant="ghost" onClick={prevStep} className="h-16 px-8 rounded-2xl text-zinc-500 font-bold lowercase">back</Button>
+                  <Button onClick={nextStep} className="flex-1 h-16 rounded-2xl bg-white text-black hover:bg-zinc-200 text-xl font-bold lowercase">continue</Button>
+                </div>
+              </motion.div>
+            )}
+
+            {step === 4 && (
+              <motion.div key="step4" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-10">
+                <div className="space-y-4">
+                  <div className="w-16 h-16 bg-white/5 rounded-[1.5rem] flex items-center justify-center">
+                    <Sparkles size={32} className="text-white" />
+                  </div>
+                  <h2 className="text-5xl font-black tracking-tighter lowercase">pillars of success.</h2>
+                  <p className="text-zinc-500 font-medium">what must be true for this goal to happen?</p>
+                </div>
+
+                <div className="space-y-4">
+                  {formData.requirements.map((req, idx) => (
+                    <div key={idx} className="flex gap-4">
+                      <Input 
+                        value={req.title}
+                        onChange={(e) => updateRequirement(idx, 'title', e.target.value)}
+                        placeholder="requirement name (e.g. save $5k)"
+                        className="h-14 bg-zinc-900 border-zinc-800 rounded-2xl px-6 focus:border-white lowercase"
+                      />
+                      <Button 
+                        variant="ghost" 
+                        onClick={() => {
+                          const updated = formData.requirements.filter((_, i) => i !== idx);
+                          setFormData({...formData, requirements: updated});
+                        }}
+                        className="h-14 w-14 rounded-2xl text-zinc-500"
+                      >
+                        &times;
+                      </Button>
+                    </div>
+                  ))}
+                  <Button 
+                    variant="outline" 
+                    onClick={addRequirement}
+                    className="w-full h-14 rounded-2xl border-dashed border-zinc-800 text-zinc-500 hover:text-white hover:border-white lowercase"
+                  >
+                    + add requirement
+                  </Button>
+                </div>
+
+                <div className="flex gap-4">
+                  <Button variant="ghost" onClick={prevStep} className="h-16 px-8 rounded-2xl text-zinc-500 font-bold lowercase">back</Button>
+                  <Button disabled={formData.requirements.length === 0} onClick={nextStep} className="flex-1 h-16 rounded-2xl bg-white text-black hover:bg-zinc-200 text-xl font-bold lowercase">continue</Button>
+                </div>
+              </motion.div>
+            )}
+
+            {step === 5 && (
+              <motion.div key="step5" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-12">
+                <div className="space-y-4">
+                  <h2 className="text-4xl font-black tracking-tighter lowercase">action blueprints.</h2>
+                  <p className="text-zinc-500 font-medium">detail the plan for each requirement.</p>
+                </div>
+
+                <div className="space-y-12">
+                  {formData.requirements.map((req, idx) => (
+                    <div key={idx} className="bg-zinc-900/50 p-8 rounded-[2.5rem] border border-zinc-800 space-y-6">
+                      <h4 className="text-xl font-black lowercase flex items-center gap-3">
+                        <span className="w-8 h-8 rounded-full bg-white text-black flex items-center justify-center text-sm">{idx + 1}</span>
+                        {req.title}
+                      </h4>
+                      <div className="space-y-6">
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest px-1">first action</label>
+                          <Input 
+                            value={req.first_action} 
+                            onChange={(e) => updateRequirement(idx, 'first_action', e.target.value)}
+                            placeholder="what is the very first step?"
+                            className="h-12 bg-zinc-800 border-zinc-700 rounded-xl px-4 lowercase"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest px-1">weekly commitment</label>
+                          <Input 
+                            value={req.weekly_commitment} 
+                            onChange={(e) => updateRequirement(idx, 'weekly_commitment', e.target.value)}
+                            placeholder="how many hours/units per week?"
+                            className="h-12 bg-zinc-800 border-zinc-700 rounded-xl px-4 lowercase"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="flex gap-4">
+                  <Button variant="ghost" onClick={prevStep} className="h-16 px-8 rounded-2xl text-zinc-500 font-bold lowercase">back</Button>
+                  <Button onClick={nextStep} className="flex-1 h-16 rounded-2xl bg-white text-black hover:bg-zinc-200 text-xl font-bold lowercase">continue</Button>
+                </div>
+              </motion.div>
+            )}
+
+            {step === 6 && (
+              <motion.div key="step6" initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="space-y-12 text-center">
+                <div className="space-y-4">
+                  <div className="w-24 h-24 bg-white rounded-[2rem] flex items-center justify-center mx-auto shadow-[0_0_50px_rgba(255,255,255,0.2)]">
+                    <Rocket size={48} className="text-black" />
+                  </div>
+                  <h2 className="text-5xl font-black tracking-tighter lowercase">ready to commit?</h2>
+                  <p className="text-zinc-500 font-medium">this goal will be added to your active path.</p>
+                </div>
+
+                <div className="bg-zinc-900/50 p-10 rounded-[3rem] border border-zinc-800 text-left space-y-8">
+                  <div className="space-y-1">
+                    <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest">primary objective</p>
+                    <h3 className="text-3xl font-black lowercase leading-tight">{formData.title}</h3>
+                  </div>
+                  <div className="grid grid-cols-2 gap-8">
+                    <div className="space-y-1">
+                      <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest">requirements</p>
+                      <p className="text-2xl font-black">{formData.requirements.length}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest">estimated xp</p>
+                      <p className="text-2xl font-black text-white">100</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-4">
+                  <Button 
+                    disabled={loading}
+                    onClick={handleComplete}
+                    className="w-full h-20 rounded-[2rem] bg-white text-black hover:bg-zinc-200 text-2xl font-black tracking-tight lowercase shadow-xl active:scale-95 transition-all"
+                  >
+                    {loading ? "syncing with destiny..." : "🔥 start execution"}
+                  </Button>
+                  <Button variant="ghost" onClick={prevStep} className="text-zinc-500 font-bold lowercase">i need to change something</Button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default GoalCreationFlow;

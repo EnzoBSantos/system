@@ -2,18 +2,20 @@
 
 import React, { useState, useEffect } from 'react';
 import Sidebar from '@/components/Sidebar';
+import MobileNav from '@/components/MobileNav';
 import Heatmap from '@/components/Heatmap';
 import HabitTracker from '@/components/HabitTracker';
 import PomodoroTimer from '@/components/PomodoroTimer';
 import DashboardStats from '@/components/DashboardStats';
 import CompletionChart from '@/components/CompletionChart';
+import Goals from '@/pages/Goals';
 import { Habit } from '@/types/app';
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { format, parseISO, subDays } from 'date-fns';
 
 const Index = () => {
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'habits' | 'pomodoro'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'habits' | 'pomodoro' | 'goals'>('dashboard');
   const [habits, setHabits] = useState<Habit[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
@@ -108,10 +110,10 @@ const Index = () => {
   };
 
   return (
-    <div className="flex h-screen bg-black text-white overflow-hidden font-sans selection:bg-white selection:text-black">
+    <div className="flex flex-col lg:flex-row h-screen bg-black text-white overflow-hidden font-sans selection:bg-white selection:text-black">
       <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
       
-      <main className="flex-1 overflow-y-auto custom-scrollbar">
+      <main className="flex-1 overflow-y-auto custom-scrollbar pb-32 lg:pb-0">
         <div className="container max-w-7xl mx-auto px-6 py-12 md:px-12 md:py-16">
           {activeTab === 'dashboard' && (
             <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -139,6 +141,12 @@ const Index = () => {
             </div>
           )}
 
+          {activeTab === 'goals' && (
+            <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
+              <Goals />
+            </div>
+          )}
+
           {activeTab === 'pomodoro' && (
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
               <PomodoroTimer />
@@ -146,6 +154,8 @@ const Index = () => {
           )}
         </div>
       </main>
+
+      <MobileNav activeTab={activeTab} setActiveTab={setActiveTab} />
     </div>
   );
 };

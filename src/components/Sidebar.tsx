@@ -1,11 +1,11 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { LayoutDashboard, CheckCircle2, Timer, Bird } from 'lucide-react';
+import { LayoutDashboard, CheckCircle2, Timer, Bird, Target } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { QUOTES } from '@/lib/quotes';
 
-type Tab = 'dashboard' | 'habits' | 'pomodoro';
+type Tab = 'dashboard' | 'habits' | 'pomodoro' | 'goals';
 
 interface SidebarProps {
   activeTab: Tab;
@@ -23,6 +23,7 @@ const Sidebar = ({ activeTab, setActiveTab }: SidebarProps) => {
   const navItems = [
     { id: 'dashboard', label: 'daily', icon: LayoutDashboard },
     { id: 'habits', label: 'rituals', icon: CheckCircle2 },
+    { id: 'goals', label: 'vision', icon: Target },
     { id: 'pomodoro', label: 'focus', icon: Timer },
   ];
 
