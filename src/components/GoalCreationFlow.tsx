@@ -103,6 +103,17 @@ const GoalCreationFlow = ({ onClose, onSuccess }: GoalCreationFlowProps) => {
   const totalSteps = 6;
   const progress = (step / totalSteps) * 100;
 
+  const GoalContext = () => (
+    <motion.div 
+      initial={{ opacity: 0, y: -10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="mb-10 p-6 bg-zinc-900/30 border border-zinc-800/50 rounded-3xl"
+    >
+      <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-[0.2em] mb-1">current objective</p>
+      <p className="text-xl font-bold lowercase tracking-tight text-white">{formData.title}</p>
+    </motion.div>
+  );
+
   return (
     <div className="fixed inset-0 z-[100] bg-black flex flex-col">
       {/* Header / Progress Bar */}
@@ -161,6 +172,7 @@ const GoalCreationFlow = ({ onClose, onSuccess }: GoalCreationFlowProps) => {
 
             {step === 2 && (
               <motion.div key="step2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-10">
+                <GoalContext />
                 <div className="space-y-4">
                   <div className="w-16 h-16 bg-white/5 rounded-[1.5rem] flex items-center justify-center">
                     <Heart size={32} className="text-white" />
@@ -183,70 +195,37 @@ const GoalCreationFlow = ({ onClose, onSuccess }: GoalCreationFlowProps) => {
 
             {step === 3 && (
               <motion.div key="step3" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-12">
-                <div className="space-y-4 text-center">
-                  <h2 className="text-4xl font-black tracking-tighter lowercase">the smart framework.</h2>
-                  <p className="text-zinc-500 font-medium">precision is the mother of success.</p>
+                <GoalContext />
+                <div className="space-y-4">
+                  <div className="w-16 h-16 bg-white/5 rounded-[1.5rem] flex items-center justify-center">
+                    <Calendar size={32} className="text-white" />
+                  </div>
+                  <h2 className="text-5xl font-black tracking-tighter lowercase">when is the deadline?</h2>
+                  <p className="text-zinc-500 font-medium">a goal is just a dream with a deadline.</p>
                 </div>
                 
-                <div className="space-y-10">
-                  <div className="space-y-4">
-                    <label className="flex items-center gap-3 text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500">
-                      <Search size={14} /> specific
-                    </label>
-                    <Input 
-                      value={formData.specific} 
-                      onChange={(e) => setFormData({...formData, specific: e.target.value})}
-                      placeholder="what exactly does success look like?"
-                      className="h-14 bg-zinc-900 border-zinc-800 rounded-2xl px-6 focus:border-white lowercase"
-                    />
-                  </div>
-
-                  <div className="space-y-4">
-                    <label className="flex items-center gap-3 text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500">
-                      <Ruler size={14} /> measurable
-                    </label>
-                    <Input 
-                      value={formData.measurable} 
-                      onChange={(e) => setFormData({...formData, measurable: e.target.value})}
-                      placeholder="how will you track completion?"
-                      className="h-14 bg-zinc-900 border-zinc-800 rounded-2xl px-6 focus:border-white lowercase"
-                    />
-                  </div>
-
-                  <div className="space-y-4">
-                    <label className="flex items-center gap-3 text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500">
-                      <Footprints size={14} /> achievable
-                    </label>
-                    <Input 
-                      value={formData.achievable} 
-                      onChange={(e) => setFormData({...formData, achievable: e.target.value})}
-                      placeholder="is this realistic for your current life?"
-                      className="h-14 bg-zinc-900 border-zinc-800 rounded-2xl px-6 focus:border-white lowercase"
-                    />
-                  </div>
-
-                  <div className="space-y-4">
-                    <label className="flex items-center gap-3 text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500">
-                      <Anchor size={14} /> relevant
-                    </label>
-                    <Input 
-                      value={formData.relevant} 
-                      onChange={(e) => setFormData({...formData, relevant: e.target.value})}
-                      placeholder="why is this aligned with your vision?"
-                      className="h-14 bg-zinc-900 border-zinc-800 rounded-2xl px-6 focus:border-white lowercase"
-                    />
-                  </div>
+                <div className="space-y-4">
+                  <label className="flex items-center gap-3 text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500">
+                    target completion date
+                  </label>
+                  <Input 
+                    type="date"
+                    value={formData.deadline} 
+                    onChange={(e) => setFormData({...formData, deadline: e.target.value})}
+                    className="h-20 text-3xl font-bold bg-transparent border-b-2 border-t-0 border-x-0 border-zinc-800 focus:border-white rounded-none px-0 lowercase tracking-tight outline-none ring-0 focus-visible:ring-0"
+                  />
                 </div>
 
                 <div className="flex gap-4">
                   <Button variant="ghost" onClick={prevStep} className="h-16 px-8 rounded-2xl text-zinc-500 font-bold lowercase">back</Button>
-                  <Button onClick={nextStep} className="flex-1 h-16 rounded-2xl bg-white text-black hover:bg-zinc-200 text-xl font-bold lowercase">continue</Button>
+                  <Button disabled={!formData.deadline} onClick={nextStep} className="flex-1 h-16 rounded-2xl bg-white text-black hover:bg-zinc-200 text-xl font-bold lowercase">continue</Button>
                 </div>
               </motion.div>
             )}
 
             {step === 4 && (
               <motion.div key="step4" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-10">
+                <GoalContext />
                 <div className="space-y-4">
                   <div className="w-16 h-16 bg-white/5 rounded-[1.5rem] flex items-center justify-center">
                     <Sparkles size={32} className="text-white" />
@@ -294,6 +273,7 @@ const GoalCreationFlow = ({ onClose, onSuccess }: GoalCreationFlowProps) => {
 
             {step === 5 && (
               <motion.div key="step5" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-12">
+                <GoalContext />
                 <div className="space-y-4">
                   <h2 className="text-4xl font-black tracking-tighter lowercase">action blueprints.</h2>
                   <p className="text-zinc-500 font-medium">detail the plan for each requirement.</p>
@@ -358,8 +338,8 @@ const GoalCreationFlow = ({ onClose, onSuccess }: GoalCreationFlowProps) => {
                       <p className="text-2xl font-black">{formData.requirements.length}</p>
                     </div>
                     <div className="space-y-1">
-                      <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest">estimated xp</p>
-                      <p className="text-2xl font-black text-white">100</p>
+                      <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest">deadline</p>
+                      <p className="text-xl font-black text-white">{formData.deadline || 'not set'}</p>
                     </div>
                   </div>
                 </div>
