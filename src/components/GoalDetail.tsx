@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Goal, GoalRequirement } from '@/types/goals';
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from '@/components/ui/button';
-import { Check, X, Calendar, Flame, Target, Trash2, ArrowLeft, LayoutList, Share2, Plus, Loader2 } from 'lucide-react';
+import { Check, X, Calendar, Flame, Target, Trash2, ArrowLeft, LayoutList, Share2, Plus, Loader2, Edit2 } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
 import { cn } from '@/lib/utils';
 import confetti from 'canvas-confetti';
@@ -22,6 +22,7 @@ interface GoalDetailProps {
 const GoalDetail = ({ goalId, onClose, onUpdate }: GoalDetailProps) => {
   const [goal, setGoal] = useState<Goal | null>(null);
   const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState(false);
   const [view, setView] = useState<'list' | 'mindmap'>('list');
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editNodeData, setEditNodeData] = useState<{type: 'goal' | 'requirement', id?: string, title: string}>({type: 'goal', title: ''});
@@ -92,21 +93,42 @@ const GoalDetail = ({ goalId, onClose, onUpdate }: GoalDetailProps) => {
     }
   };
 
-  const addNewPillar = async () => {
+  const addNewPillar = async (e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    
+    if (actionLoading) return;
+    
+    setActionLoading(true);
     const { error } = await supabase.from('goal_requirements').insert({
       goal_id: goalId,
-      title: 'new pilar',
+      title: 'new vision pilar',
       is_completed: false
     });
+    
+    if (!error) {
+      await fetchGoal();
+      onUpdate();
+      toast({ title: "pilar created." });
+    }
+    setActionLoading(false);
+  };
+
+  const deleteRequirement = async (id: string) => {
+    if (!confirm("remove this pilar from your vision?")) return;
+    
+    const { error } = await supabase.from('goal_requirements').delete().eq('id', id);
     if (!error) {
       fetchGoal();
       onUpdate();
-      toast({ title: "pilar added to the vision." });
+      toast({ title: "pilar removed." });
     }
   };
 
   const deleteGoal = async () => {
-    if (confirm("are you sure you want to abandon this path?")) {
+    if (confirm("are you sure you want to abandon this entire vision?")) {
       const { error } = await supabase.from('goals').delete().eq('id', goalId);
       if (!error) {
         onUpdate();
@@ -129,8 +151,8 @@ const GoalDetail = ({ goalId, onClose, onUpdate }: GoalDetailProps) => {
       exit={{ opacity: 0, x: '100%' }}
       className="fixed inset-0 z-[1000] bg-black overflow-y-auto h-screen w-screen"
     >
-      <div className="max-w-6xl mx-auto px-6 py-12 md:py-20 space-y-12">
-        <header className="flex items-center justify-between">
+      <div className="max-w-7xl mx-auto px-6 py-12 md:py-16 space-y-12 h-full flex flex-col">
+        <header className="flex items-center justify-between shrink-0">
           <Button variant="ghost" onClick={onClose} className="rounded-2xl text-zinc-500 hover:text-white gap-2 font-bold lowercase">
             <ArrowLeft size={20} /> back
           </Button>
@@ -139,135 +161,159 @@ const GoalDetail = ({ goalId, onClose, onUpdate }: GoalDetailProps) => {
             <button 
               onClick={() => setView('list')}
               className={cn(
-                "px-4 py-2 rounded-xl flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest transition-all",
+                "px-6 py-2 rounded-xl flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest transition-all",
                 view === 'list' ? "bg-white text-black" : "text-zinc-500 hover:text-zinc-300"
               )}
             >
-              <LayoutList size={14} /> list
+              <LayoutList size={14} /> list view
             </button>
             <button 
               onClick={() => setView('mindmap')}
               className={cn(
-                "px-4 py-2 rounded-xl flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest transition-all",
+                "px-6 py-2 rounded-xl flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest transition-all",
                 view === 'mindmap' ? "bg-white text-black" : "text-zinc-500 hover:text-zinc-300"
               )}
             >
-              <Share2 size={14} /> map
+              <Share2 size={14} /> mind map
             </button>
           </div>
 
           <Button variant="ghost" onClick={deleteGoal} className="rounded-2xl text-zinc-800 hover:text-red-500 gap-2 font-bold lowercase">
-            <Trash2 size={20} /> abandon
+            <Trash2 size={20} /> abandon vision
           </Button>
         </header>
 
-        <AnimatePresence mode="wait">
-          {view === 'mindmap' ? (
-            <motion.div 
-              key="mindmap"
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.9 }}
-            >
-              <GoalMindMap 
-                goal={goal} 
-                onAddRequirement={addNewPillar}
-                onEditNode={handleEditNode}
-              />
-            </motion.div>
-          ) : (
-            <motion.div 
-              key="list"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 20 }}
-              className="grid lg:grid-cols-[1fr_320px] gap-12"
-            >
-              <div className="space-y-12">
-                <div className="space-y-4">
-                  <div className="flex items-center gap-4">
-                    <span className="bg-white/10 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest text-zinc-400">
-                      level {goal.level}
-                    </span>
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-600 cursor-pointer hover:text-white" onClick={() => handleEditNode('goal')}>
-                      edit vision title
-                    </span>
-                  </div>
-                  <h1 className="text-6xl font-black tracking-tighter lowercase leading-tight">{goal.title}</h1>
-                  <p className="text-2xl text-zinc-500 font-medium lowercase italic leading-relaxed">"{goal.why}"</p>
-                </div>
-
-                <div className="space-y-8">
-                  <div className="flex items-center justify-between px-2">
-                    <h3 className="text-[10px] font-bold uppercase tracking-[0.3em] text-zinc-500">active requirements</h3>
-                    <Button variant="ghost" size="sm" onClick={addNewPillar} className="text-[10px] font-bold uppercase tracking-widest hover:text-white">
-                      <Plus size={14} className="mr-1" /> add
-                    </Button>
-                  </div>
+        <div className="flex-1 min-h-0">
+          <AnimatePresence mode="wait">
+            {view === 'mindmap' ? (
+              <motion.div 
+                key="mindmap"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                className="h-full w-full"
+              >
+                <GoalMindMap 
+                  goal={goal} 
+                  onAddRequirement={addNewPillar}
+                  onEditNode={handleEditNode}
+                  onDeleteRequirement={deleteRequirement}
+                />
+              </motion.div>
+            ) : (
+              <motion.div 
+                key="list"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 20 }}
+                className="grid lg:grid-cols-[1fr_350px] gap-12"
+              >
+                <div className="space-y-12">
                   <div className="space-y-4">
-                    {goal.requirements?.map((req: any) => (
-                      <div key={req.id} className="group relative">
-                        <button
-                          onClick={() => toggleRequirement(req.id, req.is_completed)}
-                          className={cn(
-                            "w-full p-8 rounded-[2.5rem] border flex items-center gap-6 transition-all",
-                            req.is_completed 
-                              ? "bg-zinc-900 border-transparent opacity-60" 
-                              : "bg-black border-zinc-800 hover:border-white/20"
-                          )}
-                        >
-                          <div className={cn(
-                            "w-12 h-12 rounded-2xl flex items-center justify-center transition-all",
-                            req.is_completed ? "bg-white text-black" : "bg-zinc-900 text-zinc-600"
-                          )}>
-                            {req.is_completed ? <Check size={24} strokeWidth={3} /> : <div className="w-2 h-2 rounded-full bg-current" />}
-                          </div>
-                          <div className="text-left flex-1">
-                            <h4 className={cn("text-xl font-bold lowercase", req.is_completed && "line-through text-zinc-500")}>{req.title}</h4>
-                            {req.first_action && !req.is_completed && (
-                              <p className="text-sm text-zinc-500 font-medium lowercase mt-1">next: {req.first_action}</p>
+                    <div className="flex items-center gap-4">
+                      <span className="bg-white/10 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest text-zinc-400">
+                        active architecture
+                      </span>
+                    </div>
+                    <h1 className="text-7xl font-black tracking-tighter lowercase leading-[0.9]">{goal.title}</h1>
+                    <p className="text-2xl text-zinc-500 font-medium lowercase leading-relaxed max-w-2xl">"{goal.why}"</p>
+                  </div>
+
+                  <div className="space-y-8">
+                    <div className="flex items-center justify-between px-2 border-b border-zinc-900 pb-4">
+                      <h3 className="text-[10px] font-bold uppercase tracking-[0.3em] text-zinc-600">architecture pilars</h3>
+                      <Button variant="ghost" size="sm" onClick={() => addNewPillar()} className="text-[10px] font-bold uppercase tracking-widest hover:text-white">
+                        <Plus size={14} className="mr-1" /> new pilar
+                      </Button>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {goal.requirements?.map((req: any) => (
+                        <div key={req.id} className="group relative">
+                          <button
+                            onClick={() => toggleRequirement(req.id, req.is_completed)}
+                            className={cn(
+                              "w-full p-8 rounded-[3rem] border flex items-center gap-6 transition-all text-left",
+                              req.is_completed 
+                                ? "bg-zinc-900/30 border-transparent opacity-60" 
+                                : "bg-black border-zinc-800 hover:border-white/20"
                             )}
+                          >
+                            <div className={cn(
+                              "w-14 h-14 rounded-2xl flex items-center justify-center transition-all shrink-0",
+                              req.is_completed ? "bg-white text-black shadow-lg" : "bg-zinc-900 text-zinc-600"
+                            )}>
+                              {req.is_completed ? <Check size={28} strokeWidth={3} /> : <div className="w-2 h-2 rounded-full bg-current" />}
+                            </div>
+                            <div className="flex-1 pr-8">
+                              <h4 className={cn("text-xl font-bold lowercase leading-tight", req.is_completed && "line-through text-zinc-500")}>{req.title}</h4>
+                            </div>
+                          </button>
+                          
+                          <div className="absolute top-4 right-4 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <Button 
+                              size="icon" 
+                              variant="ghost" 
+                              onClick={(e) => { e.stopPropagation(); handleEditNode('requirement', req.id); }}
+                              className="w-10 h-10 rounded-full text-zinc-500 hover:text-white"
+                            >
+                              <Edit2 size={16} />
+                            </Button>
+                            <Button 
+                              size="icon" 
+                              variant="ghost" 
+                              onClick={(e) => { e.stopPropagation(); deleteRequirement(req.id); }}
+                              className="w-10 h-10 rounded-full text-zinc-500 hover:text-red-500"
+                            >
+                              <Trash2 size={16} />
+                            </Button>
                           </div>
-                        </button>
-                        <button 
-                          onClick={(e) => { e.stopPropagation(); handleEditNode('requirement', req.id); }}
-                          className="absolute top-1/2 -right-4 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-zinc-900 p-3 rounded-xl border border-zinc-800 hover:text-white"
-                        >
-                          <Share2 size={16} />
-                        </button>
-                      </div>
-                    ))}
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <aside className="space-y-8">
-                <div className="bg-zinc-900 p-8 rounded-[3rem] space-y-8 border border-zinc-800">
-                  <div className="space-y-4">
-                    <div className="flex justify-between items-end">
-                      <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">progress</p>
-                      <p className="text-3xl font-black">{progress}%</p>
+                <aside className="space-y-8">
+                  <div className="bg-zinc-900/50 p-10 rounded-[3rem] space-y-10 border border-zinc-800/50 sticky top-0">
+                    <div className="space-y-6">
+                      <div className="flex justify-between items-end">
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">completion</p>
+                        <p className="text-4xl font-black">{progress}%</p>
+                      </div>
+                      <div className="h-6 bg-black rounded-full overflow-hidden p-1">
+                        <motion.div 
+                          className="h-full bg-white rounded-full shadow-[0_0_20px_rgba(255,255,255,0.3)]" 
+                          initial={{ width: 0 }}
+                          animate={{ width: `${progress}%` }}
+                        />
+                      </div>
                     </div>
-                    <div className="h-4 bg-black rounded-full overflow-hidden">
-                      <motion.div 
-                        className="h-full bg-white" 
-                        initial={{ width: 0 }}
-                        animate={{ width: `${progress}%` }}
-                      />
+                    
+                    <div className="space-y-4 pt-4 border-t border-zinc-800">
+                       <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">vision analytics</p>
+                       <div className="grid grid-cols-2 gap-4">
+                          <div className="p-4 bg-black rounded-2xl border border-zinc-800">
+                             <p className="text-2xl font-black">{totalCount}</p>
+                             <p className="text-[8px] font-bold uppercase text-zinc-500">total pilars</p>
+                          </div>
+                          <div className="p-4 bg-black rounded-2xl border border-zinc-800">
+                             <p className="text-2xl font-black">{completedCount}</p>
+                             <p className="text-[8px] font-bold uppercase text-zinc-500">achieved</p>
+                          </div>
+                       </div>
                     </div>
                   </div>
-                </div>
-              </aside>
-            </motion.div>
-          )}
-        </AnimatePresence>
+                </aside>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
       </div>
 
-      {/* Modal de Edição Rápida */}
       <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
         <DialogContent className="bg-zinc-950 border-zinc-900 rounded-[2.5rem] p-8 max-w-sm">
           <DialogHeader>
-            <DialogTitle className="text-2xl font-black lowercase tracking-tight">edit {editNodeData.type}.</DialogTitle>
+            <DialogTitle className="text-2xl font-black lowercase tracking-tight">edit vision pilar.</DialogTitle>
           </DialogHeader>
           <div className="space-y-6 py-4">
             <Input 
@@ -275,9 +321,10 @@ const GoalDetail = ({ goalId, onClose, onUpdate }: GoalDetailProps) => {
               onChange={(e) => setEditNodeData({...editNodeData, title: e.target.value})}
               className="h-14 bg-zinc-900 border-zinc-800 rounded-2xl px-6 focus:border-white lowercase text-lg"
               autoFocus
+              onKeyDown={(e) => e.key === 'Enter' && saveNodeEdit()}
             />
             <Button onClick={saveNodeEdit} className="w-full h-14 bg-white text-black hover:bg-zinc-200 font-bold rounded-2xl lowercase">
-              save changes
+              save vision
             </Button>
           </div>
         </DialogContent>
