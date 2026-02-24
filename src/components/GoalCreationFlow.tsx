@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { ArrowRight, ArrowLeft, Target, Heart, Search, Ruler, Footprints, Anchor, Calendar, Rocket, Sparkles, Lightbulb, Loader2 } from 'lucide-react';
+import { ArrowRight, ArrowLeft, Target, Heart, Search, Ruler, Footprints, Anchor, Calendar, Rocket, Sparkles, Lightbulb, Loader2, X } from 'lucide-react';
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import confetti from 'canvas-confetti';
@@ -14,6 +14,28 @@ interface GoalCreationFlowProps {
   onClose: () => void;
   onSuccess: () => void;
 }
+
+// Moved outside to prevent re-creation and re-animation on every keystroke
+const GoalContextPreview = ({ title }: { title: string }) => (
+  <motion.div 
+    initial={{ opacity: 0, y: -10 }}
+    animate={{ opacity: 1, y: 0 }}
+    className="mb-10 p-6 bg-zinc-900/30 border border-zinc-800/50 rounded-3xl"
+  >
+    <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-[0.2em] mb-1">current objective</p>
+    <p className="text-xl font-bold tracking-tight text-white">{title}</p>
+  </motion.div>
+);
+
+const StepTip = ({ title, text }: { title: string, text: string }) => (
+  <div className="bg-white/5 border border-white/5 p-4 rounded-2xl flex gap-3 mt-6">
+    <Lightbulb className="text-zinc-400 shrink-0" size={16} />
+    <div className="space-y-1">
+      <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-300">{title}</p>
+      <p className="text-xs text-zinc-500 font-medium lowercase">{text}</p>
+    </div>
+  </div>
+);
 
 const GoalCreationFlow = ({ onClose, onSuccess }: GoalCreationFlowProps) => {
   const [step, setStep] = useState(1);
@@ -47,6 +69,11 @@ const GoalCreationFlow = ({ onClose, onSuccess }: GoalCreationFlowProps) => {
     setFormData(prev => ({ ...prev, requirements: updated }));
   };
 
+  const removeRequirement = (index: number) => {
+    const updated = formData.requirements.filter((_, i) => i !== index);
+    setFormData(prev => ({ ...prev, requirements: updated }));
+  };
+
   const handleComplete = async () => {
     try {
       setLoading(true);
@@ -57,7 +84,6 @@ const GoalCreationFlow = ({ onClose, onSuccess }: GoalCreationFlowProps) => {
         return;
       }
 
-      // 1. Criar a meta
       const { data: goalData, error: goalError } = await supabase
         .from('goals')
         .insert([{
@@ -78,9 +104,7 @@ const GoalCreationFlow = ({ onClose, onSuccess }: GoalCreationFlowProps) => {
 
       if (goalError) throw goalError;
 
-      // 2. Criar os requisitos se existirem
       if (formData.requirements.length > 0) {
-        // Filtrar requisitos vazios
         const validReqs = formData.requirements
           .filter(r => r.title.trim() !== '')
           .map(r => ({
@@ -107,7 +131,6 @@ const GoalCreationFlow = ({ onClose, onSuccess }: GoalCreationFlowProps) => {
 
       toast({ title: "plan activated.", description: "your future starts now." });
       
-      // Chamar onSuccess e fechar
       setTimeout(() => {
         onSuccess();
       }, 500);
@@ -126,27 +149,6 @@ const GoalCreationFlow = ({ onClose, onSuccess }: GoalCreationFlowProps) => {
 
   const totalSteps = 6;
   const progress = (step / totalSteps) * 100;
-
-  const GoalContext = () => (
-    <motion.div 
-      initial={{ opacity: 0, y: -10 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="mb-10 p-6 bg-zinc-900/30 border border-zinc-800/50 rounded-3xl"
-    >
-      <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-[0.2em] mb-1">current objective</p>
-      <p className="text-xl font-bold lowercase tracking-tight text-white">{formData.title}</p>
-    </motion.div>
-  );
-
-  const StepTip = ({ title, text }: { title: string, text: string }) => (
-    <div className="bg-white/5 border border-white/5 p-4 rounded-2xl flex gap-3 mt-6">
-      <Lightbulb className="text-zinc-400 shrink-0" size={16} />
-      <div className="space-y-1">
-        <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-300">{title}</p>
-        <p className="text-xs text-zinc-500 font-medium lowercase">{text}</p>
-      </div>
-    </div>
-  );
 
   return (
     <div className="fixed inset-0 z-[100] bg-black flex flex-col">
@@ -185,8 +187,8 @@ const GoalCreationFlow = ({ onClose, onSuccess }: GoalCreationFlowProps) => {
                   <Input 
                     value={formData.title}
                     onChange={(e) => setFormData({...formData, title: e.target.value})}
-                    placeholder="e.g. launch my startup"
-                    className="h-20 text-3xl font-bold bg-transparent border-b-2 border-t-0 border-x-0 border-zinc-800 focus:border-white rounded-none px-0 lowercase tracking-tight outline-none ring-0 focus-visible:ring-0"
+                    placeholder="e.g. Launch my startup"
+                    className="h-20 text-3xl font-bold bg-transparent border-b-2 border-t-0 border-x-0 border-zinc-800 focus:border-white rounded-none px-0 tracking-tight outline-none ring-0 focus-visible:ring-0"
                   />
                 </div>
                 <StepTip title="pro tip" text="the best goals are specific. instead of 'be healthy', try 'run a 5k in under 25 minutes'." />
@@ -196,7 +198,7 @@ const GoalCreationFlow = ({ onClose, onSuccess }: GoalCreationFlowProps) => {
 
             {step === 2 && (
               <motion.div key="step2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-10">
-                <GoalContext />
+                <GoalContextPreview title={formData.title} />
                 <div className="space-y-4">
                   <div className="w-16 h-16 bg-white/5 rounded-[1.5rem] flex items-center justify-center">
                     <Heart size={32} className="text-white" />
@@ -208,7 +210,7 @@ const GoalCreationFlow = ({ onClose, onSuccess }: GoalCreationFlowProps) => {
                   value={formData.why}
                   onChange={(e) => setFormData({...formData, why: e.target.value})}
                   placeholder="this goal matters to me because..."
-                  className="min-h-[200px] text-xl bg-zinc-900/50 border-zinc-800 rounded-3xl p-8 focus:border-white lowercase"
+                  className="min-h-[200px] text-xl bg-zinc-900/50 border-zinc-800 rounded-3xl p-8 focus:border-white"
                 />
                 <StepTip title="think deeper" text="don't just say 'to make money'. ask yourself why that money matters—is it for freedom? for your family?" />
                 <div className="flex gap-4">
@@ -220,7 +222,7 @@ const GoalCreationFlow = ({ onClose, onSuccess }: GoalCreationFlowProps) => {
 
             {step === 3 && (
               <motion.div key="step3" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-12">
-                <GoalContext />
+                <GoalContextPreview title={formData.title} />
                 <div className="space-y-4">
                   <div className="w-16 h-16 bg-white/5 rounded-[1.5rem] flex items-center justify-center">
                     <Calendar size={32} className="text-white" />
@@ -233,7 +235,7 @@ const GoalCreationFlow = ({ onClose, onSuccess }: GoalCreationFlowProps) => {
                     type="date"
                     value={formData.deadline} 
                     onChange={(e) => setFormData({...formData, deadline: e.target.value})}
-                    className="h-20 text-3xl font-bold bg-transparent border-b-2 border-t-0 border-x-0 border-zinc-800 focus:border-white rounded-none px-0 lowercase tracking-tight outline-none ring-0 focus-visible:ring-0"
+                    className="h-20 text-3xl font-bold bg-transparent border-b-2 border-t-0 border-x-0 border-zinc-800 focus:border-white rounded-none px-0 tracking-tight outline-none ring-0 focus-visible:ring-0"
                   />
                 </div>
                 <div className="flex gap-4">
@@ -245,7 +247,7 @@ const GoalCreationFlow = ({ onClose, onSuccess }: GoalCreationFlowProps) => {
 
             {step === 4 && (
               <motion.div key="step4" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-10">
-                <GoalContext />
+                <GoalContextPreview title={formData.title} />
                 <div className="space-y-4">
                   <div className="w-16 h-16 bg-white/5 rounded-[1.5rem] flex items-center justify-center">
                     <Sparkles size={32} className="text-white" />
@@ -259,13 +261,12 @@ const GoalCreationFlow = ({ onClose, onSuccess }: GoalCreationFlowProps) => {
                       <Input 
                         value={req.title}
                         onChange={(e) => updateRequirement(idx, 'title', e.target.value)}
-                        placeholder="e.g. finish first draft, run 10km, find a mentor"
-                        className="h-14 bg-zinc-900 border-zinc-800 rounded-2xl px-6 focus:border-white lowercase"
+                        placeholder="e.g. Finish first draft, run 10km, find a mentor"
+                        className="h-14 bg-zinc-900 border-zinc-800 rounded-2xl px-6 focus:border-white"
                       />
-                      <Button variant="ghost" onClick={() => {
-                        const updated = formData.requirements.filter((_, i) => i !== idx);
-                        setFormData({...formData, requirements: updated});
-                      }} className="h-14 w-14 rounded-2xl text-zinc-500">&times;</Button>
+                      <Button variant="ghost" size="icon" onClick={() => removeRequirement(idx)} className="h-14 w-14 rounded-2xl text-zinc-500 hover:text-red-500">
+                        <X size={20} />
+                      </Button>
                     </div>
                   ))}
                   <Button variant="outline" onClick={addRequirement} className="w-full h-14 rounded-2xl border-dashed border-zinc-800 text-zinc-500 hover:text-white hover:border-white lowercase">+ add requirement</Button>
@@ -279,7 +280,7 @@ const GoalCreationFlow = ({ onClose, onSuccess }: GoalCreationFlowProps) => {
 
             {step === 5 && (
               <motion.div key="step5" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-12">
-                <GoalContext />
+                <GoalContextPreview title={formData.title} />
                 <div className="space-y-4">
                   <h2 className="text-4xl font-black tracking-tighter lowercase">action blueprints.</h2>
                   <p className="text-zinc-500 font-medium">detail the plan for each requirement.</p>
@@ -288,7 +289,7 @@ const GoalCreationFlow = ({ onClose, onSuccess }: GoalCreationFlowProps) => {
                   {formData.requirements.map((req, idx) => (
                     <div key={idx} className="bg-zinc-900/50 p-8 rounded-[2.5rem] border border-zinc-800 space-y-6">
                       <h4 className="text-xl font-black lowercase flex items-center gap-3">
-                        <span className="w-8 h-8 rounded-full bg-white text-black flex items-center justify-center text-sm">{idx + 1}</span>
+                        <span className="w-8 h-8 rounded-full bg-white text-black flex items-center justify-center text-sm font-bold">{idx + 1}</span>
                         {req.title}
                       </h4>
                       <div className="space-y-6">
@@ -297,8 +298,8 @@ const GoalCreationFlow = ({ onClose, onSuccess }: GoalCreationFlowProps) => {
                           <Input 
                             value={req.first_action} 
                             onChange={(e) => updateRequirement(idx, 'first_action', e.target.value)}
-                            placeholder="e.g. buy running shoes, open new doc"
-                            className="h-12 bg-zinc-800 border-zinc-700 rounded-xl px-4 lowercase"
+                            placeholder="e.g. Buy running shoes, open new doc"
+                            className="h-12 bg-zinc-800 border-zinc-700 rounded-xl px-4"
                           />
                         </div>
                         <div className="space-y-2">
@@ -307,7 +308,7 @@ const GoalCreationFlow = ({ onClose, onSuccess }: GoalCreationFlowProps) => {
                             value={req.weekly_commitment} 
                             onChange={(e) => updateRequirement(idx, 'weekly_commitment', e.target.value)}
                             placeholder="e.g. 5 hours, 3 sessions"
-                            className="h-12 bg-zinc-800 border-zinc-700 rounded-xl px-4 lowercase"
+                            className="h-12 bg-zinc-800 border-zinc-700 rounded-xl px-4"
                           />
                         </div>
                       </div>
@@ -333,7 +334,7 @@ const GoalCreationFlow = ({ onClose, onSuccess }: GoalCreationFlowProps) => {
                 <div className="bg-zinc-900/50 p-10 rounded-[3rem] border border-zinc-800 text-left space-y-8">
                   <div className="space-y-1">
                     <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest">primary objective</p>
-                    <h3 className="text-3xl font-black lowercase leading-tight">{formData.title}</h3>
+                    <h3 className="text-3xl font-black leading-tight">{formData.title}</h3>
                   </div>
                   <div className="grid grid-cols-2 gap-8">
                     <div className="space-y-1">
