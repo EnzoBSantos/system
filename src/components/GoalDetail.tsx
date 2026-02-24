@@ -201,10 +201,9 @@ const GoalDetail = ({ goalId, onClose, onUpdate }: GoalDetailProps) => {
                 />
                 
                 {/* Fixed Add Button for Mind Map */}
-                <div className="absolute bottom-12 right-12 z-[60]">
+                <div className="absolute bottom-12 right-12 z-[100]">
                   <Button 
-                    onClick={handleOpenCreate}
-                    onMouseDown={(e) => e.stopPropagation()}
+                    onMouseDown={(e) => handleOpenCreate(e)}
                     className="h-16 px-10 rounded-[2rem] bg-white text-black hover:bg-zinc-200 shadow-2xl font-black lowercase gap-4 text-xl border-4 border-black/10"
                   >
                     <Plus size={28} /> add vision pilar
