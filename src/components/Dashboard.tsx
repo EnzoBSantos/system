@@ -64,6 +64,25 @@ const Dashboard = ({ habits, sessions, onToggleHabit }: DashboardProps) => {
         <p className="text-sm font-medium leading-relaxed italic text-zinc-300">"what you think, you become."</p>
       </motion.div>
 
+      {/* Stats Grid - Moved above the graph */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+        {stats.map((stat, idx) => (
+          <motion.div
+            key={stat.label}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: idx * 0.1 }}
+            className="bg-zinc-900 p-5 md:p-8 rounded-[2rem] md:rounded-[2.5rem] space-y-3 md:space-y-4 hover:bg-zinc-800 transition-colors border border-transparent hover:border-zinc-700"
+          >
+            <div className="flex items-center justify-between">
+              <stat.icon className="text-white" size={20} />
+              <span className="text-[9px] md:text-[10px] font-bold text-zinc-500 uppercase tracking-widest">{stat.label}</span>
+            </div>
+            <p className="text-2xl md:text-4xl font-extrabold tracking-tighter">{stat.value}</p>
+          </motion.div>
+        ))}
+      </div>
+
       <div className="grid lg:grid-cols-3 gap-6 md:gap-8">
         <div className="lg:col-span-2">
           <Heatmap habits={habits} onToggleHabit={onToggleHabit} />
@@ -105,25 +124,6 @@ const Dashboard = ({ habits, sessions, onToggleHabit }: DashboardProps) => {
             <p className="text-xs md:text-sm text-zinc-500 px-4 md:px-6 font-medium">your discipline defines your peace.</p>
           </div>
         </div>
-      </div>
-
-      {/* Stats Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
-        {stats.map((stat, idx) => (
-          <motion.div
-            key={stat.label}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: idx * 0.1 }}
-            className="bg-zinc-900 p-5 md:p-8 rounded-[2rem] md:rounded-[2.5rem] space-y-3 md:space-y-4 hover:bg-zinc-800 transition-colors border border-transparent hover:border-zinc-700"
-          >
-            <div className="flex items-center justify-between">
-              <stat.icon className="text-white" size={20} />
-              <span className="text-[9px] md:text-[10px] font-bold text-zinc-500 uppercase tracking-widest">{stat.label}</span>
-            </div>
-            <p className="text-2xl md:text-4xl font-extrabold tracking-tighter">{stat.value}</p>
-          </motion.div>
-        ))}
       </div>
     </div>
   );
