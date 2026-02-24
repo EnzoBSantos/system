@@ -27,7 +27,6 @@ const Index = () => {
     const { data: sessionsData } = await supabase.from('pomodoro_sessions').select('*');
     
     if (habitsData) {
-      // Map snake_case from DB to camelCase for App
       const mappedHabits: Habit[] = habitsData.map(h => ({
         id: h.id,
         name: h.name,
@@ -59,24 +58,30 @@ const Index = () => {
     const habit = habits.find(h => h.id === habitId);
     if (!habit) return;
 
+    // Optimistic Update: Update UI immediately
     let newCompletedDays = [...(habit.completedDays || [])];
-    if (newCompletedDays.includes(date)) {
+    const isRemoving = newCompletedDays.includes(date);
+    
+    if (isRemoving) {
       newCompletedDays = newCompletedDays.filter(d => d !== date);
     } else {
       newCompletedDays.push(date);
     }
 
-    // Update DB using snake_case
+    // Set local state immediately for instant feedback
+    setHabits(prev => prev.map(h => h.id === habitId ? { ...h, completedDays: newCompletedDays } : h));
+
+    // Update DB in background
     const { error } = await supabase
       .from('habits')
       .update({ completed_days: newCompletedDays })
       .eq('id', habitId);
 
     if (error) {
+      // Revert on error
       console.error("Error updating habit:", error);
-      toast({ title: "Error updating ritual", variant: "destructive" });
-    } else {
-      setHabits(prev => prev.map(h => h.id === habitId ? { ...h, completedDays: newCompletedDays } : h));
+      toast({ title: "Error syncing with server", variant: "destructive" });
+      fetchData(); // Refetch to get correct state
     }
   };
 
