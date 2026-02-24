@@ -1,321 +1,78 @@
 "use client";
 
-import React, { useState, useMemo, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState, useEffect } from 'react';
 import Sidebar from '@/components/Sidebar';
-import MobileNav from '@/components/MobileNav';
 import Dashboard from '@/components/Dashboard';
-import HabitCard from '@/components/HabitCard';
-import AddHabitDialog from '@/components/AddHabitDialog';
+import HabitTracker from '@/components/HabitTracker';
 import PomodoroTimer from '@/components/PomodoroTimer';
+import MobileNav from '@/components/MobileNav';
 import { Habit, PomodoroSession } from '@/types/app';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Search, LogOut, Database, AlertCircle } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { supabase } from '@/integrations/supabase/client';
-import { showSuccess, showError } from '@/utils/toast';
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/components/ui/use-toast";
+
+type Tab = 'dashboard' | 'habits' | 'pomodoro';
 
 const Index = () => {
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'habits' | 'pomodoro'>('dashboard');
-  const [search, setSearch] = useState('');
-  const [filter, setFilter] = useState<'All' | 'Completed' | 'Pending'>('All');
+  const [activeTab, setActiveTab] = useState<Tab>('dashboard');
   const [habits, setHabits] = useState<Habit[]>([]);
   const [sessions, setSessions] = useState<PomodoroSession[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [dbError, setDbError] = useState<string | null>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     fetchData();
   }, []);
 
   const fetchData = async () => {
-    try {
-      setLoading(true);
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const [habitsRes, sessionsRes] = await Promise.all([
-        supabase.from('habits').select('*').order('created_at', { ascending: false }),
-        supabase.from('pomodoro_sessions').select('*').order('timestamp', { ascending: false })
-      ]);
-
-      if (habitsRes.error) {
-        console.error('Habits fetch error:', habitsRes.error);
-        if (habitsRes.error.message.includes('cache') || habitsRes.error.code === 'PGRST116') {
-          setDbError("the 'habits' table isn't ready in Supabase yet.");
-        }
-      } else if (habitsRes.data) {
-        setHabits(habitsRes.data.map(h => ({
-          ...h,
-          completedDays: h.completed_days || []
-        })));
-        setDbError(null);
-      }
-      
-      if (sessionsRes.data) setSessions(sessionsRes.data);
-    } catch (error) {
-      console.error('Unexpected error:', error);
-    } finally {
-      setLoading(false);
-    }
+    const { data: habitsData } = await supabase.from('habits').select('*');
+    const { data: sessionsData } = await supabase.from('pomodoro_sessions').select('*');
+    
+    if (habitsData) setHabits(habitsData);
+    if (sessionsData) setSessions(sessionsData);
   };
 
-  const filteredHabits = useMemo(() => {
-    return habits.filter(h => {
-      const matchesSearch = h.name.toLowerCase().includes(search.toLowerCase());
-      const today = new Date().toISOString().split('T')[0];
-      const isCompleted = h.completedDays.includes(today);
-      
-      if (filter === 'Completed') return matchesSearch && isCompleted;
-      if (filter === 'Pending') return matchesSearch && !isCompleted;
-      return matchesSearch;
-    });
-  }, [habits, search, filter]);
-
-  const handleAddHabit = async (newHabit: Omit<Habit, 'id' | 'completedDays' | 'createdAt' | 'streak' | 'longestStreak'>) => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-
-    const { data, error } = await supabase.from('habits').insert({
-      user_id: user.id,
-      name: newHabit.name,
-      emoji: newHabit.emoji,
-      category: newHabit.category,
-      frequency: newHabit.frequency,
-      color: newHabit.color,
-      completed_days: []
-    }).select().single();
-
-    if (error) {
-      console.error('Insert error:', error);
-      showError(`database error: ${error.message}`);
-      return;
-    }
-
-    if (data) {
-      setHabits([{ ...data, completedDays: [] }, ...habits]);
-      showSuccess("ritual created.");
-    }
-  };
-
-  const handleToggleHabit = async (id: string) => {
-    const today = new Date().toISOString().split('T')[0];
-    const habit = habits.find(h => h.id === id);
+  const handleToggleHabit = async (habitId: string, date: string) => {
+    const habit = habits.find(h => h.id === habitId);
     if (!habit) return;
 
-    const isCompleted = habit.completedDays.includes(today);
-    const newCompletedDays = isCompleted 
-      ? habit.completedDays.filter(d => d !== today)
-      : [...habit.completedDays, today];
-    
-    const newStreak = isCompleted ? Math.max(0, habit.streak - 1) : habit.streak + 1;
-
-    const { error } = await supabase.from('habits').update({
-      completed_days: newCompletedDays,
-      streak: newStreak
-    }).eq('id', id);
-
-    if (error) {
-      showError("failed to update ritual.");
-      return;
+    let newCompletedDays = [...habit.completedDays];
+    if (newCompletedDays.includes(date)) {
+      newCompletedDays = newCompletedDays.filter(d => d !== date);
+    } else {
+      newCompletedDays.push(date);
     }
 
-    setHabits(habits.map(h => h.id === id ? { ...h, completedDays: newCompletedDays, streak: newStreak } : h));
-  };
-
-  const handleUpdateHabit = async (id: string, updates: Partial<Habit>) => {
-    const { error } = await supabase.from('habits').update({
-      name: updates.name,
-      emoji: updates.emoji,
-      category: updates.category,
-    }).eq('id', id);
+    const { error } = await supabase
+      .from('habits')
+      .update({ completedDays: newCompletedDays })
+      .eq('id', habitId);
 
     if (error) {
-      showError("failed to update ritual.");
-      return;
+      toast({ title: "Error updating ritual", variant: "destructive" });
+    } else {
+      setHabits(habits.map(h => h.id === habitId ? { ...h, completedDays: newCompletedDays } : h));
     }
-
-    setHabits(habits.map(h => h.id === id ? { ...h, ...updates } : h));
-    showSuccess("ritual refined.");
   };
 
-  const handleDeleteHabit = async (id: string) => {
-    const { error } = await supabase.from('habits').delete().eq('id', id);
-    if (error) {
-      showError("failed to remove ritual.");
-      return;
+  const renderContent = () => {
+    switch (activeTab) {
+      case 'dashboard':
+        return <Dashboard habits={habits} sessions={sessions} onToggleHabit={handleToggleHabit} />;
+      case 'habits':
+        return <HabitTracker habits={habits} onUpdate={fetchData} />;
+      case 'pomodoro':
+        return <PomodoroTimer onSessionComplete={fetchData} />;
+      default:
+        return <Dashboard habits={habits} sessions={sessions} onToggleHabit={handleToggleHabit} />;
     }
-    setHabits(habits.filter(h => h.id !== id));
-    showSuccess("ritual removed.");
   };
-
-  const handleCompleteSession = async (session: Omit<PomodoroSession, 'id' | 'timestamp'>) => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-
-    const { data, error } = await supabase.from('pomodoro_sessions').insert({
-      user_id: user.id,
-      habit_id: session.habitId === 'none' ? null : session.habitId,
-      duration: session.duration,
-      type: session.type
-    }).select().single();
-
-    if (error) {
-      showError("failed to record focus.");
-      return;
-    }
-
-    if (data) setSessions([data, ...sessions]);
-    showSuccess("focus session recorded.");
-  };
-
-  const handleLogout = () => supabase.auth.signOut();
-
-  if (loading) return (
-    <div className="min-h-screen bg-black flex items-center justify-center">
-      <div className="w-8 h-8 border-2 border-white/20 border-t-white rounded-full animate-spin" />
-    </div>
-  );
-
-  if (dbError) return (
-    <div className="min-h-screen bg-black flex flex-col items-center justify-center p-6 text-center space-y-8">
-      <div className="relative">
-        <div className="w-24 h-24 bg-white/5 rounded-[2rem] flex items-center justify-center border border-white/10">
-          <Database className="text-zinc-500" size={40} />
-        </div>
-        <div className="absolute -top-2 -right-2 w-8 h-8 bg-white text-black rounded-full flex items-center justify-center shadow-xl">
-          <AlertCircle size={20} />
-        </div>
-      </div>
-      <div className="space-y-3">
-        <h2 className="text-4xl font-black tracking-tighter lowercase">connection lost.</h2>
-        <p className="text-zinc-500 max-w-sm font-medium">the rituals table isn't visible yet. please run the sql script in your supabase console and then try refreshing.</p>
-      </div>
-      <div className="flex flex-col gap-4 w-full max-w-xs">
-        <Button onClick={fetchData} className="bg-white hover:bg-zinc-200 text-black rounded-2xl h-14 font-black text-lg tracking-tight lowercase">
-          try connecting again.
-        </Button>
-        <button onClick={handleLogout} className="text-zinc-500 font-bold text-[10px] uppercase tracking-widest hover:text-white transition-colors">
-          sign out
-        </button>
-      </div>
-    </div>
-  );
 
   return (
-    <div className="flex flex-col lg:flex-row min-h-screen bg-black text-white font-sans selection:bg-white selection:text-black">
-      <div className="fixed inset-0 pointer-events-none opacity-[0.02] bg-[url('https://grainy-gradients.vercel.app/noise.svg')] z-50"></div>
-
+    <div className="flex h-screen bg-black text-white overflow-hidden">
       <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
-      <MobileNav activeTab={activeTab} setActiveTab={setActiveTab} />
-
-      <main className="flex-1 overflow-y-auto p-4 lg:p-16 pb-32 lg:pb-16 relative">
-        <button 
-          onClick={handleLogout}
-          className="absolute top-4 right-4 lg:top-8 lg:right-8 text-zinc-500 hover:text-white transition-colors p-2"
-          aria-label="Logout"
-        >
-          <LogOut size={20} />
-        </button>
-
-        <div className="max-w-6xl mx-auto">
-          <AnimatePresence mode="wait">
-            {activeTab === 'dashboard' && (
-              <motion.div key="dashboard" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
-                <Dashboard habits={habits} sessions={sessions} />
-              </motion.div>
-            )}
-
-            {activeTab === 'habits' && (
-              <motion.div key="habits" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-8 lg:space-y-12">
-                <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 lg:gap-8">
-                  <div className="space-y-2 lg:space-y-3">
-                    <h2 className="text-4xl lg:text-6xl font-black tracking-tighter lowercase">daily rituals.</h2>
-                    <p className="text-zinc-500 text-base lg:text-lg font-medium lowercase">discipline is the path to freedom.</p>
-                  </div>
-                  <AddHabitDialog onAdd={handleAddHabit} />
-                </header>
-
-                <div className="flex flex-col md:flex-row gap-4 lg:gap-6 items-center justify-between bg-zinc-900 p-2 lg:p-3 rounded-[2rem] border border-zinc-800">
-                  <div className="relative w-full md:w-80">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500" size={18} />
-                    <Input 
-                      placeholder="search practices..." 
-                      className="pl-12 bg-transparent border-none focus-visible:ring-0 focus-visible:ring-offset-0 text-base lg:text-lg lowercase font-medium"
-                      value={search}
-                      onChange={(e) => setSearch(e.target.value)}
-                    />
-                  </div>
-                  <div className="flex gap-2 w-full md:w-auto overflow-x-auto pb-1 md:pb-0 scrollbar-hide">
-                    {['All', 'Pending', 'Completed'].map((f) => (
-                      <Button
-                        key={f}
-                        variant="ghost"
-                        onClick={() => setFilter(f as any)}
-                        className={cn(
-                          "px-4 lg:px-6 h-10 lg:h-12 font-bold text-[10px] uppercase tracking-widest rounded-2xl transition-all whitespace-nowrap",
-                          filter === f ? "bg-white text-black" : "text-zinc-500 hover:text-white"
-                        )}
-                      >
-                        {f}
-                      </Button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="grid md:grid-cols-2 gap-4 lg:gap-6">
-                  <AnimatePresence mode="popLayout">
-                    {filteredHabits.map((habit) => (
-                      <HabitCard 
-                        key={habit.id} 
-                        habit={habit} 
-                        onToggle={handleToggleHabit} 
-                        onDelete={handleDeleteHabit}
-                        onUpdate={handleUpdateHabit}
-                      />
-                    ))}
-                  </AnimatePresence>
-                </div>
-
-                {filteredHabits.length === 0 && (
-                  <div className="text-center py-24 lg:py-32 space-y-4">
-                    <p className="text-3xl lg:text-4xl font-black tracking-tighter opacity-20 lowercase">void.</p>
-                    <p className="text-zinc-500 font-medium">every habit begins with a single choice.</p>
-                  </div>
-                )}
-              </motion.div>
-            )}
-
-            {activeTab === 'pomodoro' && (
-              <motion.div key="pomodoro" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
-                <header className="space-y-2 lg:space-y-3 mb-8 lg:mb-12 text-center">
-                  <h2 className="text-4xl lg:text-6xl font-black tracking-tighter lowercase">deep focus.</h2>
-                  <p className="text-zinc-500 text-base lg:text-lg font-medium lowercase">be here now.</p>
-                </header>
-                <PomodoroTimer habits={habits} onComplete={handleCompleteSession} />
-                
-                <div className="mt-12 lg:mt-20 max-w-xl mx-auto space-y-6">
-                  <h3 className="text-xl lg:text-2xl font-black tracking-tighter border-b border-zinc-800 pb-4 lowercase">recorded sessions.</h3>
-                  <div className="space-y-3 lg:space-y-4">
-                    {sessions.slice(0, 5).map((s) => (
-                      <div key={s.id} className="flex items-center justify-between bg-zinc-900 p-4 lg:p-6 rounded-[1.5rem] border border-zinc-800">
-                        <div className="flex items-center gap-4">
-                          <div className={cn("w-2.5 h-2.5 lg:w-3 lg:h-3 rounded-full", s.type === 'focus' ? "bg-white" : "bg-zinc-600")} />
-                          <span className="font-bold tracking-tight lowercase text-zinc-300 text-sm lg:text-base">{s.type.replace('-', ' ')}</span>
-                        </div>
-                        <span className="font-mono text-[10px] lg:text-xs text-zinc-500">
-                          {new Date(s.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
+      <main className="flex-1 overflow-y-auto p-6 md:p-12 pb-32 lg:pb-12">
+        {renderContent()}
       </main>
+      <MobileNav activeTab={activeTab} setActiveTab={setActiveTab} />
     </div>
   );
 };
