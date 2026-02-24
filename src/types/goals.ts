@@ -20,6 +20,7 @@ export interface Goal {
 export interface GoalRequirement {
   id: string;
   goal_id: string;
+  parent_id?: string; // Support for nested pillars
   title: string;
   first_action: string;
   weekly_commitment: string;

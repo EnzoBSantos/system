@@ -1,0 +1,1 @@
+ALTER TABLE goal_requirements ADD COLUMN IF NOT EXISTS parent_id UUID REFERENCES goal_requirements(id) ON DELETE CASCADE;

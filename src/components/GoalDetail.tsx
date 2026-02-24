@@ -27,6 +27,7 @@ const GoalDetail = ({ goalId, onClose, onUpdate }: GoalDetailProps) => {
     mode: 'create' | 'edit';
     type: 'goal' | 'requirement';
     editingId?: string;
+    parentId?: string; // Track which pillar we are adding a child to
   }>({ isOpen: false, mode: 'create', type: 'requirement' });
 
   const { toast } = useToast();
@@ -71,12 +72,12 @@ const GoalDetail = ({ goalId, onClose, onUpdate }: GoalDetailProps) => {
     }
   };
 
-  const handleOpenCreate = (e?: React.MouseEvent) => {
+  const handleOpenCreate = (e?: React.MouseEvent, parentId?: string) => {
     if (e) {
       e.preventDefault();
       e.stopPropagation();
     }
-    setDialogState({ isOpen: true, mode: 'create', type: 'requirement' });
+    setDialogState({ isOpen: true, mode: 'create', type: 'requirement', parentId });
   };
 
   const handleOpenEdit = (type: 'goal' | 'requirement', id?: string) => {
@@ -93,6 +94,7 @@ const GoalDetail = ({ goalId, onClose, onUpdate }: GoalDetailProps) => {
       if (dialogState.mode === 'create') {
         const { error } = await supabase.from('goal_requirements').insert({
           goal_id: goalId,
+          parent_id: dialogState.parentId || null,
           title: data.title,
           first_action: data.first_action || '',
           weekly_commitment: data.weekly_commitment || '',
@@ -206,6 +208,7 @@ const GoalDetail = ({ goalId, onClose, onUpdate }: GoalDetailProps) => {
                 <GoalMindMap 
                   goal={goal} 
                   onEditNode={handleOpenEdit}
+                  onCreateChild={handleOpenCreate}
                   onDeleteRequirement={deleteRequirement}
                 />
                 
@@ -256,7 +259,7 @@ const GoalDetail = ({ goalId, onClose, onUpdate }: GoalDetailProps) => {
                         </Button>
                       </div>
                       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-                        {goal.requirements?.map((req: any) => (
+                        {goal.requirements?.filter(r => !r.parent_id).map((req: any) => (
                           <div key={req.id} className="group relative">
                             <button
                               onClick={() => toggleRequirement(req.id, req.is_completed)}
@@ -319,20 +322,6 @@ const GoalDetail = ({ goalId, onClose, onUpdate }: GoalDetailProps) => {
                             animate={{ width: `${progress}%` }}
                             transition={{ type: "spring", damping: 20 }}
                           />
-                        </div>
-                      </div>
-                      
-                      <div className="space-y-4 pt-6 border-t border-white/5">
-                        <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-600">vision metrics</p>
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="bg-black/40 p-6 rounded-[2rem]">
-                            <p className="text-2xl font-black">{completedCount}</p>
-                            <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">done</p>
-                          </div>
-                          <div className="bg-black/40 p-6 rounded-[2rem]">
-                            <p className="text-2xl font-black">{totalCount - completedCount}</p>
-                            <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">pending</p>
-                          </div>
                         </div>
                       </div>
                     </div>
