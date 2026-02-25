@@ -15,7 +15,7 @@ const AdminCourses = () => {
   const { isAdmin, loading: authLoading } = useAdmin();
   const [courses, setCourses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [newCourse, setNewCourse] = useState({ title: '', description: '' });
+  const [newTitle, setNewTitle] = useState('');
   const [syncingId, setSyncingId] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const { toast } = useToast();
@@ -44,35 +44,24 @@ const AdminCourses = () => {
   };
 
   const handleCreate = async () => {
-    const trimmedTitle = newCourse.title.trim();
-    if (!trimmedTitle) {
+    const title = newTitle.trim();
+    if (!title) {
       toast({ title: "title required", description: "please enter a name for your course.", variant: "destructive" });
       return;
     }
 
     try {
       setIsCreating(true);
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        toast({ title: "session expired", description: "please log in again.", variant: "destructive" });
-        return;
-      }
-
       const { data, error } = await supabase
         .from('courses')
-        .insert([{ 
-          title: trimmedTitle, 
-          description: newCourse.description.trim() || null,
-          is_published: false 
-        }])
+        .insert([{ title, is_published: false }])
         .select()
         .single();
 
       if (error) throw error;
       
-      toast({ title: "course created.", description: "you can now add lessons to it." });
-      setNewCourse({ title: '', description: '' });
+      toast({ title: "course created." });
+      setNewTitle('');
       setCourses([data, ...courses]);
     } catch (err: any) {
       console.error("[AdminCourses] Creation error:", err);
@@ -153,11 +142,11 @@ const AdminCourses = () => {
           <div className="flex gap-4">
             <Input 
               placeholder="new course title..." 
-              value={newCourse.title}
-              onChange={(e) => setNewCourse({...newCourse, title: e.target.value})}
+              value={newTitle}
+              onChange={(e) => setNewTitle(e.target.value)}
               className="bg-zinc-900 border-zinc-800 rounded-xl w-64 text-white"
             />
-            <Button onClick={handleCreate} disabled={isCreating} className="bg-white text-black hover:bg-zinc-200 font-bold rounded-xl px-8">
+            <Button onClick={handleCreate} disabled={isCreating || !newTitle.trim()} className="bg-white text-black hover:bg-zinc-200 font-bold rounded-xl px-8">
               {isCreating ? <Loader2 className="animate-spin mr-2" size={18} /> : <Plus size={18} className="mr-2" />}
               create
             </Button>
@@ -170,19 +159,12 @@ const AdminCourses = () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <button 
-              onClick={() => navigate('/admin/lesson-builder')}
-              className="group bg-zinc-950 border-2 border-dashed border-zinc-900 p-8 rounded-[2.5rem] space-y-6 flex flex-col items-center justify-center text-center hover:border-white/20 transition-all"
-            >
-              <div className="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center text-zinc-500 group-hover:text-white transition-colors">
-                <PenTool size={32} />
+            {courses.length === 0 && (
+              <div className="col-span-full py-20 text-center border-2 border-dashed border-zinc-900 rounded-[2.5rem]">
+                <p className="text-zinc-500 font-bold uppercase tracking-widest text-[10px]">no courses found. create one above.</p>
               </div>
-              <div className="space-y-1">
-                <h3 className="text-xl font-bold tracking-tight lowercase">launch architect.</h3>
-                <p className="text-zinc-500 text-xs lowercase">build a sequential learning path.</p>
-              </div>
-            </button>
-
+            )}
+            
             {courses.map((course) => (
               <div key={course.id} className="bg-zinc-900 border border-zinc-800 p-8 rounded-[2.5rem] space-y-6 flex flex-col group/card transition-all hover:border-zinc-700">
                 <div className="flex justify-between items-start">
@@ -202,13 +184,13 @@ const AdminCourses = () => {
                     )}
                   >
                     {syncingId === course.id ? <Loader2 size={10} className="animate-spin mr-2" /> : (course.is_published ? <Globe size={10} className="mr-2" /> : <EyeOff size={10} className="mr-2" />)}
-                    {course.is_published ? "published" : "draft (click to publish)"}
+                    {course.is_published ? "published" : "draft"}
                   </Button>
                 </div>
                 
                 <div className="space-y-2 flex-1">
                   <h3 className="text-xl font-bold tracking-tight lowercase">{course.title}</h3>
-                  <p className="text-zinc-500 text-sm line-clamp-2 lowercase">{course.description || "no description."}</p>
+                  <p className="text-zinc-500 text-sm line-clamp-2 lowercase">{course.description || "no description provided."}</p>
                 </div>
                 
                 <div className="flex gap-2 pt-4">

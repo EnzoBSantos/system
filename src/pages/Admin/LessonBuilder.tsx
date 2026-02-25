@@ -93,6 +93,7 @@ const LessonBuilder = () => {
   };
 
   const addBlock = (type: BlockType) => {
+    if (!activePage) return;
     const newBlock: LessonBlock = {
       id: Date.now().toString(),
       type,
@@ -121,7 +122,7 @@ const LessonBuilder = () => {
 
   const handleSave = async () => {
     if (!courseId && !lessonId) {
-      toast({ title: "context required", description: "please select a course first.", variant: "destructive" });
+      toast({ title: "context required", description: "please open this from a course page.", variant: "destructive" });
       return;
     }
 
@@ -129,7 +130,9 @@ const LessonBuilder = () => {
     try {
       let currentLessonId = lessonId;
 
+      // 1. Create Lesson if it doesn't exist
       if (!currentLessonId && courseId) {
+        // Find or create first unit
         let { data: units } = await supabase.from('units').select('id').eq('course_id', courseId).order('order', { ascending: true }).limit(1);
         let unitId = units?.[0]?.id;
 
@@ -152,15 +155,18 @@ const LessonBuilder = () => {
         if (lessonError) throw lessonError;
         currentLessonId = newLesson.id;
       } else if (currentLessonId) {
+        // Update existing lesson title
         const { error: lessonUpdateError } = await supabase.from('lessons').update({ title: lessonTitle }).eq('id', currentLessonId);
         if (lessonUpdateError) throw lessonUpdateError;
       }
 
+      // 2. Sync Pages (Exercises)
       if (currentLessonId) {
-        // Sync exercises (pages)
+        // Delete old exercises
         const { error: delError } = await supabase.from('exercises').delete().eq('lesson_id', currentLessonId);
         if (delError) throw delError;
         
+        // Insert new pages
         const exerciseData = pages.map((page, idx) => ({
           lesson_id: currentLessonId,
           order: idx + 1,
@@ -175,7 +181,7 @@ const LessonBuilder = () => {
         }
       }
 
-      toast({ title: "lesson published.", description: "the wisdom path is now updated." });
+      toast({ title: "lesson published." });
       navigate('/admin/courses');
     } catch (err: any) {
       console.error("[LessonBuilder] Save failed:", err);
@@ -259,7 +265,7 @@ const LessonBuilder = () => {
                   </div>
                   <div className="flex gap-2">
                     <Button variant="ghost" disabled={activePageIndex === 0} onClick={() => setActivePageIndex(prev => prev - 1)} className="rounded-xl h-10 w-10 p-0 text-zinc-500 hover:text-white"><ChevronLeft size={20} /></Button>
-                    <Button variant="ghost" disabled={activePageIndex === pages.length - 1} onClick={() => setActivePageIndex(prev => prev - 1)} className="rounded-xl h-10 w-10 p-0 text-zinc-500 hover:text-white"><ChevronRight size={20} /></Button>
+                    <Button variant="ghost" disabled={activePageIndex === pages.length - 1} onClick={() => setActivePageIndex(prev => prev + 1)} className="rounded-xl h-10 w-10 p-0 text-zinc-500 hover:text-white"><ChevronRight size={20} /></Button>
                   </div>
                 </header>
                 <div className="space-y-8">
