@@ -43,23 +43,24 @@ const AdminCourses = () => {
     }
   };
 
-  const handleCreate = async () => {
-    const title = newTitle.trim();
-    console.log("[AdminCourses] Attempting to create course:", title);
+  const handleCreate = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     
+    const title = newTitle.trim();
     if (!title) {
-      toast({ title: "title required", description: "please enter a name for your course.", variant: "destructive" });
+      toast({ 
+        title: "title required", 
+        description: "please enter a name before creating the ritual.", 
+        variant: "destructive" 
+      });
       return;
     }
 
     try {
       setIsCreating(true);
       
-      // Verify session before insert
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        throw new Error("No active session found. Please log in.");
-      }
+      if (!session) throw new Error("No session found");
 
       const { data, error } = await supabase
         .from('courses')
@@ -71,12 +72,8 @@ const AdminCourses = () => {
         .select()
         .single();
 
-      if (error) {
-        console.error("[AdminCourses] DB Error:", error);
-        throw error;
-      }
+      if (error) throw error;
       
-      console.log("[AdminCourses] Course created successfully:", data);
       toast({ title: "course created." });
       setNewTitle('');
       setCourses(prev => [data, ...prev]);
@@ -156,23 +153,22 @@ const AdminCourses = () => {
             <h2 className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.3em]">curator</h2>
             <h1 className="text-4xl font-black tracking-tighter lowercase">manage courses.</h1>
           </div>
-          <div className="flex gap-4">
+          <form onSubmit={handleCreate} className="flex gap-4 relative z-10">
             <Input 
               placeholder="new course title..." 
               value={newTitle}
               onChange={(e) => setNewTitle(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
-              className="bg-zinc-900 border-zinc-800 rounded-xl w-64 text-white"
+              className="bg-zinc-900 border-zinc-800 rounded-xl w-64 text-white focus:border-white transition-all"
             />
             <Button 
-              onClick={() => handleCreate()} 
-              disabled={isCreating || !newTitle.trim()} 
-              className="bg-white text-black hover:bg-zinc-200 font-bold rounded-xl px-8"
+              type="submit"
+              disabled={isCreating} 
+              className="bg-white text-black hover:bg-zinc-200 font-bold rounded-xl px-8 shadow-lg transition-all active:scale-95"
             >
               {isCreating ? <Loader2 className="animate-spin mr-2" size={18} /> : <Plus size={18} className="mr-2" />}
               create
             </Button>
-          </div>
+          </form>
         </header>
 
         {loading ? (
