@@ -43,7 +43,9 @@ const AdminCourses = () => {
     }
   };
 
-  const handleCreate = async () => {
+  const handleCreate = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    
     const title = newTitle.trim();
     if (!title) {
       toast({ title: "title required", description: "please enter a name for your course.", variant: "destructive" });
@@ -62,7 +64,7 @@ const AdminCourses = () => {
       
       toast({ title: "course created." });
       setNewTitle('');
-      setCourses([data, ...courses]);
+      setCourses(prev => [data, ...prev]);
     } catch (err: any) {
       console.error("[AdminCourses] Creation error:", err);
       toast({ title: "creation failed", description: err.message, variant: "destructive" });
@@ -81,7 +83,7 @@ const AdminCourses = () => {
 
       if (error) throw error;
 
-      setCourses(courses.map(c => c.id === courseId ? { ...c, is_published: !currentStatus } : c));
+      setCourses(prev => prev.map(c => c.id === courseId ? { ...c, is_published: !currentStatus } : c));
       toast({ title: !currentStatus ? "course published." : "course hidden." });
     } catch (err: any) {
       toast({ title: "update failed", description: err.message, variant: "destructive" });
@@ -96,7 +98,7 @@ const AdminCourses = () => {
       const { error } = await supabase.from('courses').delete().eq('id', courseId);
       if (error) throw error;
       
-      setCourses(courses.filter(c => c.id !== courseId));
+      setCourses(prev => prev.filter(c => c.id !== courseId));
       toast({ title: "course removed." });
     } catch (err: any) {
       toast({ title: "deletion failed", description: err.message, variant: "destructive" });
@@ -139,18 +141,18 @@ const AdminCourses = () => {
             <h2 className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.3em]">curator</h2>
             <h1 className="text-4xl font-black tracking-tighter lowercase">manage courses.</h1>
           </div>
-          <div className="flex gap-4">
+          <form onSubmit={handleCreate} className="flex gap-4">
             <Input 
               placeholder="new course title..." 
               value={newTitle}
               onChange={(e) => setNewTitle(e.target.value)}
               className="bg-zinc-900 border-zinc-800 rounded-xl w-64 text-white"
             />
-            <Button onClick={handleCreate} disabled={isCreating || !newTitle.trim()} className="bg-white text-black hover:bg-zinc-200 font-bold rounded-xl px-8">
+            <Button type="submit" disabled={isCreating || !newTitle.trim()} className="bg-white text-black hover:bg-zinc-200 font-bold rounded-xl px-8">
               {isCreating ? <Loader2 className="animate-spin mr-2" size={18} /> : <Plus size={18} className="mr-2" />}
               create
             </Button>
-          </div>
+          </form>
         </header>
 
         {loading ? (

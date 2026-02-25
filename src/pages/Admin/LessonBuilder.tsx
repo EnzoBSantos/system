@@ -81,15 +81,14 @@ const LessonBuilder = () => {
       title: `Page ${pages.length + 1}`,
       blocks: [{ id: Date.now().toString(), type: 'HEADING', content: '' }]
     };
-    setPages([...pages, newPage]);
+    setPages(prev => [...prev, newPage]);
     setActivePageIndex(pages.length);
   };
 
   const removePage = (index: number) => {
     if (pages.length === 1) return;
-    const newPages = pages.filter((_, i) => i !== index);
-    setPages(newPages);
-    setActivePageIndex(Math.max(0, index - 1));
+    setPages(prev => prev.filter((_, i) => i !== index));
+    setActivePageIndex(prev => Math.max(0, index - 1));
   };
 
   const addBlock = (type: BlockType) => {
@@ -100,24 +99,42 @@ const LessonBuilder = () => {
       content: '',
       placeholder: type === 'HEADING' ? 'enter title...' : type === 'TEXT' ? 'share the wisdom...' : type === 'IMAGE' ? 'image url...' : 'button text...'
     };
-    const newPages = [...pages];
-    newPages[activePageIndex].blocks.push(newBlock);
-    setPages(newPages);
+    
+    setPages(prev => prev.map((page, idx) => {
+      if (idx === activePageIndex) {
+        return {
+          ...page,
+          blocks: [...page.blocks, newBlock]
+        };
+      }
+      return page;
+    }));
   };
 
   const updateBlock = (blockId: string, content: string) => {
-    const newPages = [...pages];
-    const blockIndex = newPages[activePageIndex].blocks.findIndex(b => b.id === blockId);
-    if (blockIndex !== -1) {
-      newPages[activePageIndex].blocks[blockIndex].content = content;
-      setPages(newPages);
-    }
+    setPages(prev => prev.map((page, idx) => {
+      if (idx === activePageIndex) {
+        return {
+          ...page,
+          blocks: page.blocks.map(block => 
+            block.id === blockId ? { ...block, content } : block
+          )
+        };
+      }
+      return page;
+    }));
   };
 
   const removeBlock = (blockId: string) => {
-    const newPages = [...pages];
-    newPages[activePageIndex].blocks = newPages[activePageIndex].blocks.filter(b => b.id !== blockId);
-    setPages(newPages);
+    setPages(prev => prev.map((page, idx) => {
+      if (idx === activePageIndex) {
+        return {
+          ...page,
+          blocks: page.blocks.filter(block => block.id !== blockId)
+        };
+      }
+      return page;
+    }));
   };
 
   const handleSave = async () => {
@@ -130,9 +147,7 @@ const LessonBuilder = () => {
     try {
       let currentLessonId = lessonId;
 
-      // 1. Create Lesson if it doesn't exist
       if (!currentLessonId && courseId) {
-        // Find or create first unit
         let { data: units } = await supabase.from('units').select('id').eq('course_id', courseId).order('order', { ascending: true }).limit(1);
         let unitId = units?.[0]?.id;
 
@@ -155,18 +170,14 @@ const LessonBuilder = () => {
         if (lessonError) throw lessonError;
         currentLessonId = newLesson.id;
       } else if (currentLessonId) {
-        // Update existing lesson title
         const { error: lessonUpdateError } = await supabase.from('lessons').update({ title: lessonTitle }).eq('id', currentLessonId);
         if (lessonUpdateError) throw lessonUpdateError;
       }
 
-      // 2. Sync Pages (Exercises)
       if (currentLessonId) {
-        // Delete old exercises
         const { error: delError } = await supabase.from('exercises').delete().eq('lesson_id', currentLessonId);
         if (delError) throw delError;
         
-        // Insert new pages
         const exerciseData = pages.map((page, idx) => ({
           lesson_id: currentLessonId,
           order: idx + 1,
