@@ -35,8 +35,21 @@ serve(async (req) => {
 
     let targetUnitId = null;
 
-    // If it's a new lesson, we need to find or create a unit for the course
-    if (!lessonId && courseId) {
+    // If editing existing lesson, check its current unit
+    if (lessonId) {
+      const { data: existingLesson } = await supabaseClient
+        .from('lessons')
+        .select('unit_id')
+        .eq('id', lessonId)
+        .single();
+      
+      if (existingLesson?.unit_id) {
+        targetUnitId = existingLesson.unit_id;
+      }
+    }
+
+    // If no unit found and we have a courseId, find or create one
+    if (!targetUnitId && courseId) {
       const { data: units } = await supabaseClient
         .from('units')
         .select('id')
@@ -47,14 +60,9 @@ serve(async (req) => {
       if (units && units.length > 0) {
         targetUnitId = units[0].id;
       } else {
-        // Create a default unit if none exists
         const { data: newUnit, error: unitError } = await supabaseClient
           .from('units')
-          .insert({
-            course_id: courseId,
-            title: 'Module 1',
-            order: 1
-          })
+          .insert({ course_id: courseId, title: 'Module 1', order: 1 })
           .select()
           .single();
         
@@ -86,6 +94,7 @@ serve(async (req) => {
     )
 
   } catch (error: any) {
+    console.error("[save-lesson] Error:", error.message);
     return new Response(
       JSON.stringify({ error: error.message }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

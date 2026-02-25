@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAdmin } from "@/hooks/useAdmin";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Trash2, LayoutGrid, ArrowLeft, PenTool, Globe, EyeOff, Loader2, AlertCircle } from 'lucide-react';
+import { Plus, Trash2, LayoutGrid, ArrowLeft, PenTool, Globe, EyeOff, Loader2, AlertCircle, Play, Edit2 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import Sidebar from '@/components/Sidebar';
 import { useNavigate } from 'react-router-dom';
@@ -30,7 +30,13 @@ const AdminCourses = () => {
       setLoading(true);
       const { data, error } = await supabase
         .from('courses')
-        .select('*')
+        .select(`
+          *,
+          units (
+            *,
+            lessons (*)
+          )
+        `)
         .order('created_at', { ascending: false });
       
       if (error) throw error;
@@ -48,27 +54,15 @@ const AdminCourses = () => {
     
     const title = newTitle.trim();
     if (!title) {
-      toast({ 
-        title: "title required", 
-        description: "please enter a name before creating the ritual.", 
-        variant: "destructive" 
-      });
+      toast({ title: "title required", variant: "destructive" });
       return;
     }
 
     try {
       setIsCreating(true);
-      
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) throw new Error("No session found");
-
       const { data, error } = await supabase
         .from('courses')
-        .insert([{ 
-          title, 
-          is_published: false,
-          description: "" 
-        }])
+        .insert([{ title, is_published: false, description: "" }])
         .select()
         .single();
 
@@ -76,9 +70,8 @@ const AdminCourses = () => {
       
       toast({ title: "course created." });
       setNewTitle('');
-      setCourses(prev => [data, ...prev]);
+      fetchCourses();
     } catch (err: any) {
-      console.error("[AdminCourses] Creation error:", err);
       toast({ title: "creation failed", description: err.message, variant: "destructive" });
     } finally {
       setIsCreating(false);
@@ -94,8 +87,7 @@ const AdminCourses = () => {
         .eq('id', courseId);
 
       if (error) throw error;
-
-      setCourses(prev => prev.map(c => c.id === courseId ? { ...c, is_published: !currentStatus } : c));
+      fetchCourses();
       toast({ title: !currentStatus ? "course published." : "course hidden." });
     } catch (err: any) {
       toast({ title: "update failed", description: err.message, variant: "destructive" });
@@ -109,129 +101,126 @@ const AdminCourses = () => {
     try {
       const { error } = await supabase.from('courses').delete().eq('id', courseId);
       if (error) throw error;
-      
-      setCourses(prev => prev.filter(c => c.id !== courseId));
+      fetchCourses();
       toast({ title: "course removed." });
     } catch (err: any) {
       toast({ title: "deletion failed", description: err.message, variant: "destructive" });
     }
   };
 
-  if (authLoading) return (
-    <div className="h-screen bg-black flex flex-col items-center justify-center text-white space-y-4">
-      <div className="w-8 h-8 border-2 border-white/10 border-t-white rounded-full animate-spin" />
-      <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">verifying authority...</span>
-    </div>
-  );
+  if (authLoading) return <div className="h-screen bg-black flex items-center justify-center"><Loader2 className="animate-spin text-white" /></div>;
 
   if (isAdmin === false) return (
     <div className="h-screen bg-black flex flex-col items-center justify-center text-white p-6 text-center space-y-8">
-      <div className="w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center text-red-500">
-        <AlertCircle size={32} />
-      </div>
-      <div className="space-y-2">
-        <h1 className="text-6xl font-black tracking-tighter lowercase text-white">access denied.</h1>
-        <p className="text-zinc-500 font-medium max-w-md mx-auto">
-          your soul is not yet authorized to curate these paths. please ensure your profile role is set to 'admin'.
-        </p>
-      </div>
-      <Button 
-        onClick={() => navigate('/dashboard')}
-        className="h-14 px-8 rounded-2xl bg-white text-black hover:bg-zinc-200 font-bold lowercase gap-2"
-      >
-        <ArrowLeft size={18} /> return to sanctuary
-      </Button>
+      <AlertCircle size={64} className="text-red-500" />
+      <h1 className="text-4xl font-black">Access Denied</h1>
+      <Button onClick={() => navigate('/dashboard')}>Return to Sanctuary</Button>
     </div>
   );
 
   return (
     <div className="flex h-screen bg-black text-white">
       <Sidebar activeTab="dashboard" setActiveTab={() => {}} />
-      <main className="flex-1 overflow-y-auto p-12 space-y-12">
+      <main className="flex-1 overflow-y-auto p-12 space-y-12 custom-scrollbar">
         <header className="flex items-center justify-between">
           <div className="space-y-1">
             <h2 className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.3em]">curator</h2>
             <h1 className="text-4xl font-black tracking-tighter lowercase">manage courses.</h1>
           </div>
-          <form onSubmit={handleCreate} className="flex gap-4 relative z-10">
+          <form onSubmit={handleCreate} className="flex gap-4">
             <Input 
               placeholder="new course title..." 
               value={newTitle}
               onChange={(e) => setNewTitle(e.target.value)}
-              className="bg-zinc-900 border-zinc-800 rounded-xl w-64 text-white focus:border-white transition-all"
+              className="bg-zinc-900 border-zinc-800 rounded-xl w-64"
             />
-            <Button 
-              type="submit"
-              disabled={isCreating} 
-              className="bg-white text-black hover:bg-zinc-200 font-bold rounded-xl px-8 shadow-lg transition-all active:scale-95"
-            >
-              {isCreating ? <Loader2 className="animate-spin mr-2" size={18} /> : <Plus size={18} className="mr-2" />}
+            <Button type="submit" disabled={isCreating} className="bg-white text-black hover:bg-zinc-200 font-bold rounded-xl px-8">
+              {isCreating ? <Loader2 className="animate-spin" /> : <Plus size={18} className="mr-2" />}
               create
             </Button>
           </form>
         </header>
 
-        {loading ? (
-          <div className="flex justify-center py-20">
-            <Loader2 className="animate-spin text-zinc-500" size={32} />
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {courses.length === 0 && (
-              <div className="col-span-full py-20 text-center border-2 border-dashed border-zinc-900 rounded-[2.5rem]">
-                <p className="text-zinc-500 font-bold uppercase tracking-widest text-[10px]">no courses found. create one above.</p>
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+          {courses.map((course) => (
+            <div key={course.id} className="bg-zinc-900 border border-zinc-800 p-8 rounded-[2.5rem] space-y-8 flex flex-col">
+              <div className="flex justify-between items-start">
+                <div className="space-y-1">
+                  <h3 className="text-2xl font-black tracking-tight lowercase">{course.title}</h3>
+                  <p className="text-zinc-500 text-sm lowercase">{course.description || "no description."}</p>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => togglePublish(course.id, course.is_published)}
+                  className={cn(
+                    "rounded-full text-[8px] font-black uppercase tracking-widest px-4 h-8",
+                    course.is_published ? "bg-green-500/10 border-green-500/50 text-green-500" : "bg-zinc-800 border-zinc-700 text-zinc-500"
+                  )}
+                >
+                  {course.is_published ? "published" : "draft"}
+                </Button>
               </div>
-            )}
-            
-            {courses.map((course) => (
-              <div key={course.id} className="bg-zinc-900 border border-zinc-800 p-8 rounded-[2.5rem] space-y-6 flex flex-col group/card transition-all hover:border-zinc-700">
-                <div className="flex justify-between items-start">
-                  <div className="w-14 h-14 bg-white/5 rounded-2xl flex items-center justify-center text-zinc-500">
-                    <LayoutGrid size={28} />
-                  </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => togglePublish(course.id, course.is_published)}
-                    disabled={syncingId === course.id}
-                    className={cn(
-                      "rounded-full text-[8px] font-black uppercase tracking-widest px-4 h-8 transition-all",
-                      course.is_published 
-                        ? "bg-green-500/10 border-green-500/50 text-green-500 hover:bg-green-500/20" 
-                        : "bg-zinc-800 border-zinc-700 text-zinc-500 hover:bg-zinc-700 hover:text-white"
-                    )}
-                  >
-                    {syncingId === course.id ? <Loader2 size={10} className="animate-spin mr-2" /> : (course.is_published ? <Globe size={10} className="mr-2" /> : <EyeOff size={10} className="mr-2" />)}
-                    {course.is_published ? "published" : "draft"}
-                  </Button>
-                </div>
-                
-                <div className="space-y-2 flex-1">
-                  <h3 className="text-xl font-bold tracking-tight lowercase">{course.title}</h3>
-                  <p className="text-zinc-500 text-sm line-clamp-2 lowercase">{course.description || "no description provided."}</p>
-                </div>
-                
-                <div className="flex gap-2 pt-4">
-                  <Button 
-                    variant="outline" 
-                    className="flex-1 rounded-xl border-zinc-800 hover:bg-zinc-800 lowercase font-bold"
-                    onClick={() => navigate(`/admin/lesson-builder?courseId=${course.id}`)}
-                  >
-                    edit content
-                  </Button>
+
+              <div className="space-y-4">
+                <div className="flex items-center justify-between border-b border-zinc-800 pb-2">
+                  <h4 className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest">lessons</h4>
                   <Button 
                     variant="ghost" 
-                    size="icon"
-                    onClick={() => handleDelete(course.id)}
-                    className="text-zinc-600 hover:text-red-500 hover:bg-red-500/10 rounded-xl"
+                    size="sm" 
+                    onClick={() => navigate(`/admin/lesson-builder?courseId=${course.id}`)}
+                    className="text-[10px] font-bold uppercase tracking-widest hover:text-white"
                   >
-                    <Trash2 size={18} />
+                    <Plus size={12} className="mr-1" /> add lesson
                   </Button>
                 </div>
+                
+                <div className="space-y-2">
+                  {course.units?.flatMap((u: any) => u.lessons || []).map((lesson: any) => (
+                    <div key={lesson.id} className="flex items-center justify-between p-4 bg-black/40 border border-zinc-800 rounded-2xl group">
+                      <div className="flex items-center gap-4">
+                        <div className="w-8 h-8 rounded-lg bg-zinc-900 flex items-center justify-center text-zinc-600">
+                          <Play size={14} fill="currentColor" />
+                        </div>
+                        <span className="text-sm font-bold lowercase">{lesson.title}</span>
+                      </div>
+                      <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Button 
+                          variant="ghost" 
+                          size="icon"
+                          onClick={() => navigate(`/admin/lesson-builder/${lesson.id}?courseId=${course.id}`)}
+                          className="w-8 h-8 rounded-lg text-zinc-500 hover:text-white"
+                        >
+                          <Edit2 size={14} />
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="icon"
+                          className="w-8 h-8 rounded-lg text-zinc-500 hover:text-red-500"
+                        >
+                          <Trash2 size={14} />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                  {(!course.units || course.units.length === 0 || course.units.every((u: any) => !u.lessons || u.lessons.length === 0)) && (
+                    <p className="text-[10px] text-zinc-700 italic text-center py-4">no lessons yet.</p>
+                  )}
+                </div>
               </div>
-            ))}
-          </div>
-        )}
+
+              <div className="pt-4 mt-auto flex gap-3">
+                <Button 
+                  variant="ghost" 
+                  onClick={() => handleDelete(course.id)}
+                  className="text-zinc-600 hover:text-red-500 hover:bg-red-500/10 rounded-xl font-bold lowercase"
+                >
+                  delete course
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
       </main>
     </div>
   );
