@@ -1,7 +1,7 @@
-const CACHE_NAME = 'pillar-v3';
+const CACHE_NAME = 'pillar-v4';
 
 self.addEventListener('install', (event) => {
-  self.skipWaiting();
+  // Removido o skipWaiting imediato para evitar interrupções bruscas
 });
 
 self.addEventListener('activate', (event) => {
@@ -16,21 +16,15 @@ self.addEventListener('activate', (event) => {
       );
     })
   );
-  return self.clients.claim();
 });
 
-// Estratégia: Network First para o index.html, Cache First para o resto
 self.addEventListener('fetch', (event) => {
-  if (event.request.mode === 'navigate') {
-    event.respondWith(
-      fetch(event.request).catch(() => caches.match('/'))
-    );
-    return;
-  }
+  // Ignora requisições de extensões ou esquemas não suportados
+  if (!event.request.url.startsWith('http')) return;
 
   event.respondWith(
-    caches.match(event.request).then((response) => {
-      return response || fetch(event.request);
+    fetch(event.request).catch(() => {
+      return caches.match(event.request);
     })
   );
 });
