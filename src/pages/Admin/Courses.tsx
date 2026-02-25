@@ -36,7 +36,7 @@ const AdminCourses = () => {
       if (error) throw error;
       setCourses(data || []);
     } catch (err: any) {
-      console.error("Fetch error:", err);
+      console.error("[AdminCourses] Fetch error:", err);
       toast({ title: "failed to fetch courses", description: err.message, variant: "destructive" });
     } finally {
       setLoading(false);
@@ -44,16 +44,28 @@ const AdminCourses = () => {
   };
 
   const handleCreate = async () => {
-    if (!newCourse.title.trim()) {
+    const trimmedTitle = newCourse.title.trim();
+    if (!trimmedTitle) {
       toast({ title: "title required", description: "please enter a name for your course.", variant: "destructive" });
       return;
     }
 
     try {
       setIsCreating(true);
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        toast({ title: "session expired", description: "please log in again.", variant: "destructive" });
+        return;
+      }
+
       const { data, error } = await supabase
         .from('courses')
-        .insert([newCourse])
+        .insert([{ 
+          title: trimmedTitle, 
+          description: newCourse.description.trim() || null,
+          is_published: false 
+        }])
         .select()
         .single();
 
@@ -63,6 +75,7 @@ const AdminCourses = () => {
       setNewCourse({ title: '', description: '' });
       setCourses([data, ...courses]);
     } catch (err: any) {
+      console.error("[AdminCourses] Creation error:", err);
       toast({ title: "creation failed", description: err.message, variant: "destructive" });
     } finally {
       setIsCreating(false);
