@@ -17,6 +17,7 @@ const AdminCourses = () => {
   const [loading, setLoading] = useState(true);
   const [newCourse, setNewCourse] = useState({ title: '', description: '' });
   const [syncingId, setSyncingId] = useState<string | null>(null);
+  const [isCreating, setIsCreating] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -43,16 +44,28 @@ const AdminCourses = () => {
   };
 
   const handleCreate = async () => {
-    if (!newCourse.title.trim()) return;
+    if (!newCourse.title.trim()) {
+      toast({ title: "title required", description: "please enter a name for your course.", variant: "destructive" });
+      return;
+    }
+
     try {
-      const { error } = await supabase.from('courses').insert([newCourse]);
+      setIsCreating(true);
+      const { data, error } = await supabase
+        .from('courses')
+        .insert([newCourse])
+        .select()
+        .single();
+
       if (error) throw error;
       
-      toast({ title: "course created." });
+      toast({ title: "course created.", description: "you can now add lessons to it." });
       setNewCourse({ title: '', description: '' });
-      fetchCourses();
+      setCourses([data, ...courses]);
     } catch (err: any) {
       toast({ title: "creation failed", description: err.message, variant: "destructive" });
+    } finally {
+      setIsCreating(false);
     }
   };
 
@@ -131,8 +144,9 @@ const AdminCourses = () => {
               onChange={(e) => setNewCourse({...newCourse, title: e.target.value})}
               className="bg-zinc-900 border-zinc-800 rounded-xl w-64 text-white"
             />
-            <Button onClick={handleCreate} className="bg-white text-black hover:bg-zinc-200 font-bold rounded-xl px-8">
-              <Plus size={18} className="mr-2" /> create
+            <Button onClick={handleCreate} disabled={isCreating} className="bg-white text-black hover:bg-zinc-200 font-bold rounded-xl px-8">
+              {isCreating ? <Loader2 className="animate-spin mr-2" size={18} /> : <Plus size={18} className="mr-2" />}
+              create
             </Button>
           </div>
         </header>

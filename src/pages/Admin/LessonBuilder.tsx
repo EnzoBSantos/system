@@ -33,7 +33,6 @@ const LessonBuilder = () => {
     if (lessonId) {
       fetchLesson();
     } else {
-      // Default initial page for new lesson
       setPages([{
         id: 'temp-1',
         title: 'Introduction',
@@ -44,6 +43,7 @@ const LessonBuilder = () => {
 
   const fetchLesson = async () => {
     try {
+      setLoading(true);
       const { data: lesson, error: lessonError } = await supabase
         .from('lessons')
         .select('title, exercises(*)')
@@ -66,6 +66,7 @@ const LessonBuilder = () => {
         setPages([{ id: 'temp-1', title: 'Introduction', blocks: [] }]);
       }
     } catch (err: any) {
+      console.error("Load error:", err);
       toast({ title: "Failed to load lesson", description: err.message, variant: "destructive" });
     } finally {
       setLoading(false);
@@ -128,7 +129,6 @@ const LessonBuilder = () => {
     try {
       let currentLessonId = lessonId;
 
-      // 1. Ensure we have a Unit (if we are creating a new lesson for a course)
       if (!currentLessonId && courseId) {
         let { data: units } = await supabase.from('units').select('id').eq('course_id', courseId).order('order', { ascending: true }).limit(1);
         let unitId = units?.[0]?.id;
@@ -143,7 +143,6 @@ const LessonBuilder = () => {
           unitId = newUnit.id;
         }
 
-        // 2. Create Lesson
         const { data: newLesson, error: lessonError } = await supabase.from('lessons').insert({
           unit_id: unitId,
           title: lessonTitle,
@@ -153,37 +152,39 @@ const LessonBuilder = () => {
         if (lessonError) throw lessonError;
         currentLessonId = newLesson.id;
       } else if (currentLessonId) {
-        // Update existing lesson title
-        await supabase.from('lessons').update({ title: lessonTitle }).eq('id', currentLessonId);
+        const { error: lessonUpdateError } = await supabase.from('lessons').update({ title: lessonTitle }).eq('id', currentLessonId);
+        if (lessonUpdateError) throw lessonUpdateError;
       }
 
-      // 3. Sync Pages as Exercises
-      // For simplicity, we delete and recreate exercises for the lesson
       if (currentLessonId) {
-        await supabase.from('exercises').delete().eq('lesson_id', currentLessonId);
+        const { error: delError } = await supabase.from('exercises').delete().eq('lesson_id', currentLessonId);
+        if (delError) throw delError;
         
         const exerciseData = pages.map((page, idx) => ({
           lesson_id: currentLessonId,
           order: idx + 1,
-          type: 'CONTENT', // Custom type for page content
+          type: 'CONTENT',
           content: { title: page.title, blocks: page.blocks },
           correct_answer: 'N/A'
         }));
 
-        const { error: exError } = await supabase.from('exercises').insert(exerciseData);
-        if (exError) throw exError;
+        if (exerciseData.length > 0) {
+          const { error: insError } = await supabase.from('exercises').insert(exerciseData);
+          if (insError) throw insError;
+        }
       }
 
-      toast({ title: "Lesson published.", description: "The knowledge is now accessible in the Academy." });
+      toast({ title: "Lesson published.", description: "The content is now synchronized." });
       navigate('/admin/courses');
     } catch (err: any) {
+      console.error("Save failed:", err);
       toast({ title: "Save failed", description: err.message, variant: "destructive" });
     } finally {
       setIsSaving(false);
     }
   };
 
-  if (loading) return <div className="h-screen bg-black flex items-center justify-center"><Loader2 className="animate-spin" /></div>;
+  if (loading) return <div className="h-screen bg-black flex items-center justify-center"><Loader2 className="animate-spin text-white" /></div>;
 
   return (
     <div className="fixed inset-0 bg-black flex flex-col z-[100] font-sans">
