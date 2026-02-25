@@ -1,10 +1,10 @@
 "use client";
 
 import React from 'react';
-import { LayoutDashboard, CheckCircle2, Timer, Target } from 'lucide-react';
+import { LayoutDashboard, CheckCircle2, Timer, Target, ListTodo } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-type Tab = 'dashboard' | 'habits' | 'pomodoro' | 'goals';
+type Tab = 'dashboard' | 'habits' | 'pomodoro' | 'goals' | 'tasks';
 
 interface MobileNavProps {
   activeTab: Tab;
@@ -14,6 +14,7 @@ interface MobileNavProps {
 const MobileNav = ({ activeTab, setActiveTab }: MobileNavProps) => {
   const navItems = [
     { id: 'dashboard', label: 'daily', icon: LayoutDashboard },
+    { id: 'tasks', label: 'tasks', icon: ListTodo },
     { id: 'habits', label: 'rituals', icon: CheckCircle2 },
     { id: 'goals', label: 'vision', icon: Target },
     { id: 'pomodoro', label: 'focus', icon: Timer },

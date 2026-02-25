@@ -9,6 +9,7 @@ import PomodoroTimer from '@/components/PomodoroTimer';
 import DashboardStats from '@/components/DashboardStats';
 import CompletionChart from '@/components/CompletionChart';
 import Goals from '@/pages/Goals';
+import Tasks from '@/pages/Tasks';
 import GoalCreationFlow from '@/components/GoalCreationFlow';
 import GoalDetail from '@/components/GoalDetail';
 import { Habit } from '@/types/app';
@@ -18,7 +19,7 @@ import { format, parseISO, subDays } from 'date-fns';
 import { AnimatePresence } from 'framer-motion';
 
 const Index = () => {
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'habits' | 'pomodoro' | 'goals'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'habits' | 'pomodoro' | 'goals' | 'tasks'>('dashboard');
   const [habits, setHabits] = useState<Habit[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   
@@ -144,6 +145,12 @@ const Index = () => {
             </div>
           )}
 
+          {activeTab === 'tasks' && (
+            <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
+              <Tasks />
+            </div>
+          )}
+
           {activeTab === 'habits' && (
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
               <HabitTracker habits={habits} onUpdate={fetchHabits} />
@@ -170,7 +177,7 @@ const Index = () => {
 
       <MobileNav activeTab={activeTab} setActiveTab={setActiveTab} />
 
-      {/* Global Overlays (Cover everything) */}
+      {/* Global Overlays */}
       <AnimatePresence>
         {isFlowOpen && (
           <GoalCreationFlow 
