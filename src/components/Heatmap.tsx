@@ -8,7 +8,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { 
   Sparkles, Zap, Heart, Brain, BookOpen, Dumbbell, Moon, Coffee, 
   Timer, CheckCircle2, Wind, Droplets, Smile, Star, Sun, Flame,
-  LucideIcon, Crown
+  LucideIcon
 } from 'lucide-react';
 
 interface HeatmapProps {
@@ -28,31 +28,17 @@ const Heatmap = ({ habits, onToggleHabit }: HeatmapProps) => {
 
   const renderSymbol = (emoji: string) => {
     const Icon = ICON_MAP[emoji];
-    if (Icon) return <Icon size={20} className="md:size-6 text-white" />;
+    if (Icon) return <Icon size={20} className="md:size-6" />;
     return <span className="text-xl">{emoji}</span>;
-  };
-
-  const isPerfectDay = (dateStr: string) => {
-    if (habits.length === 0) return false;
-    return habits.every(h => h.completed_days?.includes(dateStr));
   };
 
   return (
     <div className="bg-zinc-900 border border-zinc-800 rounded-[2.5rem] p-8 md:p-10 space-y-8 h-full">
       <div className="flex items-center justify-between">
-        <div className="space-y-1">
-          <h3 className="text-2xl font-bold tracking-tight lowercase">weekly flow.</h3>
-          <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">track your rituals</p>
-        </div>
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-white shadow-[0_0_10px_rgba(255,255,255,0.5)]" />
-            <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">done</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <Crown size={14} className="text-yellow-500" />
-            <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">perfect</span>
-          </div>
+        <h3 className="text-2xl font-bold tracking-tight lowercase">weekly flow.</h3>
+        <div className="flex items-center gap-2">
+          <div className="w-3 h-3 rounded-full bg-white" />
+          <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">completed</span>
         </div>
       </div>
 
@@ -61,28 +47,19 @@ const Heatmap = ({ habits, onToggleHabit }: HeatmapProps) => {
           <div className="grid grid-cols-[40px_1fr] md:grid-cols-[60px_1fr] gap-4 items-center">
             <span className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest text-center">rit</span>
             <div className="grid grid-cols-7 gap-1 md:gap-4">
-              {dayInitials.map((initial, i) => {
-                const dateStr = weekDays[i].toISOString().split('T')[0];
-                const perfect = isPerfectDay(dateStr);
-                return (
-                  <div key={i} className="flex flex-col items-center gap-1">
-                    <span className={cn(
-                      "text-[10px] font-bold uppercase tracking-widest",
-                      isToday(weekDays[i]) ? "text-white" : "text-zinc-600",
-                      perfect && "text-yellow-500"
-                    )}>
-                      {initial}
-                    </span>
-                    {perfect ? (
-                      <Crown size={8} className="text-yellow-500 animate-pulse" />
-                    ) : isToday(weekDays[i]) ? (
-                      <div className="w-1 h-1 rounded-full bg-white" />
-                    ) : (
-                      <div className="w-1 h-1" />
-                    )}
-                  </div>
-                );
-              })}
+              {dayInitials.map((initial, i) => (
+                <div key={i} className="flex flex-col items-center gap-1">
+                  <span className={cn(
+                    "text-[10px] font-bold uppercase tracking-widest",
+                    isToday(weekDays[i]) ? "text-white" : "text-zinc-600"
+                  )}>
+                    {initial}
+                  </span>
+                  {isToday(weekDays[i]) && (
+                    <div className="w-1 h-1 rounded-full bg-white" />
+                  )}
+                </div>
+              ))}
             </div>
           </div>
 
@@ -101,7 +78,7 @@ const Heatmap = ({ habits, onToggleHabit }: HeatmapProps) => {
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <div className="text-white hover:scale-110 transition-transform cursor-help">
+                          <div className="text-zinc-400 hover:text-white transition-colors">
                             {renderSymbol(habit.emoji)}
                           </div>
                         </TooltipTrigger>
@@ -116,26 +93,18 @@ const Heatmap = ({ habits, onToggleHabit }: HeatmapProps) => {
                     {weekDays.map((day) => {
                       const dateStr = day.toISOString().split('T')[0];
                       const isCompleted = habit.completed_days?.includes(dateStr);
-                      const perfect = isPerfectDay(dateStr);
                       
                       return (
                         <div key={dateStr} className="flex justify-center">
                           <button
                             onClick={() => onToggleHabit(habit.id, dateStr)}
                             className={cn(
-                              "w-7 h-7 md:w-9 md:h-9 rounded-full border-2 transition-all duration-200 relative",
+                              "w-7 h-7 md:w-9 md:h-9 rounded-full border-2 transition-all duration-200",
                               isCompleted 
                                 ? "bg-white border-white scale-105 shadow-[0_0_15px_rgba(255,255,255,0.2)]" 
-                                : "border-zinc-800 hover:border-zinc-700 bg-transparent",
-                              perfect && isCompleted && "ring-2 ring-yellow-500 ring-offset-2 ring-offset-black"
+                                : "border-zinc-800 hover:border-zinc-700 bg-transparent"
                             )}
-                          >
-                            {perfect && isCompleted && (
-                              <div className="absolute -top-1 -right-1">
-                                <Crown size={10} className="text-yellow-500 fill-yellow-500" />
-                              </div>
-                            )}
-                          </button>
+                          />
                         </div>
                       );
                     })}
