@@ -12,6 +12,7 @@ import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 import LessonView from "./pages/LessonView";
 import AdminCourses from "./pages/admin/Courses";
+import LessonBuilder from "./pages/admin/LessonBuilder";
 import PWAInstallPrompt from "./components/PWAInstallPrompt";
 
 const queryClient = new QueryClient();
@@ -80,6 +81,10 @@ const App = () => {
             <Route 
               path="/admin/courses" 
               element={session ? <AdminCourses /> : <Navigate to="/login" replace />} 
+            />
+            <Route 
+              path="/admin/lesson-builder/:lessonId?" 
+              element={session ? <LessonBuilder /> : <Navigate to="/login" replace />} 
             />
             
             {/* Quick Access /adm */}

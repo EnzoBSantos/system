@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAdmin } from "@/hooks/useAdmin";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Trash2, LayoutGrid, ArrowLeft } from 'lucide-react';
+import { Plus, Trash2, LayoutGrid, ArrowLeft, PenTool } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import Sidebar from '@/components/Sidebar';
 import { useNavigate } from 'react-router-dom';
@@ -83,6 +83,19 @@ const AdminCourses = () => {
         </header>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <button 
+            onClick={() => navigate('/admin/lesson-builder')}
+            className="group bg-zinc-950 border-2 border-dashed border-zinc-900 p-8 rounded-[2.5rem] space-y-6 flex flex-col items-center justify-center text-center hover:border-white/20 transition-all"
+          >
+            <div className="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center text-zinc-500 group-hover:text-white transition-colors">
+              <PenTool size={32} />
+            </div>
+            <div className="space-y-1">
+              <h3 className="text-xl font-bold tracking-tight lowercase">launch architect.</h3>
+              <p className="text-zinc-500 text-xs lowercase">build a sequential learning path.</p>
+            </div>
+          </button>
+
           {courses.map((course) => (
             <div key={course.id} className="bg-zinc-900 border border-zinc-800 p-8 rounded-[2.5rem] space-y-6">
               <div className="w-14 h-14 bg-white/5 rounded-2xl flex items-center justify-center text-zinc-500">
