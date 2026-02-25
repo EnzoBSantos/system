@@ -18,8 +18,10 @@ import { useToast } from "@/components/ui/use-toast";
 import { format, parseISO, subDays } from 'date-fns';
 import { AnimatePresence } from 'framer-motion';
 
+type Tab = 'dashboard' | 'habits' | 'pomodoro' | 'goals' | 'tasks';
+
 const Index = () => {
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'habits' | 'pomodoro' | 'goals' | 'tasks'>('dashboard');
+  const [activeTab, setActiveTab] = useState<Tab>('dashboard');
   const [habits, setHabits] = useState<Habit[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isFlowOpen, setIsFlowOpen] = useState(false);
@@ -36,6 +38,13 @@ const Index = () => {
 
   useEffect(() => { fetchHabits(); }, []);
 
+  const handleTabChange = (tab: Tab) => {
+    setActiveTab(tab);
+    // Fecha qualquer detalhe ou fluxo aberto ao navegar para outra aba
+    setSelectedGoalId(null);
+    setIsFlowOpen(false);
+  };
+
   const handleToggleHabit = async (habitId: string, dateStr: string) => {
     const habit = habits.find(h => h.id === habitId);
     if (!habit) return;
@@ -49,7 +58,7 @@ const Index = () => {
 
   return (
     <div className="flex flex-col lg:flex-row h-screen bg-black text-white overflow-hidden font-sans">
-      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
+      <Sidebar activeTab={activeTab} setActiveTab={handleTabChange} />
       
       <main className="flex-1 overflow-y-auto custom-scrollbar pb-24 lg:pb-0">
         <div className="container max-w-7xl mx-auto px-4 py-8 md:px-12 md:py-16">
@@ -80,21 +89,28 @@ const Index = () => {
         </div>
       </main>
 
-      <MobileNav activeTab={activeTab} setActiveTab={setActiveTab} />
+      {/* A navegação mobile deve estar sempre disponível e no topo da hierarquia */}
+      <div className="relative z-[60]">
+        <MobileNav activeTab={activeTab} setActiveTab={handleTabChange} />
+      </div>
 
       <AnimatePresence>
         {isFlowOpen && (
-          <GoalCreationFlow 
-            onClose={() => setIsFlowOpen(false)} 
-            onSuccess={() => { setRefreshGoals(prev => prev + 1); setIsFlowOpen(false); }} 
-          />
+          <div className="z-50">
+            <GoalCreationFlow 
+              onClose={() => setIsFlowOpen(false)} 
+              onSuccess={() => { setRefreshGoals(prev => prev + 1); setIsFlowOpen(false); }} 
+            />
+          </div>
         )}
         {selectedGoalId && (
-          <GoalDetail 
-            goalId={selectedGoalId} 
-            onClose={() => setSelectedGoalId(null)}
-            onUpdate={() => setRefreshGoals(prev => prev + 1)}
-          />
+          <div className="z-50">
+            <GoalDetail 
+              goalId={selectedGoalId} 
+              onClose={() => setSelectedGoalId(null)}
+              onUpdate={() => setRefreshGoals(prev => prev + 1)}
+            />
+          </div>
         )}
       </AnimatePresence>
     </div>
