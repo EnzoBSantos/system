@@ -5,7 +5,7 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { 
   ArrowLeft, Save, Plus, Trash2, 
   Type, AlignLeft, Image as ImageIcon, MousePointer2, 
-  ChevronRight, ChevronLeft, Loader2
+  ChevronRight, ChevronLeft, Loader2, FileText, GripVertical
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -34,7 +34,7 @@ const LessonBuilder = () => {
       fetchLesson();
     } else {
       setPages([{
-        id: 'p1',
+        id: crypto.randomUUID(),
         title: 'Introduction',
         blocks: [{ type: 'heading', value: 'Welcome to the path' }]
       }]);
@@ -84,6 +84,34 @@ const LessonBuilder = () => {
     }
   };
 
+  const addPage = () => {
+    const newPage: LessonPage = {
+      id: crypto.randomUUID(),
+      title: `Page ${pages.length + 1}`,
+      blocks: []
+    };
+    setPages([...pages, newPage]);
+    setActivePageIndex(pages.length);
+  };
+
+  const deletePage = (index: number) => {
+    if (pages.length <= 1) {
+      toast({ title: "cannot delete", description: "a lesson must have at least one page.", variant: "destructive" });
+      return;
+    }
+    const newPages = pages.filter((_, i) => i !== index);
+    setPages(newPages);
+    if (activePageIndex >= newPages.length) {
+      setActivePageIndex(newPages.length - 1);
+    }
+  };
+
+  const updatePageTitle = (value: string) => {
+    const newPages = [...pages];
+    newPages[activePageIndex].title = value;
+    setPages(newPages);
+  };
+
   const addBlock = (type: BlockType) => {
     const newPages = [...pages];
     newPages[activePageIndex].blocks.push({ type, value: '' });
@@ -96,59 +124,161 @@ const LessonBuilder = () => {
     setPages(newPages);
   };
 
+  const deleteBlock = (blockIndex: number) => {
+    const newPages = [...pages];
+    newPages[activePageIndex].blocks = newPages[activePageIndex].blocks.filter((_, i) => i !== blockIndex);
+    setPages(newPages);
+  };
+
   if (loading) return <div className="h-screen bg-black flex items-center justify-center"><Loader2 className="animate-spin text-white" /></div>;
+
+  const activePage = pages[activePageIndex];
 
   return (
     <div className="fixed inset-0 bg-black flex flex-col z-[100] font-sans">
-      <header className="h-24 border-b border-zinc-900 px-8 flex items-center justify-between bg-black/50 backdrop-blur-xl shrink-0">
+      <header className="h-20 border-b border-zinc-900 px-8 flex items-center justify-between bg-black/50 backdrop-blur-xl shrink-0">
         <div className="flex items-center gap-6">
           <Button variant="ghost" size="icon" onClick={() => navigate('/admin/courses')} className="rounded-full text-zinc-500">
             <ArrowLeft size={24} />
           </Button>
-          <input 
-            value={lessonTitle}
-            onChange={(e) => setLessonTitle(e.target.value)}
-            className="bg-transparent border-none text-2xl font-black tracking-tighter lowercase outline-none w-64"
-          />
+          <div className="flex flex-col">
+            <span className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest">lesson title</span>
+            <input 
+              value={lessonTitle}
+              onChange={(e) => setLessonTitle(e.target.value)}
+              className="bg-transparent border-none text-xl font-black tracking-tighter lowercase outline-none w-64"
+            />
+          </div>
         </div>
-        <Button onClick={handleSave} disabled={isSaving} className="bg-white text-black hover:bg-zinc-200 h-12 px-8 rounded-2xl font-black lowercase gap-2">
-          {isSaving ? <Loader2 className="animate-spin" /> : <Save size={18} />}
-          publish lesson
-        </Button>
+        <div className="flex items-center gap-4">
+          <Button onClick={handleSave} disabled={isSaving} className="bg-white text-black hover:bg-zinc-200 h-11 px-6 rounded-xl font-black lowercase gap-2">
+            {isSaving ? <Loader2 className="animate-spin" /> : <Save size={18} />}
+            publish lesson
+          </Button>
+        </div>
       </header>
 
-      <div className="flex-1 overflow-y-auto p-20">
-        <div className="max-w-3xl mx-auto space-y-12">
-          <div className="space-y-8">
-            {pages[activePageIndex]?.blocks.map((block, idx) => (
-              <div key={idx} className="bg-zinc-900/50 p-8 rounded-[2rem] border border-zinc-800 space-y-4">
-                <span className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest">{block.type}</span>
-                {block.type === 'heading' || block.type === 'button' ? (
-                  <Input 
-                    value={block.value} 
-                    onChange={(e) => updateBlock(idx, e.target.value)}
-                    className="bg-transparent border-zinc-800 text-xl font-bold lowercase"
-                    placeholder={`Enter ${block.type}...`}
-                  />
-                ) : (
-                  <Textarea 
-                    value={block.value} 
-                    onChange={(e) => updateBlock(idx, e.target.value)}
-                    className="bg-transparent border-zinc-800 lowercase"
-                    placeholder={`Enter ${block.type}...`}
-                  />
+      <div className="flex-1 flex overflow-hidden">
+        {/* Pages Sidebar */}
+        <aside className="w-72 border-r border-zinc-900 bg-zinc-950/50 flex flex-col shrink-0">
+          <div className="p-6 border-b border-zinc-900 flex items-center justify-between">
+            <h3 className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">lesson pages</h3>
+            <Button variant="ghost" size="icon" onClick={addPage} className="h-8 w-8 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-900">
+              <Plus size={18} />
+            </Button>
+          </div>
+          <div className="flex-1 overflow-y-auto p-4 space-y-2 custom-scrollbar">
+            {pages.map((page, idx) => (
+              <div 
+                key={page.id}
+                onClick={() => setActivePageIndex(idx)}
+                className={cn(
+                  "group flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all border",
+                  activePageIndex === idx 
+                    ? "bg-white text-black border-white" 
+                    : "bg-transparent border-transparent text-zinc-500 hover:bg-zinc-900 hover:text-zinc-300"
                 )}
+              >
+                <FileText size={16} className={cn(activePageIndex === idx ? "text-black" : "text-zinc-700")} />
+                <span className="flex-1 text-xs font-bold lowercase truncate">{page.title}</span>
+                <button 
+                  onClick={(e) => { e.stopPropagation(); deletePage(idx); }}
+                  className={cn(
+                    "opacity-0 group-hover:opacity-100 transition-opacity",
+                    activePageIndex === idx ? "text-black/40 hover:text-black" : "text-zinc-700 hover:text-red-500"
+                  )}
+                >
+                  <Trash2 size={14} />
+                </button>
               </div>
             ))}
           </div>
+        </aside>
 
-          <div className="flex justify-center gap-4">
-            <Button onClick={() => addBlock('heading')} variant="outline" className="rounded-xl lowercase font-bold gap-2"><Type size={16}/> Heading</Button>
-            <Button onClick={() => addBlock('paragraph')} variant="outline" className="rounded-xl lowercase font-bold gap-2"><AlignLeft size={16}/> Paragraph</Button>
-            <Button onClick={() => addBlock('image')} variant="outline" className="rounded-xl lowercase font-bold gap-2"><ImageIcon size={16}/> Image</Button>
-            <Button onClick={() => addBlock('button')} variant="outline" className="rounded-xl lowercase font-bold gap-2"><MousePointer2 size={16}/> Button</Button>
+        {/* Editor Area */}
+        <main className="flex-1 overflow-y-auto bg-black custom-scrollbar">
+          <div className="max-w-3xl mx-auto py-20 px-8 space-y-12">
+            {/* Page Header Editor */}
+            <div className="space-y-4 border-b border-zinc-900 pb-12">
+              <span className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest">page title</span>
+              <Input 
+                value={activePage?.title || ''}
+                onChange={(e) => updatePageTitle(e.target.value)}
+                className="bg-transparent border-none text-5xl font-black tracking-tighter lowercase p-0 h-auto focus-visible:ring-0"
+                placeholder="Enter page title..."
+              />
+            </div>
+
+            {/* Blocks List */}
+            <div className="space-y-8">
+              <AnimatePresence mode="popLayout">
+                {activePage?.blocks.map((block, idx) => (
+                  <motion.div 
+                    key={idx}
+                    layout
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    className="group relative bg-zinc-900/30 border border-zinc-800 p-8 rounded-[2rem] space-y-4 hover:border-zinc-700 transition-all"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <GripVertical size={14} className="text-zinc-800" />
+                        <span className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest">{block.type}</span>
+                      </div>
+                      <button 
+                        onClick={() => deleteBlock(idx)}
+                        className="opacity-0 group-hover:opacity-100 text-zinc-700 hover:text-red-500 transition-all"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+
+                    {block.type === 'heading' || block.type === 'button' ? (
+                      <Input 
+                        value={block.value} 
+                        onChange={(e) => updateBlock(idx, e.target.value)}
+                        className="bg-zinc-950 border-zinc-800 h-14 rounded-xl text-lg font-bold lowercase focus:border-white transition-all"
+                        placeholder={`Enter ${block.type} text...`}
+                      />
+                    ) : (
+                      <Textarea 
+                        value={block.value} 
+                        onChange={(e) => updateBlock(idx, e.target.value)}
+                        className="bg-zinc-950 border-zinc-800 min-h-[120px] rounded-xl text-base lowercase focus:border-white transition-all leading-relaxed"
+                        placeholder={`Enter ${block.type} content...`}
+                      />
+                    )}
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+
+              {activePage?.blocks.length === 0 && (
+                <div className="py-20 text-center border-2 border-dashed border-zinc-900 rounded-[2.5rem]">
+                  <p className="text-zinc-700 font-bold uppercase tracking-widest text-[10px]">this page is empty. add blocks below.</p>
+                </div>
+              )}
+            </div>
+
+            {/* Add Block Controls */}
+            <div className="pt-12 border-t border-zinc-900">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <Button onClick={() => addBlock('heading')} variant="outline" className="h-14 rounded-xl border-zinc-800 hover:bg-zinc-900 lowercase font-bold gap-2">
+                  <Type size={16} className="text-zinc-500" /> Heading
+                </Button>
+                <Button onClick={() => addBlock('paragraph')} variant="outline" className="h-14 rounded-xl border-zinc-800 hover:bg-zinc-900 lowercase font-bold gap-2">
+                  <AlignLeft size={16} className="text-zinc-500" /> Paragraph
+                </Button>
+                <Button onClick={() => addBlock('image')} variant="outline" className="h-14 rounded-xl border-zinc-800 hover:bg-zinc-900 lowercase font-bold gap-2">
+                  <ImageIcon size={16} className="text-zinc-500" /> Image URL
+                </Button>
+                <Button onClick={() => addBlock('button')} variant="outline" className="h-14 rounded-xl border-zinc-800 hover:bg-zinc-900 lowercase font-bold gap-2">
+                  <MousePointer2 size={16} className="text-zinc-500" /> Button
+                </Button>
+              </div>
+            </div>
           </div>
-        </div>
+        </main>
       </div>
     </div>
   );
