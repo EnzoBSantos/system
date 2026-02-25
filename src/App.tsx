@@ -76,9 +76,20 @@ const App = () => {
               element={session ? <LessonView /> : <Navigate to="/login" replace />} 
             />
 
+            {/* Admin Routes */}
             <Route 
               path="/admin/courses" 
               element={session ? <AdminCourses /> : <Navigate to="/login" replace />} 
+            />
+            
+            {/* Quick Access /adm */}
+            <Route 
+              path="/adm" 
+              element={<Navigate to="/admin/courses" replace />} 
+            />
+            <Route 
+              path="/admin" 
+              element={<Navigate to="/admin/courses" replace />} 
             />
             
             <Route path="*" element={<NotFound />} />
