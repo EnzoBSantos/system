@@ -5,7 +5,6 @@ import Sidebar from '@/components/Sidebar';
 import MobileNav from '@/components/MobileNav';
 import Heatmap from '@/components/Heatmap';
 import HabitTracker from '@/components/HabitTracker';
-import PomodoroTimer from '@/components/PomodoroTimer';
 import DashboardStats from '@/components/DashboardStats';
 import CompletionChart from '@/components/CompletionChart';
 import Goals from '@/pages/Goals';
@@ -16,10 +15,9 @@ import QuickTaskDialog from '@/components/tasks/QuickTaskDialog';
 import { Habit } from '@/types/app';
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
-import { format, parseISO, subDays } from 'date-fns';
 import { AnimatePresence } from 'framer-motion';
 
-type Tab = 'dashboard' | 'habits' | 'pomodoro' | 'goals' | 'tasks';
+type Tab = 'dashboard' | 'habits' | 'goals' | 'tasks';
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState<Tab>('dashboard');
@@ -40,7 +38,7 @@ const Index = () => {
       const { data, error } = await supabase
         .from('habits')
         .select('*')
-        .eq('user_id', user.id) // Explicit client-side filter
+        .eq('user_id', user.id)
         .order('created_at', { ascending: true });
       
       if (error) throw error;
@@ -78,12 +76,12 @@ const Index = () => {
         .from('habits')
         .update({ completed_days: newCompletedDays })
         .eq('id', habitId)
-        .eq('user_id', user.id); // Guard against IDOR
+        .eq('user_id', user.id);
       
       if (error) throw error;
     } catch (error: any) {
       toast({ title: "Failed to update ritual", description: error.message, variant: "destructive" });
-      fetchHabits(); // Revert state on error
+      fetchHabits();
     }
   };
 
@@ -130,7 +128,6 @@ const Index = () => {
               refreshTrigger={refreshGoals}
             />
           )}
-          {activeTab === 'pomodoro' && <PomodoroTimer />}
         </div>
       </main>
 
@@ -166,9 +163,7 @@ const Index = () => {
       <QuickTaskDialog 
         open={isTaskDialogOpen} 
         onOpenChange={setIsTaskDialogOpen} 
-        onTaskCreated={() => {
-          // As tarefas serão atualizadas via Supabase no componente Tasks se estiver ativo
-        }}
+        onTaskCreated={() => {}}
       />
     </div>
   );

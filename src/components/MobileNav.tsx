@@ -1,11 +1,11 @@
 "use client";
 
 import React, { useState } from 'react';
-import { LayoutDashboard, Timer, Target, ListTodo, Plus, X, Rocket } from 'lucide-react';
+import { LayoutDashboard, Target, ListTodo, Plus, X, Rocket } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 
-type Tab = 'dashboard' | 'habits' | 'pomodoro' | 'goals' | 'tasks';
+type Tab = 'dashboard' | 'habits' | 'goals' | 'tasks';
 
 interface MobileNavProps {
   activeTab: Tab;
@@ -24,7 +24,6 @@ const MobileNav = ({ activeTab, setActiveTab, onOpenGoalFlow, onOpenQuickTask }:
 
   const rightItems = [
     { id: 'goals', label: 'vision', icon: Target },
-    { id: 'pomodoro', label: 'focus', icon: Timer },
   ];
 
   return (
