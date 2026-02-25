@@ -13,24 +13,28 @@ export function useAdmin() {
         const { data: { user } } = await supabase.auth.getUser();
         
         if (!user) {
-          console.log("[useAdmin] No user found in session.");
           setIsAdmin(false);
           setLoading(false);
           return;
         }
 
+        // Usamos .maybeSingle() em vez de .single() para evitar o erro de 'JSON coercion'
+        // se o registro não existir.
         const { data: profile, error } = await supabase
           .from('profiles')
           .select('role')
           .eq('id', user.id)
-          .single();
+          .maybeSingle();
 
         if (error) {
-          console.error("[useAdmin] Error fetching profile:", error.message);
+          console.error("[useAdmin] Query error:", error.message);
+          setIsAdmin(false);
+        } else if (!profile) {
+          console.log("[useAdmin] Profile record missing for user:", user.id);
           setIsAdmin(false);
         } else {
-          console.log("[useAdmin] Current role:", profile?.role);
-          setIsAdmin(profile?.role === 'admin');
+          console.log("[useAdmin] Current role:", profile.role);
+          setIsAdmin(profile.role === 'admin');
         }
       } catch (err) {
         console.error("[useAdmin] Unexpected error:", err);
