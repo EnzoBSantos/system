@@ -12,6 +12,7 @@ import Goals from '@/pages/Goals';
 import Tasks from '@/pages/Tasks';
 import GoalCreationFlow from '@/components/GoalCreationFlow';
 import GoalDetail from '@/components/GoalDetail';
+import QuickTaskDialog from '@/components/tasks/QuickTaskDialog';
 import { Habit } from '@/types/app';
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -25,6 +26,7 @@ const Index = () => {
   const [habits, setHabits] = useState<Habit[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isFlowOpen, setIsFlowOpen] = useState(false);
+  const [isTaskDialogOpen, setIsTaskDialogOpen] = useState(false);
   const [selectedGoalId, setSelectedGoalId] = useState<string | null>(null);
   const [refreshGoals, setRefreshGoals] = useState(0);
 
@@ -107,7 +109,7 @@ const Index = () => {
           activeTab={activeTab} 
           setActiveTab={handleTabChange} 
           onOpenGoalFlow={() => setIsFlowOpen(true)}
-          onQuickTask={() => handleTabChange('tasks')}
+          onOpenQuickTask={() => setIsTaskDialogOpen(true)}
         />
       </div>
 
@@ -130,6 +132,14 @@ const Index = () => {
           </div>
         )}
       </AnimatePresence>
+
+      <QuickTaskDialog 
+        open={isTaskDialogOpen} 
+        onOpenChange={setIsTaskDialogOpen} 
+        onTaskCreated={() => {
+          // As tarefas serão atualizadas via Supabase no componente Tasks se estiver ativo
+        }}
+      />
     </div>
   );
 };

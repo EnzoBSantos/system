@@ -11,10 +11,10 @@ interface MobileNavProps {
   activeTab: Tab;
   setActiveTab: (tab: Tab) => void;
   onOpenGoalFlow: () => void;
-  onQuickTask: () => void;
+  onOpenQuickTask: () => void;
 }
 
-const MobileNav = ({ activeTab, setActiveTab, onOpenGoalFlow, onQuickTask }: MobileNavProps) => {
+const MobileNav = ({ activeTab, setActiveTab, onOpenGoalFlow, onOpenQuickTask }: MobileNavProps) => {
   const [isOpen, setIsOpen] = useState(false);
 
   const leftItems = [
@@ -45,7 +45,7 @@ const MobileNav = ({ activeTab, setActiveTab, onOpenGoalFlow, onQuickTask }: Mob
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 20 }}
-                onClick={() => { onQuickTask(); setIsOpen(false); }}
+                onClick={() => { onOpenQuickTask(); setIsOpen(false); }}
                 className="w-full bg-zinc-900 border border-zinc-800 p-6 rounded-[2rem] flex items-center justify-between group active:scale-95 transition-all"
               >
                 <div className="flex items-center gap-4">
@@ -101,7 +101,7 @@ const MobileNav = ({ activeTab, setActiveTab, onOpenGoalFlow, onQuickTask }: Mob
             ))}
           </div>
 
-          <div className="absolute left-1/2 -top-12 -translate-x-1/2">
+          <div className="absolute left-1/2 -top-8 -translate-x-1/2">
             <button
               onClick={() => setIsOpen(!isOpen)}
               className={cn(
