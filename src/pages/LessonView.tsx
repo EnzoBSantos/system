@@ -9,7 +9,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import confetti from 'canvas-confetti';
 import { useToast } from '@/components/ui/use-toast';
 import BlockRenderer from '@/components/learning/BlockRenderer';
-import { LessonPage } from '@/types/lesson-builder';
+import { LessonPage } from '@/types/lesson';
 
 const LessonView = () => {
   const { lessonId } = useParams();
@@ -35,14 +35,17 @@ const LessonView = () => {
 
         setLesson(lessonData);
         
-        if (lessonData.exercises && lessonData.exercises.length > 0) {
+        if (lessonData.content && Array.isArray(lessonData.content) && lessonData.content.length > 0) {
+          setPages(lessonData.content);
+        } 
+        else if (lessonData.exercises && lessonData.exercises.length > 0) {
           const sortedExercises = [...lessonData.exercises].sort((a, b) => a.order - b.order);
           const fetchedPages = sortedExercises.map(ex => ({
             id: ex.id,
             title: ex.content?.title || 'Untitled Page',
             blocks: ex.content?.blocks || []
           }));
-          setPages(fetchedPages);
+          setPages(fetchedPages as any);
         }
       } catch (err: any) {
         toast({ title: "Failed to load lesson", description: err.message, variant: "destructive" });
@@ -87,7 +90,7 @@ const LessonView = () => {
 
   if (loading) return (
     <div className="min-h-screen bg-black flex flex-col items-center justify-center space-y-4">
-      <Loader2 className="animate-spin text-white" size={32} />
+      <div className="w-10 h-10 border-2 border-white/10 border-t-white rounded-full animate-spin" />
       <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">drawing wisdom...</span>
     </div>
   );
@@ -125,21 +128,21 @@ const LessonView = () => {
         <AnimatePresence mode="wait">
           {!completed ? (
             <motion.div
-              key={activePage.id}
+              key={activePage.id || currentPageIndex}
               initial={{ opacity: 0, x: 20, filter: "blur(10px)" }}
               animate={{ opacity: 1, x: 0, filter: "blur(0px)" }}
               exit={{ opacity: 0, x: -20, filter: "blur(10px)" }}
               className="space-y-4"
             >
-              {activePage.blocks.map((block) => (
+              {activePage.blocks.map((block, bIdx) => (
                 <BlockRenderer 
-                  key={block.id} 
+                  key={bIdx} 
                   block={block} 
                   onAction={handleNext} 
                 />
               ))}
 
-              {!activePage.blocks.some(b => b.type === 'BUTTON') && (
+              {!activePage.blocks.some(b => b.type.toLowerCase() === 'button') && (
                 <div className="pt-8">
                   <Button 
                     onClick={handleNext}

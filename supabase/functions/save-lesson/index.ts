@@ -8,7 +8,6 @@ const corsHeaders = {
 }
 
 serve(async (req) => {
-  // Handle CORS
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
   }
@@ -19,38 +18,67 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    // 1. Validate Authentication
     const authHeader = req.headers.get('Authorization')
     if (!authHeader) throw new Error('No authorization header')
     
     const { data: { user }, error: authError } = await supabaseClient.auth.getUser(authHeader.replace('Bearer ', ''))
     if (authError || !user) throw new Error('Unauthorized')
 
-    // 2. Validate Payload
     const { lessonId, courseId, title, content, order } = await req.json()
 
     if (!title || !Array.isArray(content)) {
       return new Response(
-        JSON.stringify({ error: "Missing required fields: title and content (array) are mandatory." }),
+        JSON.stringify({ error: "Title and content array are required." }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
-    // 3. Save Data (Upsert)
+    let targetUnitId = null;
+
+    // If it's a new lesson, we need to find or create a unit for the course
+    if (!lessonId && courseId) {
+      const { data: units } = await supabaseClient
+        .from('units')
+        .select('id')
+        .eq('course_id', courseId)
+        .order('order', { ascending: true })
+        .limit(1);
+
+      if (units && units.length > 0) {
+        targetUnitId = units[0].id;
+      } else {
+        // Create a default unit if none exists
+        const { data: newUnit, error: unitError } = await supabaseClient
+          .from('units')
+          .insert({
+            course_id: courseId,
+            title: 'Module 1',
+            order: 1
+          })
+          .select()
+          .single();
+        
+        if (unitError) throw unitError;
+        targetUnitId = newUnit.id;
+      }
+    }
+
+    const lessonData = {
+      title,
+      content,
+      order: order || 1,
+    };
+
+    if (lessonId) lessonData.id = lessonId;
+    if (targetUnitId) lessonData.unit_id = targetUnitId;
+
     const { data, error } = await supabaseClient
       .from('lessons')
-      .upsert({
-        id: lessonId, // If present, update. If null, insert.
-        title,
-        content,
-        order: order || 1,
-      })
+      .upsert(lessonData)
       .select()
       .single()
 
     if (error) throw error
-
-    console.log(`[save-lesson] Lesson ${data.id} saved successfully.`)
 
     return new Response(
       JSON.stringify(data),
@@ -58,7 +86,6 @@ serve(async (req) => {
     )
 
   } catch (error: any) {
-    console.error(`[save-lesson] Error:`, error.message)
     return new Response(
       JSON.stringify({ error: error.message }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
