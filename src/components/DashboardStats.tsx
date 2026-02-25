@@ -16,10 +16,10 @@ const DashboardStats = ({ habits }: DashboardStatsProps) => {
     : 0;
 
   const stats = [
-    { label: 'active rituals', value: totalRituals, icon: Target, color: 'text-blue-500' },
-    { label: 'total streaks', value: currentStreaks, icon: Flame, color: 'text-orange-500' },
-    { label: 'weekly flow', value: `${avgCompletion}%`, icon: Calendar, color: 'text-green-500' },
-    { label: 'best record', value: Math.max(0, ...habits.map(h => h.streak || 0)), icon: Trophy, color: 'text-yellow-500' },
+    { label: 'active rituals', value: totalRituals, icon: Target },
+    { label: 'total streaks', value: currentStreaks, icon: Flame },
+    { label: 'weekly flow', value: `${avgCompletion}%`, icon: Calendar },
+    { label: 'best record', value: Math.max(0, ...habits.map(h => h.streak || 0)), icon: Trophy },
   ];
 
   return (
@@ -28,7 +28,7 @@ const DashboardStats = ({ habits }: DashboardStatsProps) => {
         const Icon = stat.icon;
         return (
           <div key={i} className="bg-zinc-900 border border-zinc-800 p-6 rounded-[2rem] space-y-3">
-            <div className={`w-10 h-10 rounded-2xl bg-white/5 flex items-center justify-center ${stat.color}`}>
+            <div className="w-10 h-10 rounded-2xl bg-white/5 flex items-center justify-center text-white">
               <Icon size={20} />
             </div>
             <div>
