@@ -55,7 +55,8 @@ serve(async (req) => {
 
     let targetUnitId = null;
 
-    if (lessonId && lessonId !== 'undefined') {
+    // Resolve targetUnitId
+    if (lessonId && lessonId !== 'undefined' && lessonId !== 'null') {
       const { data: existingLesson } = await supabaseClient
         .from('lessons')
         .select('unit_id')
@@ -67,7 +68,7 @@ serve(async (req) => {
       }
     }
 
-    if (!targetUnitId && courseId && courseId !== 'null') {
+    if (!targetUnitId && courseId && courseId !== 'null' && courseId !== 'undefined') {
       const { data: units } = await supabaseClient
         .from('units')
         .select('id')
@@ -99,10 +100,16 @@ serve(async (req) => {
       order: order || 1,
     };
 
-    if (lessonId && lessonId !== 'undefined') lessonData.id = lessonId;
-    if (targetUnitId) lessonData.unit_id = targetUnitId;
+    if (lessonId && lessonId !== 'undefined' && lessonId !== 'null') {
+      lessonData.id = lessonId;
+    }
+    
+    if (targetUnitId) {
+      lessonData.unit_id = targetUnitId;
+    }
 
-    // Use a simpler upsert if PostgREST cache is lagging
+    console.log("[save-lesson] Saving data:", { id: lessonData.id, unit_id: lessonData.unit_id });
+
     const { data, error } = await supabaseClient
       .from('lessons')
       .upsert(lessonData)
@@ -110,10 +117,11 @@ serve(async (req) => {
       .single()
 
     if (error) {
-      console.error("[save-lesson] Upsert error:", error.message);
-      // If schema cache is the issue, we can try to notify again here
-      await supabaseClient.rpc('reload_schema_cache').catch(() => {});
-      throw error;
+      console.error("[save-lesson] Database error:", error.message);
+      return new Response(
+        JSON.stringify({ error: `Database error: ${error.message}` }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
     }
 
     return new Response(
@@ -122,7 +130,7 @@ serve(async (req) => {
     )
 
   } catch (error: any) {
-    console.error("[save-lesson] Critical error:", error.message);
+    console.error("[save-lesson] Runtime error:", error.message);
     return new Response(
       JSON.stringify({ error: error.message }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
