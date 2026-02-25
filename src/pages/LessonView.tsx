@@ -77,13 +77,13 @@ const LessonView = () => {
 
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
+      // Karma is now awarded automatically via database trigger on lesson_completions insert
       await supabase.from('lesson_completions').insert({
         user_id: user.id,
         lesson_id: lessonId,
         score: 100
       });
 
-      await supabase.rpc('award_karma', { points: lesson?.xp_reward || 50 });
       toast({ title: "ritual complete.", description: `you earned ${lesson?.xp_reward || 50} XP!` });
     }
   };

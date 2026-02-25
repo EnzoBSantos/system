@@ -42,7 +42,7 @@ const Tasks = () => {
       let query = supabase
         .from('tasks')
         .select('*')
-        .eq('user_id', user.id) // Secure filter
+        .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
       if (activeFilter === 'today') {
@@ -85,13 +85,13 @@ const Tasks = () => {
         .from('tasks')
         .update({ status })
         .eq('id', id)
-        .eq('user_id', user.id); // Guard against IDOR
+        .eq('user_id', user.id);
 
       if (error) throw error;
       
       if (status === 'completed') {
-        await supabase.rpc('award_karma', { points: 10 });
-        toast({ title: "task conquered. +10 karma" });
+        // Karma is now awarded automatically via database trigger
+        toast({ title: "task conquered." });
       }
     } catch (error: any) {
       fetchTasks(false);
@@ -110,7 +110,7 @@ const Tasks = () => {
         .from('tasks')
         .delete()
         .eq('id', id)
-        .eq('user_id', user.id); // Guard against IDOR
+        .eq('user_id', user.id);
 
       if (error) throw error;
       toast({ title: "removed from reality." });
