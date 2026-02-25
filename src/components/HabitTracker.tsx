@@ -26,12 +26,22 @@ const HabitTracker = ({ habits, onUpdate }: HabitTrackerProps) => {
   const { toast } = useToast();
 
   const deleteHabit = async (id: string) => {
-    const { error } = await supabase.from('habits').delete().eq('id', id);
-    if (error) {
-      toast({ title: "error deleting ritual", variant: "destructive" });
-    } else {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { error } = await supabase
+        .from('habits')
+        .delete()
+        .eq('id', id)
+        .eq('user_id', user.id); // Explicit ownership check
+
+      if (error) throw error;
+      
       onUpdate();
       toast({ title: "ritual removed." });
+    } catch (error: any) {
+      toast({ title: "error deleting ritual", description: error.message, variant: "destructive" });
     }
   };
 

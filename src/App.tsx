@@ -21,10 +21,18 @@ const App = () => {
   useEffect(() => {
     const initAuth = async () => {
       try {
-        const { data: { session: initialSession } } = await supabase.auth.getSession();
-        setSession(initialSession);
+        // Use getUser() for server-side validation instead of just getSession()
+        const { data: { user }, error } = await supabase.auth.getUser();
+        
+        if (user) {
+          const { data: { session: currentSession } } = await supabase.auth.getSession();
+          setSession(currentSession);
+        } else {
+          setSession(null);
+        }
       } catch (error) {
         console.error("Auth init error:", error);
+        setSession(null);
       } finally {
         setLoading(false);
       }
@@ -56,7 +64,7 @@ const App = () => {
           <Routes>
             <Route 
               path="/" 
-              element={<Navigate to="/login" replace />} 
+              element={<Navigate to={session ? "/dashboard" : "/login"} replace />} 
             />
             
             <Route 

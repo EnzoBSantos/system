@@ -33,9 +33,23 @@ const Index = () => {
   const { toast } = useToast();
 
   const fetchHabits = async () => {
-    const { data } = await supabase.from('habits').select('*').order('created_at', { ascending: true });
-    setHabits(data || []);
-    setIsLoading(false);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from('habits')
+        .select('*')
+        .eq('user_id', user.id) // Explicit client-side filter
+        .order('created_at', { ascending: true });
+      
+      if (error) throw error;
+      setHabits(data || []);
+    } catch (error: any) {
+      console.error("Fetch habits error:", error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   useEffect(() => { fetchHabits(); }, []);
@@ -47,14 +61,30 @@ const Index = () => {
   };
 
   const handleToggleHabit = async (habitId: string, dateStr: string) => {
-    const habit = habits.find(h => h.id === habitId);
-    if (!habit) return;
-    const newCompletedDays = habit.completed_days.includes(dateStr)
-      ? habit.completed_days.filter(d => d !== dateStr)
-      : [...habit.completed_days, dateStr];
-    
-    setHabits(prev => prev.map(h => h.id === habitId ? { ...h, completed_days: newCompletedDays } : h));
-    await supabase.from('habits').update({ completed_days: newCompletedDays }).eq('id', habitId);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const habit = habits.find(h => h.id === habitId);
+      if (!habit) return;
+      
+      const newCompletedDays = habit.completed_days.includes(dateStr)
+        ? habit.completed_days.filter(d => d !== dateStr)
+        : [...habit.completed_days, dateStr];
+      
+      setHabits(prev => prev.map(h => h.id === habitId ? { ...h, completed_days: newCompletedDays } : h));
+      
+      const { error } = await supabase
+        .from('habits')
+        .update({ completed_days: newCompletedDays })
+        .eq('id', habitId)
+        .eq('user_id', user.id); // Guard against IDOR
+      
+      if (error) throw error;
+    } catch (error: any) {
+      toast({ title: "Failed to update ritual", description: error.message, variant: "destructive" });
+      fetchHabits(); // Revert state on error
+    }
   };
 
   const getGreeting = () => {
