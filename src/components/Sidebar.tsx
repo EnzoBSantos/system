@@ -1,10 +1,12 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { LayoutDashboard, CheckCircle2, Timer, Target, ListTodo } from 'lucide-react';
+import { LayoutDashboard, CheckCircle2, Timer, Target, ListTodo, ShieldCheck } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { QUOTES } from '@/lib/quotes';
 import PillarLogo from './PillarLogo';
+import { useAdmin } from '@/hooks/useAdmin';
+import { useNavigate } from 'react-router-dom';
 
 type Tab = 'dashboard' | 'habits' | 'pomodoro' | 'goals' | 'tasks';
 
@@ -15,6 +17,8 @@ interface SidebarProps {
 
 const Sidebar = ({ activeTab, setActiveTab }: SidebarProps) => {
   const [quote, setQuote] = useState(QUOTES[0]);
+  const { isAdmin } = useAdmin();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const randomIndex = Math.floor(Math.random() * QUOTES.length);
@@ -45,7 +49,10 @@ const Sidebar = ({ activeTab, setActiveTab }: SidebarProps) => {
           return (
             <button
               key={item.id}
-              onClick={() => setActiveTab(item.id as Tab)}
+              onClick={() => {
+                setActiveTab(item.id as Tab);
+                navigate('/dashboard');
+              }}
               className={cn(
                 "w-full flex items-center space-x-4 px-4 py-4 rounded-2xl transition-all duration-300 group",
                 isActive 
@@ -58,6 +65,16 @@ const Sidebar = ({ activeTab, setActiveTab }: SidebarProps) => {
             </button>
           );
         })}
+
+        {isAdmin && (
+          <button
+            onClick={() => navigate('/admin/courses')}
+            className="w-full flex items-center space-x-4 px-4 py-4 rounded-2xl transition-all duration-300 group text-zinc-500 hover:text-white hover:bg-zinc-900"
+          >
+            <ShieldCheck size={20} className="transition-transform group-hover:scale-110 text-amber-500" />
+            <span className="font-semibold text-lg">admin</span>
+          </button>
+        )}
       </nav>
 
       <div className="pt-8 border-t border-border">
