@@ -5,9 +5,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAdmin } from "@/hooks/useAdmin";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Edit, Trash2, Loader2, LayoutGrid } from 'lucide-react';
+import { Plus, Trash2, LayoutGrid, ArrowLeft } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import Sidebar from '@/components/Sidebar';
+import { useNavigate } from 'react-router-dom';
 
 const AdminCourses = () => {
   const { isAdmin, loading: authLoading } = useAdmin();
@@ -15,6 +16,7 @@ const AdminCourses = () => {
   const [loading, setLoading] = useState(true);
   const [newCourse, setNewCourse] = useState({ title: '', description: '' });
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (isAdmin) fetchCourses();
@@ -36,8 +38,27 @@ const AdminCourses = () => {
     }
   };
 
-  if (authLoading) return <div className="h-screen bg-black flex items-center justify-center text-white">verifying authority...</div>;
-  if (isAdmin === false) return <div className="h-screen bg-black flex items-center justify-center text-white">access denied.</div>;
+  if (authLoading) return (
+    <div className="h-screen bg-black flex flex-col items-center justify-center text-white space-y-4">
+      <div className="w-8 h-8 border-2 border-white/10 border-t-white rounded-full animate-spin" />
+      <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">verifying authority...</span>
+    </div>
+  );
+
+  if (isAdmin === false) return (
+    <div className="h-screen bg-black flex flex-col items-center justify-center text-white p-6 text-center space-y-8">
+      <div className="space-y-2">
+        <h1 className="text-6xl font-black tracking-tighter lowercase">access denied.</h1>
+        <p className="text-zinc-500 font-medium">your soul is not yet authorized to curate these paths.</p>
+      </div>
+      <Button 
+        onClick={() => navigate('/dashboard')}
+        className="h-14 px-8 rounded-2xl bg-white text-black hover:bg-zinc-200 font-bold lowercase gap-2"
+      >
+        <ArrowLeft size={18} /> return to sanctuary
+      </Button>
+    </div>
+  );
 
   return (
     <div className="flex h-screen bg-black text-white">
