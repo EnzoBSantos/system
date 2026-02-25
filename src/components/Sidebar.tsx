@@ -1,14 +1,14 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { LayoutDashboard, CheckCircle2, Target, ListTodo, ShieldCheck } from 'lucide-react';
+import { LayoutDashboard, CheckCircle2, Target, ListTodo, ShieldCheck, BookOpen } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { QUOTES } from '@/lib/quotes';
 import PillarLogo from './PillarLogo';
 import { useAdmin } from '@/hooks/useAdmin';
 import { useNavigate } from 'react-router-dom';
 
-type Tab = 'dashboard' | 'habits' | 'goals' | 'tasks';
+type Tab = 'dashboard' | 'habits' | 'goals' | 'tasks' | 'academy';
 
 interface SidebarProps {
   activeTab: Tab;
@@ -30,6 +30,7 @@ const Sidebar = ({ activeTab, setActiveTab }: SidebarProps) => {
     { id: 'tasks', label: 'tasks', icon: ListTodo },
     { id: 'habits', label: 'rituals', icon: CheckCircle2 },
     { id: 'goals', label: 'vision', icon: Target },
+    { id: 'academy', label: 'academy', icon: BookOpen },
   ];
 
   return (

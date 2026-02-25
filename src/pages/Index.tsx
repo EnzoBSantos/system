@@ -9,6 +9,7 @@ import DashboardStats from '@/components/DashboardStats';
 import CompletionChart from '@/components/CompletionChart';
 import Goals from '@/pages/Goals';
 import Tasks from '@/pages/Tasks';
+import Academy from '@/pages/Academy';
 import GoalCreationFlow from '@/components/GoalCreationFlow';
 import GoalDetail from '@/components/GoalDetail';
 import QuickTaskDialog from '@/components/tasks/QuickTaskDialog';
@@ -17,7 +18,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { AnimatePresence } from 'framer-motion';
 
-type Tab = 'dashboard' | 'habits' | 'goals' | 'tasks';
+type Tab = 'dashboard' | 'habits' | 'goals' | 'tasks' | 'academy';
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState<Tab>('dashboard');
@@ -121,6 +122,7 @@ const Index = () => {
 
           {activeTab === 'tasks' && <Tasks />}
           {activeTab === 'habits' && <HabitTracker habits={habits} onUpdate={fetchHabits} />}
+          {activeTab === 'academy' && <Academy />}
           {activeTab === 'goals' && (
             <Goals 
               onOpenFlow={() => setIsFlowOpen(true)}
