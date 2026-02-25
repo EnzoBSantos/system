@@ -63,22 +63,41 @@ const LessonBuilder = () => {
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      const { data, error } = await supabase.functions.invoke('save-lesson', {
-        body: {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("No active session");
+
+      // Using full hardcoded URL as per system guidelines
+      const response = await fetch('https://xywbivdtaurgtzbinnss.supabase.co/functions/v1/save-lesson', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+          'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh5d2JpdmR0YXVyZ3R6YmlubnNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4NjA3MzQsImV4cCI6MjA4NzQzNjczNH0.fziZ2CMouROZq2TvORJ_iNiikzKhM6Fe_3F3tsnbiGk'
+        },
+        body: JSON.stringify({
           lessonId,
           courseId,
           title: lessonTitle,
           content: pages,
           order: 1
-        }
+        })
       });
 
-      if (error) throw error;
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || "Failed to save lesson");
+      }
 
       toast({ title: "lesson published." });
       navigate('/admin/courses');
     } catch (err: any) {
-      toast({ title: "save failed", description: err.message, variant: "destructive" });
+      console.error("[LessonBuilder] Save error:", err);
+      toast({ 
+        title: "save failed", 
+        description: err.message || "Check console for details.", 
+        variant: "destructive" 
+      });
     } finally {
       setIsSaving(false);
     }

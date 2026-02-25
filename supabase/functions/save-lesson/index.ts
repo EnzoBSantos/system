@@ -32,15 +32,15 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: corsHeaders })
     }
 
-    // SECURITY FIX: Verify Admin Role
-    const { data: profile, error: profileError } = await supabaseClient
+    // Role check: Only admins can save lessons
+    const { data: profile } = await supabaseClient
       .from('profiles')
       .select('role')
       .eq('id', user.id)
       .single();
 
-    if (profileError || profile?.role !== 'admin') {
-      console.error("[save-lesson] Unauthorized access attempt by user:", user.id);
+    if (profile?.role !== 'admin') {
+      console.error("[save-lesson] User is not an admin", user.id);
       return new Response(JSON.stringify({ error: 'Forbidden: Admin access required' }), { status: 403, headers: corsHeaders })
     }
 
@@ -110,6 +110,8 @@ serve(async (req) => {
       .single()
 
     if (error) throw error;
+
+    console.log("[save-lesson] Lesson saved successfully", data.id);
 
     return new Response(
       JSON.stringify(data),
