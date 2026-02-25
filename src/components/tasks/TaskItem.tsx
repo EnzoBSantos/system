@@ -1,8 +1,8 @@
 "use client";
 
-import React from 'react';
+import React, { forwardRef } from 'react';
 import { Task } from '@/types/tasks';
-import { Check, Calendar, Hash, Trash2, AlignLeft } from 'lucide-react';
+import { Check, Calendar, Hash, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format, isPast, isToday as isTodayDate } from 'date-fns';
 import { motion } from 'framer-motion';
@@ -14,7 +14,7 @@ interface TaskItemProps {
   onClick: (task: Task) => void;
 }
 
-const TaskItem = ({ task, onToggle, onDelete, onClick }: TaskItemProps) => {
+const TaskItem = forwardRef<HTMLDivElement, TaskItemProps>(({ task, onToggle, onDelete, onClick }, ref) => {
   const isCompleted = task.status === 'completed';
   const isOverdue = task.due_date && isPast(new Date(task.due_date)) && !isTodayDate(new Date(task.due_date)) && !isCompleted;
 
@@ -27,7 +27,11 @@ const TaskItem = ({ task, onToggle, onDelete, onClick }: TaskItemProps) => {
 
   return (
     <motion.div 
+      ref={ref}
       layout
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.95 }}
       className={cn(
         "group flex items-center gap-3 p-3 md:p-5 rounded-[1.2rem] md:rounded-[2rem] transition-all border cursor-pointer min-h-[52px]",
         isCompleted ? "bg-zinc-900/30 border-transparent opacity-50" : cn("bg-black hover:border-zinc-600", priorityColors[task.priority_level as keyof typeof priorityColors])
@@ -85,6 +89,8 @@ const TaskItem = ({ task, onToggle, onDelete, onClick }: TaskItemProps) => {
       </button>
     </motion.div>
   );
-};
+});
+
+TaskItem.displayName = "TaskItem";
 
 export default TaskItem;
