@@ -55,6 +55,14 @@ const Index = () => {
     await supabase.from('habits').update({ completed_days: newCompletedDays }).eq('id', habitId);
   };
 
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour >= 5 && hour < 12) return "good morning.";
+    if (hour >= 12 && hour < 18) return "good afternoon.";
+    if (hour >= 18 && hour < 22) return "good evening.";
+    return "good night.";
+  };
+
   return (
     <div className="flex flex-col lg:flex-row h-screen bg-black text-white overflow-hidden font-sans">
       <Sidebar activeTab={activeTab} setActiveTab={handleTabChange} />
@@ -65,7 +73,9 @@ const Index = () => {
             <div className="space-y-8 md:space-y-12">
               <header className="space-y-1">
                 <h2 className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.3em]">overview</h2>
-                <h1 className="lowercase text-3xl md:text-6xl font-extrabold tracking-tighter">the path today.</h1>
+                <h1 className="lowercase text-3xl md:text-6xl font-extrabold tracking-tighter">
+                  {getGreeting()}
+                </h1>
               </header>
               <DashboardStats habits={habits} />
               <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 md:gap-8">
