@@ -1,22 +1,15 @@
-const CACHE_NAME = 'pillar-cache-v2'; // Incrementando a versão
+const CACHE_NAME = 'pillar-v3';
 
 self.addEventListener('install', (event) => {
-  self.skipWaiting(); // Força o novo service worker a assumir o controle imediatamente
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(['/']);
-    })
-  );
+  self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
-  // Limpa caches antigos de versões anteriores
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
           if (cacheName !== CACHE_NAME) {
-            console.log('[Service Worker] Deleting old cache:', cacheName);
             return caches.delete(cacheName);
           }
         })
@@ -26,13 +19,11 @@ self.addEventListener('activate', (event) => {
   return self.clients.claim();
 });
 
+// Estratégia: Network First para o index.html, Cache First para o resto
 self.addEventListener('fetch', (event) => {
-  // Estratégia: Tenta rede primeiro para o arquivo principal, senão usa cache
   if (event.request.mode === 'navigate') {
     event.respondWith(
-      fetch(event.request).catch(() => {
-        return caches.match('/');
-      })
+      fetch(event.request).catch(() => caches.match('/'))
     );
     return;
   }
