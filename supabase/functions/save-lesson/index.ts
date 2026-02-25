@@ -40,7 +40,6 @@ serve(async (req) => {
       .single();
 
     if (profile?.role !== 'admin') {
-      console.error("[save-lesson] User is not an admin", user.id);
       return new Response(JSON.stringify({ error: 'Forbidden: Admin access required' }), { status: 403, headers: corsHeaders })
     }
 
@@ -103,15 +102,19 @@ serve(async (req) => {
     if (lessonId && lessonId !== 'undefined') lessonData.id = lessonId;
     if (targetUnitId) lessonData.unit_id = targetUnitId;
 
+    // Use a simpler upsert if PostgREST cache is lagging
     const { data, error } = await supabaseClient
       .from('lessons')
       .upsert(lessonData)
       .select()
       .single()
 
-    if (error) throw error;
-
-    console.log("[save-lesson] Lesson saved successfully", data.id);
+    if (error) {
+      console.error("[save-lesson] Upsert error:", error.message);
+      // If schema cache is the issue, we can try to notify again here
+      await supabaseClient.rpc('reload_schema_cache').catch(() => {});
+      throw error;
+    }
 
     return new Response(
       JSON.stringify(data),
