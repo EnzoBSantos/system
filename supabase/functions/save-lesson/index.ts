@@ -8,25 +8,41 @@ const corsHeaders = {
 }
 
 serve(async (req) => {
+  // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
   }
 
   try {
+    console.log("[save-lesson] Function invoked");
+
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
+    // Manual authentication handling
     const authHeader = req.headers.get('Authorization')
-    if (!authHeader) throw new Error('No authorization header')
+    if (!authHeader) {
+      console.error("[save-lesson] No authorization header provided");
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: corsHeaders })
+    }
     
-    const { data: { user }, error: authError } = await supabaseClient.auth.getUser(authHeader.replace('Bearer ', ''))
-    if (authError || !user) throw new Error('Unauthorized')
+    const token = authHeader.replace('Bearer ', '')
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser(token)
+    
+    if (authError || !user) {
+      console.error("[save-lesson] Auth error:", authError?.message);
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: corsHeaders })
+    }
 
-    const { lessonId, courseId, title, content, order } = await req.json()
+    const body = await req.json()
+    const { lessonId, courseId, title, content, order } = body
+    
+    console.log("[save-lesson] Request body received", { lessonId, courseId, title, pageCount: content?.length });
 
     if (!title || !Array.isArray(content)) {
+      console.error("[save-lesson] Validation failed: Title or content missing");
       return new Response(
         JSON.stringify({ error: "Title and content array are required." }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -35,21 +51,24 @@ serve(async (req) => {
 
     let targetUnitId = null;
 
-    // If editing existing lesson, check its current unit
-    if (lessonId) {
+    // 1. If editing existing lesson, find its unit
+    if (lessonId && lessonId !== 'undefined') {
+      console.log("[save-lesson] Checking existing lesson unit", lessonId);
       const { data: existingLesson } = await supabaseClient
         .from('lessons')
         .select('unit_id')
         .eq('id', lessonId)
-        .single();
+        .maybeSingle();
       
       if (existingLesson?.unit_id) {
         targetUnitId = existingLesson.unit_id;
+        console.log("[save-lesson] Found existing unit_id", targetUnitId);
       }
     }
 
-    // If no unit found and we have a courseId, find or create one
-    if (!targetUnitId && courseId) {
+    // 2. If no unit found yet, we need a courseId to find/create one
+    if (!targetUnitId && courseId && courseId !== 'null') {
+      console.log("[save-lesson] Looking for unit in course", courseId);
       const { data: units } = await supabaseClient
         .from('units')
         .select('id')
@@ -59,26 +78,39 @@ serve(async (req) => {
 
       if (units && units.length > 0) {
         targetUnitId = units[0].id;
+        console.log("[save-lesson] Using first available unit", targetUnitId);
       } else {
+        console.log("[save-lesson] No units found, creating default unit for course", courseId);
         const { data: newUnit, error: unitError } = await supabaseClient
           .from('units')
-          .insert({ course_id: courseId, title: 'Module 1', order: 1 })
+          .insert({ 
+            course_id: courseId, 
+            title: 'Module 1', 
+            order: 1 
+          })
           .select()
           .single();
         
-        if (unitError) throw unitError;
+        if (unitError) {
+          console.error("[save-lesson] Failed to create unit", unitError.message);
+          throw unitError;
+        }
         targetUnitId = newUnit.id;
+        console.log("[save-lesson] Created new unit", targetUnitId);
       }
     }
 
-    const lessonData = {
+    // Prepare data for upsert
+    const lessonData: any = {
       title,
       content,
       order: order || 1,
     };
 
-    if (lessonId) lessonData.id = lessonId;
+    if (lessonId && lessonId !== 'undefined') lessonData.id = lessonId;
     if (targetUnitId) lessonData.unit_id = targetUnitId;
+
+    console.log("[save-lesson] Upserting lesson data", { id: lessonData.id, unit_id: lessonData.unit_id });
 
     const { data, error } = await supabaseClient
       .from('lessons')
@@ -86,7 +118,12 @@ serve(async (req) => {
       .select()
       .single()
 
-    if (error) throw error
+    if (error) {
+      console.error("[save-lesson] Upsert error:", error.message);
+      throw error;
+    }
+
+    console.log("[save-lesson] Lesson saved successfully", data.id);
 
     return new Response(
       JSON.stringify(data),
@@ -94,7 +131,7 @@ serve(async (req) => {
     )
 
   } catch (error: any) {
-    console.error("[save-lesson] Error:", error.message);
+    console.error("[save-lesson] Critical error:", error.message);
     return new Response(
       JSON.stringify({ error: error.message }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
