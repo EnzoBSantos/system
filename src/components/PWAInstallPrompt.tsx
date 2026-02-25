@@ -2,9 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Share, PlusSquare, Zap, CloudOff, Bell, Bird } from 'lucide-react';
+import { X, Share, PlusSquare, Zap, CloudOff, Bell } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
+import PillarLogo from './PillarLogo';
 
 const PWAInstallPrompt = () => {
   const [isVisible, setIsVisible] = useState(false);
@@ -91,7 +91,7 @@ const PWAInstallPrompt = () => {
           <div className="p-8 pt-12 space-y-8">
             <div className="flex items-center gap-5">
               <div className="w-16 h-16 bg-white rounded-3xl flex items-center justify-center shrink-0 shadow-lg">
-                <Bird className="text-black" size={32} />
+                <PillarLogo className="text-black" size={32} />
               </div>
               <div className="space-y-1">
                 <h3 className="text-2xl font-black tracking-tighter lowercase">pillar.</h3>
@@ -115,6 +115,7 @@ const PWAInstallPrompt = () => {
               <div className="bg-white/5 rounded-3xl p-6 space-y-4 border border-white/5">
                 <p className="text-sm font-bold lowercase text-zinc-400 text-center">ios installation guide:</p>
                 <div className="flex items-center justify-between px-2">
+                  {/* ... conteúdo mantido ... */}
                   <div className="flex flex-col items-center gap-3">
                     <div className="w-10 h-10 bg-zinc-800 rounded-xl flex items-center justify-center">
                       <Share size={18} className="text-blue-400" />

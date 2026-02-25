@@ -3,7 +3,7 @@
 import { Auth } from '@supabase/auth-ui-react';
 import { ThemeSupa } from '@supabase/auth-ui-shared';
 import { supabase } from "@/integrations/supabase/client";
-import { Bird } from 'lucide-react';
+import PillarLogo from '@/components/PillarLogo';
 
 const Login = () => {
   return (
@@ -12,7 +12,7 @@ const Login = () => {
         <div className="flex flex-col items-center space-y-6">
           <div className="flex items-center gap-4">
             <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center">
-              <Bird className="text-black" size={28} />
+              <PillarLogo className="text-black" size={28} />
             </div>
             <h1 className="text-5xl font-black tracking-tighter lowercase text-white">pillar.</h1>
           </div>
