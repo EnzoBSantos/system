@@ -9,21 +9,35 @@ export function useAdmin() {
 
   useEffect(() => {
     async function checkRole() {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (!user) {
+          console.log("[useAdmin] No user found in session.");
+          setIsAdmin(false);
+          setLoading(false);
+          return;
+        }
+
+        const { data: profile, error } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', user.id)
+          .single();
+
+        if (error) {
+          console.error("[useAdmin] Error fetching profile:", error.message);
+          setIsAdmin(false);
+        } else {
+          console.log("[useAdmin] Current role:", profile?.role);
+          setIsAdmin(profile?.role === 'admin');
+        }
+      } catch (err) {
+        console.error("[useAdmin] Unexpected error:", err);
         setIsAdmin(false);
+      } finally {
         setLoading(false);
-        return;
       }
-
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', user.id)
-        .single();
-
-      setIsAdmin(profile?.role === 'admin');
-      setLoading(false);
     }
 
     checkRole();
