@@ -10,6 +10,8 @@ import { supabase } from "@/integrations/supabase/client";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
+import LessonView from "./pages/LessonView";
+import AdminCourses from "./pages/admin/Courses";
 import PWAInstallPrompt from "./components/PWAInstallPrompt";
 
 const queryClient = new QueryClient();
@@ -21,18 +23,10 @@ const App = () => {
   useEffect(() => {
     const initAuth = async () => {
       try {
-        // Use getUser() for server-side validation instead of just getSession()
-        const { data: { user }, error } = await supabase.auth.getUser();
-        
-        if (user) {
-          const { data: { session: currentSession } } = await supabase.auth.getSession();
-          setSession(currentSession);
-        } else {
-          setSession(null);
-        }
+        const { data: { session: initialSession } } = await supabase.auth.getSession();
+        setSession(initialSession);
       } catch (error) {
         console.error("Auth init error:", error);
-        setSession(null);
       } finally {
         setLoading(false);
       }
@@ -64,7 +58,7 @@ const App = () => {
           <Routes>
             <Route 
               path="/" 
-              element={<Navigate to={session ? "/dashboard" : "/login"} replace />} 
+              element={<Navigate to="/login" replace />} 
             />
             
             <Route 
@@ -75,6 +69,16 @@ const App = () => {
             <Route 
               path="/dashboard" 
               element={session ? <Index /> : <Navigate to="/login" replace />} 
+            />
+
+            <Route 
+              path="/lesson/:lessonId" 
+              element={session ? <LessonView /> : <Navigate to="/login" replace />} 
+            />
+
+            <Route 
+              path="/admin/courses" 
+              element={session ? <AdminCourses /> : <Navigate to="/login" replace />} 
             />
             
             <Route path="*" element={<NotFound />} />
