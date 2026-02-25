@@ -108,11 +108,11 @@ const Tasks = () => {
   ];
 
   return (
-    <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
-      <header className="flex flex-col md:flex-row md:items-end justify-between gap-8">
-        <div className="space-y-2">
-          <h2 className="text-sm font-bold text-zinc-500 uppercase tracking-[0.3em]">workflow</h2>
-          <h1 className="text-6xl font-extrabold tracking-tighter lowercase">the grind.</h1>
+    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      <header className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <div className="space-y-1">
+          <h2 className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.3em]">workflow</h2>
+          <h1 className="text-3xl font-extrabold tracking-tighter lowercase">the grind.</h1>
         </div>
         
         <div className="flex flex-wrap items-center gap-4">
@@ -122,23 +122,23 @@ const Tasks = () => {
                 key={tab.id}
                 onClick={() => setActiveFilter(tab.id as Filter)}
                 className={cn(
-                  "px-6 py-2 rounded-xl flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest transition-all",
+                  "px-4 py-1.5 rounded-xl flex items-center gap-2 text-[9px] font-bold uppercase tracking-widest transition-all",
                   activeFilter === tab.id ? "bg-white text-black" : "text-zinc-500 hover:text-zinc-300"
                 )}
               >
-                <tab.icon size={14} /> {tab.label}
+                <tab.icon size={12} /> {tab.label}
               </button>
             ))}
           </div>
         </div>
       </header>
 
-      <div className="max-w-4xl mx-auto space-y-12">
+      <div className="max-w-4xl mx-auto space-y-8">
         <TaskInput onTaskCreated={handleTaskCreated} defaultProjectId={inboxId} />
 
         {loading && initialLoad ? (
-          <div className="flex flex-col items-center justify-center py-20 space-y-4">
-            <Loader2 className="animate-spin text-zinc-800" size={40} />
+          <div className="flex flex-col items-center justify-center py-12 space-y-4">
+            <Loader2 className="animate-spin text-zinc-800" size={32} />
             <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-600">Syncing database...</p>
           </div>
         ) : (

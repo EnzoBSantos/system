@@ -70,12 +70,12 @@ const Index = () => {
       <Sidebar activeTab={activeTab} setActiveTab={handleTabChange} />
       
       <main className="flex-1 overflow-y-auto custom-scrollbar pb-24 lg:pb-0">
-        <div className="container max-w-7xl mx-auto px-4 py-8 md:px-12 md:py-16">
+        <div className="container max-w-7xl mx-auto px-4 py-6 md:px-12 md:py-12">
           {activeTab === 'dashboard' && (
-            <div className="space-y-8 md:space-y-12">
+            <div className="space-y-6 md:space-y-8">
               <header className="space-y-1">
                 <h2 className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.3em]">overview</h2>
-                <h1 className="lowercase text-3xl md:text-6xl font-extrabold tracking-tighter">
+                <h1 className="lowercase text-3xl md:text-4xl font-extrabold tracking-tighter">
                   {getGreeting()}
                 </h1>
               </header>
