@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAdmin } from "@/hooks/useAdmin";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Trash2, LayoutGrid, ArrowLeft, PenTool, Globe, EyeOff, Loader2 } from 'lucide-react';
+import { Plus, Trash2, LayoutGrid, ArrowLeft, PenTool, Globe, EyeOff, Loader2, AlertCircle } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import Sidebar from '@/components/Sidebar';
 import { useNavigate } from 'react-router-dom';
@@ -25,42 +25,66 @@ const AdminCourses = () => {
   }, [isAdmin]);
 
   const fetchCourses = async () => {
-    setLoading(true);
-    const { data } = await supabase.from('courses').select('*').order('created_at', { ascending: false });
-    setCourses(data || []);
-    setLoading(false);
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('courses')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      setCourses(data || []);
+    } catch (err: any) {
+      console.error("Fetch error:", err);
+      toast({ title: "failed to fetch courses", description: err.message, variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleCreate = async () => {
-    if (!newCourse.title) return;
-    const { error } = await supabase.from('courses').insert([newCourse]);
-    if (!error) {
+    if (!newCourse.title.trim()) return;
+    try {
+      const { error } = await supabase.from('courses').insert([newCourse]);
+      if (error) throw error;
+      
       toast({ title: "course created." });
       setNewCourse({ title: '', description: '' });
       fetchCourses();
+    } catch (err: any) {
+      toast({ title: "creation failed", description: err.message, variant: "destructive" });
     }
   };
 
   const togglePublish = async (courseId: string, currentStatus: boolean) => {
-    setSyncingId(courseId);
-    const { error } = await supabase
-      .from('courses')
-      .update({ is_published: !currentStatus })
-      .eq('id', courseId);
+    try {
+      setSyncingId(courseId);
+      const { error } = await supabase
+        .from('courses')
+        .update({ is_published: !currentStatus })
+        .eq('id', courseId);
 
-    if (!error) {
+      if (error) throw error;
+
       setCourses(courses.map(c => c.id === courseId ? { ...c, is_published: !currentStatus } : c));
       toast({ title: !currentStatus ? "course published." : "course hidden." });
+    } catch (err: any) {
+      toast({ title: "update failed", description: err.message, variant: "destructive" });
+    } finally {
+      setSyncingId(null);
     }
-    setSyncingId(null);
   };
 
   const handleDelete = async (courseId: string) => {
     if (!confirm("remove this path forever?")) return;
-    const { error } = await supabase.from('courses').delete().eq('id', courseId);
-    if (!error) {
+    try {
+      const { error } = await supabase.from('courses').delete().eq('id', courseId);
+      if (error) throw error;
+      
       setCourses(courses.filter(c => c.id !== courseId));
       toast({ title: "course removed." });
+    } catch (err: any) {
+      toast({ title: "deletion failed", description: err.message, variant: "destructive" });
     }
   };
 
@@ -73,9 +97,14 @@ const AdminCourses = () => {
 
   if (isAdmin === false) return (
     <div className="h-screen bg-black flex flex-col items-center justify-center text-white p-6 text-center space-y-8">
+      <div className="w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center text-red-500">
+        <AlertCircle size={32} />
+      </div>
       <div className="space-y-2">
-        <h1 className="text-6xl font-black tracking-tighter lowercase">access denied.</h1>
-        <p className="text-zinc-500 font-medium">your soul is not yet authorized to curate these paths.</p>
+        <h1 className="text-6xl font-black tracking-tighter lowercase text-white">access denied.</h1>
+        <p className="text-zinc-500 font-medium max-w-md mx-auto">
+          your soul is not yet authorized to curate these paths. please ensure your profile role is set to 'admin'.
+        </p>
       </div>
       <Button 
         onClick={() => navigate('/dashboard')}
@@ -100,7 +129,7 @@ const AdminCourses = () => {
               placeholder="new course title..." 
               value={newCourse.title}
               onChange={(e) => setNewCourse({...newCourse, title: e.target.value})}
-              className="bg-zinc-900 border-zinc-800 rounded-xl w-64"
+              className="bg-zinc-900 border-zinc-800 rounded-xl w-64 text-white"
             />
             <Button onClick={handleCreate} className="bg-white text-black hover:bg-zinc-200 font-bold rounded-xl px-8">
               <Plus size={18} className="mr-2" /> create
@@ -108,59 +137,74 @@ const AdminCourses = () => {
           </div>
         </header>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <button 
-            onClick={() => navigate('/admin/lesson-builder')}
-            className="group bg-zinc-950 border-2 border-dashed border-zinc-900 p-8 rounded-[2.5rem] space-y-6 flex flex-col items-center justify-center text-center hover:border-white/20 transition-all"
-          >
-            <div className="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center text-zinc-500 group-hover:text-white transition-colors">
-              <PenTool size={32} />
-            </div>
-            <div className="space-y-1">
-              <h3 className="text-xl font-bold tracking-tight lowercase">launch architect.</h3>
-              <p className="text-zinc-500 text-xs lowercase">build a sequential learning path.</p>
-            </div>
-          </button>
+        {loading ? (
+          <div className="flex justify-center py-20">
+            <Loader2 className="animate-spin text-zinc-500" size={32} />
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <button 
+              onClick={() => navigate('/admin/lesson-builder')}
+              className="group bg-zinc-950 border-2 border-dashed border-zinc-900 p-8 rounded-[2.5rem] space-y-6 flex flex-col items-center justify-center text-center hover:border-white/20 transition-all"
+            >
+              <div className="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center text-zinc-500 group-hover:text-white transition-colors">
+                <PenTool size={32} />
+              </div>
+              <div className="space-y-1">
+                <h3 className="text-xl font-bold tracking-tight lowercase">launch architect.</h3>
+                <p className="text-zinc-500 text-xs lowercase">build a sequential learning path.</p>
+              </div>
+            </button>
 
-          {courses.map((course) => (
-            <div key={course.id} className="bg-zinc-900 border border-zinc-800 p-8 rounded-[2.5rem] space-y-6 flex flex-col">
-              <div className="flex justify-between items-start">
-                <div className="w-14 h-14 bg-white/5 rounded-2xl flex items-center justify-center text-zinc-500">
-                  <LayoutGrid size={28} />
+            {courses.map((course) => (
+              <div key={course.id} className="bg-zinc-900 border border-zinc-800 p-8 rounded-[2.5rem] space-y-6 flex flex-col group/card transition-all hover:border-zinc-700">
+                <div className="flex justify-between items-start">
+                  <div className="w-14 h-14 bg-white/5 rounded-2xl flex items-center justify-center text-zinc-500">
+                    <LayoutGrid size={28} />
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => togglePublish(course.id, course.is_published)}
+                    disabled={syncingId === course.id}
+                    className={cn(
+                      "rounded-full text-[8px] font-black uppercase tracking-widest px-4 h-8 transition-all",
+                      course.is_published 
+                        ? "bg-green-500/10 border-green-500/50 text-green-500 hover:bg-green-500/20" 
+                        : "bg-zinc-800 border-zinc-700 text-zinc-500 hover:bg-zinc-700 hover:text-white"
+                    )}
+                  >
+                    {syncingId === course.id ? <Loader2 size={10} className="animate-spin mr-2" /> : (course.is_published ? <Globe size={10} className="mr-2" /> : <EyeOff size={10} className="mr-2" />)}
+                    {course.is_published ? "published" : "draft (click to publish)"}
+                  </Button>
                 </div>
-                <button
-                  onClick={() => togglePublish(course.id, course.is_published)}
-                  disabled={syncingId === course.id}
-                  className={cn(
-                    "px-3 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest flex items-center gap-2 border transition-all",
-                    course.is_published 
-                      ? "bg-green-500/10 border-green-500/50 text-green-500" 
-                      : "bg-zinc-800 border-zinc-700 text-zinc-500 hover:text-white"
-                  )}
-                >
-                  {syncingId === course.id ? <Loader2 size={10} className="animate-spin" /> : (course.is_published ? <Globe size={10} /> : <EyeOff size={10} />)}
-                  {course.is_published ? "published" : "draft"}
-                </button>
+                
+                <div className="space-y-2 flex-1">
+                  <h3 className="text-xl font-bold tracking-tight lowercase">{course.title}</h3>
+                  <p className="text-zinc-500 text-sm line-clamp-2 lowercase">{course.description || "no description."}</p>
+                </div>
+                
+                <div className="flex gap-2 pt-4">
+                  <Button 
+                    variant="outline" 
+                    className="flex-1 rounded-xl border-zinc-800 hover:bg-zinc-800 lowercase font-bold"
+                    onClick={() => navigate(`/admin/lesson-builder?courseId=${course.id}`)}
+                  >
+                    edit content
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    size="icon"
+                    onClick={() => handleDelete(course.id)}
+                    className="text-zinc-600 hover:text-red-500 hover:bg-red-500/10 rounded-xl"
+                  >
+                    <Trash2 size={18} />
+                  </Button>
+                </div>
               </div>
-              
-              <div className="space-y-2 flex-1">
-                <h3 className="text-xl font-bold tracking-tight lowercase">{course.title}</h3>
-                <p className="text-zinc-500 text-sm line-clamp-2 lowercase">{course.description || "no description."}</p>
-              </div>
-              
-              <div className="flex gap-2 pt-4">
-                <Button variant="outline" className="flex-1 rounded-xl border-zinc-800 hover:bg-zinc-800 lowercase">edit</Button>
-                <Button 
-                  variant="ghost" 
-                  onClick={() => handleDelete(course.id)}
-                  className="text-zinc-600 hover:text-red-500 hover:bg-red-500/10 rounded-xl"
-                >
-                  <Trash2 size={18} />
-                </Button>
-              </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </main>
     </div>
   );
