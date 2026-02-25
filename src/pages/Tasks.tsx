@@ -77,7 +77,9 @@ const Tasks = () => {
       if (error) throw error;
       
       if (status === 'completed') {
-        toast({ title: "task conquered." });
+        // Securely award karma via RPC instead of direct table update
+        await supabase.rpc('award_karma', { points: 10 });
+        toast({ title: "task conquered. +10 karma" });
       }
     } catch (error: any) {
       fetchTasks(false);
