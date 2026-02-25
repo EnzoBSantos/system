@@ -21,7 +21,16 @@ const Tasks = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [inboxId, setInboxId] = useState<string | null>(null);
   const { toast } = useToast();
+
+  useEffect(() => {
+    const fetchInbox = async () => {
+      const { data } = await supabase.from('projects').select('id').eq('is_inbox', true).single();
+      if (data) setInboxId(data.id);
+    };
+    fetchInbox();
+  }, []);
 
   const fetchTasks = async () => {
     try {
@@ -35,8 +44,12 @@ const Tasks = () => {
         const todayStr = format(new Date(), 'yyyy-MM-dd');
         query = query.or(`due_date.eq.${todayStr},due_date.lt.${todayStr}`);
       } else if (activeFilter === 'inbox') {
-        const { data: inbox } = await supabase.from('projects').select('id').eq('is_inbox', true).single();
-        if (inbox) query = query.eq('project_id', inbox.id);
+        // Se estiver na aba inbox, buscamos tarefas do inbox ou sem projeto
+        if (inboxId) {
+          query = query.or(`project_id.eq.${inboxId},project_id.is.null`);
+        } else {
+          query = query.is('project_id', null);
+        }
       } else if (activeFilter === 'upcoming') {
         const todayStr = format(new Date(), 'yyyy-MM-dd');
         query = query.gt('due_date', todayStr);
@@ -54,7 +67,7 @@ const Tasks = () => {
 
   useEffect(() => {
     fetchTasks();
-  }, [activeFilter]);
+  }, [activeFilter, inboxId]);
 
   const handleToggle = async (id: string, status: 'open' | 'completed') => {
     try {
@@ -86,7 +99,7 @@ const Tasks = () => {
   const handleTaskCreated = (newTask?: Task) => {
     fetchTasks();
     if (newTask) {
-      setSelectedTask(newTask);
+      // Opcional: abrir detalhes da nova tarefa
     }
   };
 
@@ -144,7 +157,7 @@ const Tasks = () => {
       </header>
 
       <div className="max-w-4xl mx-auto space-y-12">
-        <TaskInput onTaskCreated={handleTaskCreated} />
+        <TaskInput onTaskCreated={handleTaskCreated} defaultProjectId={inboxId} />
 
         {loading ? (
           <div className="flex flex-col items-center justify-center py-20 space-y-4">

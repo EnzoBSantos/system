@@ -79,7 +79,7 @@ const TaskItem = ({ task, onToggle, onDelete, onClick }: TaskItemProps) => {
           e.stopPropagation();
           onDelete(task.id);
         }}
-        className="opacity-0 group-hover:opacity-100 p-1 text-zinc-700 hover:text-red-500 transition-all"
+        className="opacity-0 group-hover:opacity-100 p-1 text-white/40 hover:text-red-500 transition-all"
       >
         <Trash2 size={16} />
       </button>
