@@ -165,34 +165,34 @@ const GoalDetail = ({ goalId, onClose, onUpdate }: GoalDetailProps) => {
       className="fixed inset-0 z-[40] bg-black overflow-hidden h-screen w-screen"
     >
       <div className="w-full h-full flex flex-col">
-        <header className="flex items-center justify-between shrink-0 px-8 py-8 md:py-10 border-b border-white/5 bg-black/50 backdrop-blur-xl z-50">
-          <Button variant="ghost" onClick={onClose} className="rounded-2xl text-zinc-500 hover:text-white gap-2 font-bold lowercase">
-            <ArrowLeft size={20} /> back
+        <header className="flex items-center justify-between shrink-0 px-4 md:px-8 py-4 md:py-10 border-b border-white/5 bg-black/50 backdrop-blur-xl z-50">
+          <Button variant="ghost" onClick={onClose} className="rounded-xl md:rounded-2xl text-zinc-500 hover:text-white gap-2 font-bold lowercase text-xs md:text-base">
+            <ArrowLeft size={16} className="md:size-20" /> back
           </Button>
           
-          <div className="flex bg-zinc-900 p-1 rounded-2xl border border-zinc-800">
+          <div className="flex bg-zinc-900 p-0.5 md:p-1 rounded-xl md:rounded-2xl border border-zinc-800 scale-90 md:scale-100">
             <button 
               onClick={() => setView('list')}
               className={cn(
-                "px-6 py-2 rounded-xl flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest transition-all",
+                "px-3 md:px-6 py-1.5 md:py-2 rounded-lg md:rounded-xl flex items-center gap-2 text-[8px] md:text-[10px] font-bold uppercase tracking-widest transition-all",
                 view === 'list' ? "bg-white text-black" : "text-zinc-500 hover:text-zinc-300"
               )}
             >
-              <LayoutList size={14} /> list view
+              <LayoutList size={12} className="md:size-14" /> list
             </button>
             <button 
               onClick={() => setView('mindmap')}
               className={cn(
-                "px-6 py-2 rounded-xl flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest transition-all",
+                "px-3 md:px-6 py-1.5 md:py-2 rounded-lg md:rounded-xl flex items-center gap-2 text-[8px] md:text-[10px] font-bold uppercase tracking-widest transition-all",
                 view === 'mindmap' ? "bg-white text-black" : "text-zinc-500 hover:text-zinc-300"
               )}
             >
-              <Share2 size={14} /> mind map
+              <Share2 size={12} className="md:size-14" /> map
             </button>
           </div>
 
-          <Button variant="ghost" onClick={deleteGoal} className="rounded-2xl text-zinc-800 hover:text-red-500 gap-2 font-bold lowercase">
-            <Trash2 size={20} /> abandon vision
+          <Button variant="ghost" onClick={deleteGoal} className="rounded-xl md:rounded-2xl text-zinc-800 hover:text-red-500 gap-1 md:gap-2 font-bold lowercase text-[10px] md:text-base">
+            <Trash2 size={16} className="md:size-20" /> abandon
           </Button>
         </header>
 
@@ -220,40 +220,40 @@ const GoalDetail = ({ goalId, onClose, onUpdate }: GoalDetailProps) => {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -30 }}
                 transition={{ duration: 0.5, ease: "circOut" }}
-                className="h-full overflow-y-auto px-8 md:px-16 py-12"
+                className="h-full overflow-y-auto px-4 md:px-16 py-8 md:py-12"
               >
-                <div className="grid lg:grid-cols-[1fr_400px] gap-16 max-w-[1800px] mx-auto">
-                  <div className="space-y-12">
+                <div className="grid lg:grid-cols-[1fr_400px] gap-8 md:gap-16 max-w-[1800px] mx-auto">
+                  <div className="space-y-8 md:space-y-12">
                     <motion.div 
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: 0.2 }}
-                      className="space-y-4"
+                      className="space-y-2 md:space-y-4"
                     >
-                      <div className="flex items-center gap-4">
-                        <span className="bg-white/10 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest text-zinc-400">
+                      <div className="flex items-center gap-2">
+                        <span className="bg-white/10 px-2 md:px-3 py-0.5 md:py-1 rounded-full text-[8px] md:text-[10px] font-bold uppercase tracking-widest text-zinc-400">
                           active architecture
                         </span>
                       </div>
-                      <div className="flex items-center gap-4 group">
-                        <h1 className="text-7xl md:text-8xl font-black tracking-tighter lowercase leading-[0.9]">{goal.title}</h1>
+                      <div className="flex items-center gap-3 md:gap-4 group">
+                        <h1 className="text-4xl md:text-8xl font-black tracking-tighter lowercase leading-[0.9]">{goal.title}</h1>
                         <Button 
                           variant="ghost" 
                           size="icon" 
                           onClick={() => handleOpenEdit('goal')}
-                          className="opacity-0 group-hover:opacity-100 transition-opacity rounded-full w-12 h-12"
+                          className="opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity rounded-full w-8 h-8 md:w-12 md:h-12"
                         >
-                          <Edit2 size={32} />
+                          <Edit2 size={16} className="md:size-32" />
                         </Button>
                       </div>
-                      <p className="text-3xl text-zinc-500 font-medium lowercase leading-relaxed max-w-3xl">"{goal.why}"</p>
+                      <p className="text-xl md:text-3xl text-zinc-500 font-medium lowercase leading-relaxed max-w-3xl">"{goal.why}"</p>
                     </motion.div>
 
-                    <div className="space-y-8">
-                      <div className="flex items-center justify-between px-2 border-b border-zinc-900 pb-4">
-                        <h3 className="text-[10px] font-bold uppercase tracking-[0.3em] text-zinc-600">architecture pillars</h3>
-                        <Button variant="ghost" size="sm" onClick={(e) => handleOpenCreate(e)} className="text-[10px] font-bold uppercase tracking-widest hover:text-white">
-                          <Plus size={14} className="mr-1" /> new pillar
+                    <div className="space-y-6 md:space-y-8">
+                      <div className="flex items-center justify-between px-1 md:px-2 border-b border-zinc-900 pb-3 md:pb-4">
+                        <h3 className="text-[9px] md:text-[10px] font-bold uppercase tracking-[0.3em] text-zinc-600">pillars</h3>
+                        <Button variant="ghost" size="sm" onClick={(e) => handleOpenCreate(e)} className="text-[9px] md:text-[10px] font-bold uppercase tracking-widest hover:text-white">
+                          <Plus size={12} className="md:size-14 mr-1" /> new
                         </Button>
                       </div>
                       <motion.div 
@@ -262,7 +262,7 @@ const GoalDetail = ({ goalId, onClose, onUpdate }: GoalDetailProps) => {
                         variants={{
                           visible: { transition: { staggerChildren: 0.05 } }
                         }}
-                        className="grid grid-cols-1 xl:grid-cols-2 gap-6"
+                        className="grid grid-cols-1 xl:grid-cols-2 gap-4 md:gap-6"
                       >
                         {goal.requirements?.filter(r => !r.parent_id).map((req: any) => (
                           <motion.div 
@@ -276,42 +276,42 @@ const GoalDetail = ({ goalId, onClose, onUpdate }: GoalDetailProps) => {
                             <button
                               onClick={() => toggleRequirement(req.id, req.is_completed)}
                               className={cn(
-                                "w-full p-10 rounded-[3.5rem] border flex items-center gap-8 transition-all text-left h-full",
+                                "w-full p-6 md:p-10 rounded-[2rem] md:rounded-[3.5rem] border flex items-center gap-4 md:gap-8 transition-all text-left h-full",
                                 req.is_completed 
                                   ? "bg-zinc-900/30 border-transparent opacity-60" 
                                   : "bg-black border-zinc-800 hover:border-white/20"
                               )}
                             >
                               <div className={cn(
-                                "w-16 h-16 rounded-3xl flex items-center justify-center transition-all shrink-0",
+                                "w-10 h-10 md:w-16 md:h-16 rounded-2xl md:rounded-3xl flex items-center justify-center transition-all shrink-0",
                                 req.is_completed ? "bg-white text-black shadow-lg" : "bg-zinc-900 text-zinc-600"
                               )}>
-                                {req.is_completed ? <Check size={32} strokeWidth={3} /> : <div className="w-2.5 h-2.5 rounded-full bg-current" />}
+                                {req.is_completed ? <Check size={20} className="md:size-32" strokeWidth={3} /> : <div className="w-1.5 md:w-2.5 h-1.5 md:h-2.5 rounded-full bg-current" />}
                               </div>
-                              <div className="flex-1 pr-8">
-                                <h4 className={cn("text-2xl font-bold lowercase leading-tight", req.is_completed && "line-through text-zinc-500")}>{req.title}</h4>
+                              <div className="flex-1 pr-6 md:pr-8">
+                                <h4 className={cn("text-lg md:text-2xl font-bold lowercase leading-tight", req.is_completed && "line-through text-zinc-500")}>{req.title}</h4>
                                 {req.weekly_commitment && (
-                                  <p className="text-[11px] font-bold uppercase tracking-widest text-zinc-500 mt-3">{req.weekly_commitment}</p>
+                                  <p className="text-[9px] md:text-[11px] font-bold uppercase tracking-widest text-zinc-500 mt-2 md:mt-3">{req.weekly_commitment}</p>
                                 )}
                               </div>
                             </button>
                             
-                            <div className="absolute top-6 right-6 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <div className="absolute top-4 right-4 md:top-6 md:right-6 flex gap-1.5 md:gap-2 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity">
                               <Button 
                                 size="icon" 
                                 variant="ghost" 
                                 onClick={(e) => { e.stopPropagation(); handleOpenEdit('requirement', req.id); }}
-                                className="w-12 h-12 rounded-full text-zinc-500 hover:text-white bg-black/40 backdrop-blur-sm"
+                                className="w-8 h-8 md:w-12 md:h-12 rounded-full text-zinc-500 hover:text-white bg-black/40 backdrop-blur-sm"
                               >
-                                <Edit2 size={20} />
+                                <Edit2 size={14} className="md:size-20" />
                               </Button>
                               <Button 
                                 size="icon" 
                                 variant="ghost" 
                                 onClick={(e) => { e.stopPropagation(); deleteRequirement(req.id); }}
-                                className="w-12 h-12 rounded-full text-zinc-500 hover:text-red-500 bg-black/40 backdrop-blur-sm"
+                                className="w-8 h-8 md:w-12 md:h-12 rounded-full text-zinc-500 hover:text-red-500 bg-black/40 backdrop-blur-sm"
                               >
-                                <Trash2 size={20} />
+                                <Trash2 size={14} className="md:size-20" />
                               </Button>
                             </div>
                           </motion.div>
@@ -320,21 +320,21 @@ const GoalDetail = ({ goalId, onClose, onUpdate }: GoalDetailProps) => {
                     </div>
                   </div>
 
-                  <aside className="space-y-8">
+                  <aside className="space-y-6 md:space-y-8">
                     <motion.div 
                       initial={{ opacity: 0, x: 20 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: 0.4 }}
-                      className="bg-zinc-900/50 p-12 rounded-[3.5rem] space-y-12 border border-zinc-800/50 sticky top-0"
+                      className="bg-zinc-900/50 p-8 md:p-12 rounded-[2.5rem] md:rounded-[3.5rem] space-y-8 md:space-y-12 border border-zinc-800/50"
                     >
-                      <div className="space-y-8">
+                      <div className="space-y-4 md:space-y-8">
                         <div className="flex justify-between items-end">
-                          <p className="text-[11px] font-bold uppercase tracking-widest text-zinc-500">total completion</p>
-                          <p className="text-6xl font-black">{progress}%</p>
+                          <p className="text-[9px] md:text-[11px] font-bold uppercase tracking-widest text-zinc-500">completion</p>
+                          <p className="text-4xl md:text-6xl font-black">{progress}%</p>
                         </div>
-                        <div className="h-8 bg-black rounded-full overflow-hidden p-1.5">
+                        <div className="h-4 md:h-8 bg-black rounded-full overflow-hidden p-1 md:p-1.5">
                           <motion.div 
-                            className="h-full bg-white rounded-full shadow-[0_0_30px_rgba(255,255,255,0.4)]" 
+                            className="h-full bg-white rounded-full shadow-[0_0_20px_rgba(255,255,255,0.4)]" 
                             initial={{ width: 0 }}
                             animate={{ width: `${progress}%` }}
                             transition={{ type: "spring", damping: 20 }}
