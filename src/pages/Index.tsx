@@ -40,7 +40,6 @@ const Index = () => {
 
   const handleTabChange = (tab: Tab) => {
     setActiveTab(tab);
-    // Fecha qualquer detalhe ou fluxo aberto ao navegar para outra aba
     setSelectedGoalId(null);
     setIsFlowOpen(false);
   };
@@ -66,12 +65,16 @@ const Index = () => {
             <div className="space-y-8 md:space-y-12">
               <header className="space-y-1">
                 <h2 className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.3em]">overview</h2>
-                <h1 className="lowercase">the path today.</h1>
+                <h1 className="lowercase text-3xl md:text-6xl font-extrabold tracking-tighter">the path today.</h1>
               </header>
               <DashboardStats habits={habits} />
               <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 md:gap-8">
-                <div className="xl:col-span-2"><Heatmap habits={habits} onToggleHabit={handleToggleHabit} /></div>
-                <div className="hidden md:block"><CompletionChart habits={habits} /></div>
+                <div className="xl:col-span-2">
+                  <Heatmap habits={habits} onToggleHabit={handleToggleHabit} />
+                </div>
+                <div className="block">
+                  <CompletionChart habits={habits} />
+                </div>
               </div>
             </div>
           )}
@@ -89,7 +92,6 @@ const Index = () => {
         </div>
       </main>
 
-      {/* A navegação mobile deve estar sempre disponível e no topo da hierarquia */}
       <div className="relative z-[60]">
         <MobileNav activeTab={activeTab} setActiveTab={handleTabChange} />
       </div>
