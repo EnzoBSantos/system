@@ -70,7 +70,7 @@ const Index = () => {
       <Sidebar activeTab={activeTab} setActiveTab={handleTabChange} />
       
       <main className="flex-1 overflow-y-auto custom-scrollbar pb-24 lg:pb-0">
-        <div className="container max-w-7xl mx-auto px-4 py-6 md:px-12 md:py-12">
+        <div className="container max-w-7xl mx-auto px-4 py-4 md:px-12 md:py-12">
           {activeTab === 'dashboard' && (
             <div className="space-y-6 md:space-y-8">
               <header className="space-y-1">
@@ -80,7 +80,7 @@ const Index = () => {
                 </h1>
               </header>
               <DashboardStats habits={habits} />
-              <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 md:gap-8">
+              <div className="grid grid-cols-1 xl:grid-cols-3 gap-3 md:gap-8">
                 <div className="xl:col-span-2">
                   <Heatmap habits={habits} onToggleHabit={handleToggleHabit} />
                 </div>
