@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Task } from '@/types/tasks';
-import { Check, Calendar, Hash, Trash2, AlignLeft, ListTree } from 'lucide-react';
+import { Check, Calendar, Hash, Trash2, AlignLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format, isPast, isToday as isTodayDate } from 'date-fns';
 import { motion } from 'framer-motion';
@@ -29,7 +29,7 @@ const TaskItem = ({ task, onToggle, onDelete, onClick }: TaskItemProps) => {
     <motion.div 
       layout
       className={cn(
-        "group flex items-start gap-4 p-5 rounded-[2rem] transition-all border cursor-pointer",
+        "group flex items-center gap-3 p-3 md:p-5 rounded-[1.2rem] md:rounded-[2rem] transition-all border cursor-pointer min-h-[52px]",
         isCompleted ? "bg-zinc-900/30 border-transparent opacity-50" : cn("bg-black hover:border-zinc-600", priorityColors[task.priority_level as keyof typeof priorityColors])
       )}
       onClick={() => onClick(task)}
@@ -40,40 +40,35 @@ const TaskItem = ({ task, onToggle, onDelete, onClick }: TaskItemProps) => {
           onToggle(task.id, isCompleted ? 'open' : 'completed');
         }}
         className={cn(
-          "w-7 h-7 rounded-full border-2 flex items-center justify-center transition-all mt-1 shrink-0",
+          "w-6 h-6 md:w-7 md:h-7 rounded-full border-2 flex items-center justify-center transition-all shrink-0",
           isCompleted 
             ? "bg-white border-white text-black" 
             : "border-zinc-700 hover:border-white"
         )}
       >
-        {isCompleted && <Check size={16} strokeWidth={3} />}
+        {isCompleted && <Check size={14} strokeWidth={4} />}
       </button>
 
-      <div className="flex-1 min-w-0 space-y-2">
+      <div className="flex-1 min-w-0">
         <h4 className={cn(
-          "text-lg font-bold tracking-tight lowercase truncate",
+          "text-sm md:text-lg font-bold tracking-tight lowercase truncate",
           isCompleted && "line-through text-zinc-600"
         )}>
           {task.title}
         </h4>
         
-        <div className="flex flex-wrap items-center gap-4">
+        <div className="flex items-center gap-3 mt-0.5">
           {task.due_date && (
             <div className={cn(
-              "flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest",
+              "flex items-center gap-1 text-[8px] md:text-[10px] font-bold uppercase tracking-widest",
               isOverdue ? "text-red-500" : "text-zinc-500"
             )}>
-              <Calendar size={12} />
+              <Calendar size={10} />
               {isTodayDate(new Date(task.due_date)) ? "Today" : format(new Date(task.due_date), 'MMM d')}
             </div>
           )}
-          {task.description && (
-            <div className="flex items-center gap-1 text-zinc-600">
-              <AlignLeft size={12} />
-            </div>
-          )}
-          <div className="flex items-center gap-1.5 text-[10px] font-bold text-zinc-600 uppercase tracking-widest">
-            <Hash size={12} />
+          <div className="flex items-center gap-1 text-[8px] md:text-[10px] font-bold text-zinc-600 uppercase tracking-widest">
+            <Hash size={10} />
             #inbox
           </div>
         </div>
@@ -84,9 +79,9 @@ const TaskItem = ({ task, onToggle, onDelete, onClick }: TaskItemProps) => {
           e.stopPropagation();
           onDelete(task.id);
         }}
-        className="opacity-0 group-hover:opacity-100 p-2 text-zinc-700 hover:text-red-500 transition-all"
+        className="opacity-0 group-hover:opacity-100 p-1 text-zinc-700 hover:text-red-500 transition-all"
       >
-        <Trash2 size={18} />
+        <Trash2 size={16} />
       </button>
     </motion.div>
   );

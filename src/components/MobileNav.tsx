@@ -21,7 +21,7 @@ const MobileNav = ({ activeTab, setActiveTab }: MobileNavProps) => {
   ];
 
   return (
-    <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-black/80 backdrop-blur-xl border-t border-zinc-800 px-6 pb-8 pt-3">
+    <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-black/80 backdrop-blur-xl border-t border-zinc-800 px-4 pb-6 pt-2">
       <div className="flex justify-between items-center max-w-md mx-auto">
         {navItems.map((item) => {
           const Icon = item.icon;
@@ -31,17 +31,17 @@ const MobileNav = ({ activeTab, setActiveTab }: MobileNavProps) => {
               key={item.id}
               onClick={() => setActiveTab(item.id as Tab)}
               className={cn(
-                "flex flex-col items-center gap-1.5 transition-all duration-300",
+                "flex flex-col items-center gap-1 transition-all duration-300",
                 isActive ? "text-white" : "text-zinc-500"
               )}
             >
               <div className={cn(
-                "p-2 rounded-2xl transition-all",
-                isActive ? "bg-white text-black scale-110" : "bg-transparent"
+                "p-2 rounded-xl transition-all",
+                isActive ? "bg-white text-black" : "bg-transparent"
               )}>
-                <Icon size={20} />
+                <Icon size={18} />
               </div>
-              <span className="text-[10px] font-bold uppercase tracking-widest">{item.label}</span>
+              <span className="text-[8px] font-bold uppercase tracking-[0.1em]">{item.label}</span>
             </button>
           );
         })}
