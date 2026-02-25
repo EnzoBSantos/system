@@ -39,7 +39,11 @@ const Tasks = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      let query = supabase.from('tasks').select('*').order('created_at', { ascending: false });
+      let query = supabase
+        .from('tasks')
+        .select('*')
+        .eq('user_id', user.id) // Secure filter
+        .order('created_at', { ascending: false });
 
       if (activeFilter === 'today') {
         const todayStr = format(new Date(), 'yyyy-MM-dd');
@@ -72,12 +76,20 @@ const Tasks = () => {
 
   const handleToggle = async (id: string, status: 'open' | 'completed') => {
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
       setTasks(prev => prev.map(t => t.id === id ? { ...t, status } : t));
-      const { error } = await supabase.from('tasks').update({ status }).eq('id', id);
+      
+      const { error } = await supabase
+        .from('tasks')
+        .update({ status })
+        .eq('id', id)
+        .eq('user_id', user.id); // Guard against IDOR
+
       if (error) throw error;
       
       if (status === 'completed') {
-        // Securely award karma via RPC instead of direct table update
         await supabase.rpc('award_karma', { points: 10 });
         toast({ title: "task conquered. +10 karma" });
       }
@@ -89,8 +101,17 @@ const Tasks = () => {
 
   const handleDelete = async (id: string) => {
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
       setTasks(prev => prev.filter(t => t.id !== id));
-      const { error } = await supabase.from('tasks').delete().eq('id', id);
+      
+      const { error } = await supabase
+        .from('tasks')
+        .delete()
+        .eq('id', id)
+        .eq('user_id', user.id); // Guard against IDOR
+
       if (error) throw error;
       toast({ title: "removed from reality." });
     } catch (error: any) {

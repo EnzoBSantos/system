@@ -24,8 +24,14 @@ const App = () => {
   useEffect(() => {
     const initAuth = async () => {
       try {
-        const { data: { session: initialSession } } = await supabase.auth.getSession();
-        setSession(initialSession);
+        // Use getUser() instead of getSession() for server-side verification
+        const { data: { user }, error } = await supabase.auth.getUser();
+        if (error || !user) {
+          setSession(null);
+        } else {
+          const { data: { session: currentSession } } = await supabase.auth.getSession();
+          setSession(currentSession);
+        }
       } catch (error) {
         console.error("Auth init error:", error);
       } finally {
