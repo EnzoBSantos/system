@@ -14,7 +14,7 @@ interface QuickTaskDialogProps {
 const QuickTaskDialog = ({ open, onOpenChange, onTaskCreated }: QuickTaskDialogProps) => {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-zinc-950 border-zinc-900 text-white rounded-[2.5rem] p-8 max-w-lg outline-none">
+      <DialogContent className="bg-zinc-950 border-zinc-900 text-white rounded-[2.5rem] p-8 max-w-lg outline-none fixed top-[15%] sm:top-[50%] translate-y-0 sm:translate-y-[-50%]">
         <DialogHeader className="mb-4">
           <DialogTitle className="text-3xl font-black tracking-tighter lowercase">capture ritual.</DialogTitle>
         </DialogHeader>

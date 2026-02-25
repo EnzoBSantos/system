@@ -20,6 +20,7 @@ const Tasks = () => {
   const [view, setView] = useState<View>('list');
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
+  const [initialLoad, setInitialLoad] = useState(true);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [inboxId, setInboxId] = useState<string | null>(null);
   const { toast } = useToast();
@@ -32,9 +33,9 @@ const Tasks = () => {
     fetchInbox();
   }, []);
 
-  const fetchTasks = async () => {
+  const fetchTasks = async (showLoader = true) => {
     try {
-      setLoading(true);
+      if (showLoader) setLoading(true);
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
@@ -44,7 +45,6 @@ const Tasks = () => {
         const todayStr = format(new Date(), 'yyyy-MM-dd');
         query = query.or(`due_date.eq.${todayStr},due_date.lt.${todayStr}`);
       } else if (activeFilter === 'inbox') {
-        // Se estiver na aba inbox, buscamos tarefas do inbox ou sem projeto
         if (inboxId) {
           query = query.or(`project_id.eq.${inboxId},project_id.is.null`);
         } else {
@@ -62,11 +62,12 @@ const Tasks = () => {
       toast({ title: "fetch error", description: error.message, variant: "destructive" });
     } finally {
       setLoading(false);
+      setInitialLoad(false);
     }
   };
 
   useEffect(() => {
-    fetchTasks();
+    fetchTasks(!initialLoad);
   }, [activeFilter, inboxId]);
 
   const handleToggle = async (id: string, status: 'open' | 'completed') => {
@@ -79,7 +80,7 @@ const Tasks = () => {
         toast({ title: "task conquered." });
       }
     } catch (error: any) {
-      fetchTasks();
+      fetchTasks(false);
       toast({ title: "sync error", description: error.message, variant: "destructive" });
     }
   };
@@ -91,16 +92,13 @@ const Tasks = () => {
       if (error) throw error;
       toast({ title: "removed from reality." });
     } catch (error: any) {
-      fetchTasks();
+      fetchTasks(false);
       toast({ title: "delete error", description: error.message, variant: "destructive" });
     }
   };
 
   const handleTaskCreated = (newTask?: Task) => {
-    fetchTasks();
-    if (newTask) {
-      // Opcional: abrir detalhes da nova tarefa
-    }
+    fetchTasks(false);
   };
 
   const filterTabs = [
@@ -132,46 +130,27 @@ const Tasks = () => {
               </button>
             ))}
           </div>
-
-          <div className="flex bg-zinc-900 p-1 rounded-2xl border border-zinc-800">
-            <button 
-              onClick={() => setView('list')}
-              className={cn(
-                "p-2 rounded-xl transition-all",
-                view === 'list' ? "bg-zinc-800 text-white" : "text-zinc-500"
-              )}
-            >
-              <LayoutList size={18} />
-            </button>
-            <button 
-              onClick={() => setView('board')}
-              className={cn(
-                "p-2 rounded-xl transition-all",
-                view === 'board' ? "bg-zinc-800 text-white" : "text-zinc-500"
-              )}
-            >
-              <LayoutGrid size={18} />
-            </button>
-          </div>
         </div>
       </header>
 
       <div className="max-w-4xl mx-auto space-y-12">
         <TaskInput onTaskCreated={handleTaskCreated} defaultProjectId={inboxId} />
 
-        {loading ? (
+        {loading && initialLoad ? (
           <div className="flex flex-col items-center justify-center py-20 space-y-4">
             <Loader2 className="animate-spin text-zinc-800" size={40} />
             <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-600">Syncing database...</p>
           </div>
         ) : (
-          <TaskListView 
-            tasks={tasks} 
-            onToggle={handleToggle} 
-            onDelete={handleDelete} 
-            onTaskClick={(task) => setSelectedTask(task)}
-            title={activeFilter}
-          />
+          <div className={cn("transition-opacity duration-300", loading ? "opacity-50" : "opacity-100")}>
+            <TaskListView 
+              tasks={tasks} 
+              onToggle={handleToggle} 
+              onDelete={handleDelete} 
+              onTaskClick={(task) => setSelectedTask(task)}
+              title={activeFilter}
+            />
+          </div>
         )}
       </div>
 
@@ -180,7 +159,7 @@ const Tasks = () => {
           <TaskDetail 
             task={selectedTask} 
             onClose={() => setSelectedTask(null)}
-            onUpdate={fetchTasks}
+            onUpdate={() => fetchTasks(false)}
           />
         )}
       </AnimatePresence>
