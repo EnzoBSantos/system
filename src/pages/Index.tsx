@@ -103,7 +103,12 @@ const Index = () => {
       </main>
 
       <div className="relative z-[60]">
-        <MobileNav activeTab={activeTab} setActiveTab={handleTabChange} />
+        <MobileNav 
+          activeTab={activeTab} 
+          setActiveTab={handleTabChange} 
+          onOpenGoalFlow={() => setIsFlowOpen(true)}
+          onQuickTask={() => handleTabChange('tasks')}
+        />
       </div>
 
       <AnimatePresence>
