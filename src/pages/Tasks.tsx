@@ -5,10 +5,12 @@ import { LayoutList, LayoutGrid, Inbox, Calendar, Clock, Loader2 } from 'lucide-
 import { cn } from '@/lib/utils';
 import TaskInput from '@/components/tasks/TaskInput';
 import TaskListView from '@/components/tasks/TaskListView';
+import TaskDetail from '@/components/tasks/TaskDetail';
 import { Task } from '@/types/tasks';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 import { format } from 'date-fns';
+import { AnimatePresence } from 'framer-motion';
 
 type Filter = 'inbox' | 'today' | 'upcoming';
 type View = 'list' | 'board';
@@ -18,6 +20,7 @@ const Tasks = () => {
   const [view, setView] = useState<View>('list');
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const { toast } = useToast();
 
   const fetchTasks = async () => {
@@ -80,6 +83,13 @@ const Tasks = () => {
     }
   };
 
+  const handleTaskCreated = (newTask?: Task) => {
+    fetchTasks();
+    if (newTask) {
+      setSelectedTask(newTask);
+    }
+  };
+
   const filterTabs = [
     { id: 'inbox', label: 'Inbox', icon: Inbox },
     { id: 'today', label: 'Today', icon: Calendar },
@@ -134,7 +144,7 @@ const Tasks = () => {
       </header>
 
       <div className="max-w-4xl mx-auto space-y-12">
-        <TaskInput onTaskCreated={fetchTasks} />
+        <TaskInput onTaskCreated={handleTaskCreated} />
 
         {loading ? (
           <div className="flex flex-col items-center justify-center py-20 space-y-4">
@@ -146,10 +156,21 @@ const Tasks = () => {
             tasks={tasks} 
             onToggle={handleToggle} 
             onDelete={handleDelete} 
+            onTaskClick={(task) => setSelectedTask(task)}
             title={activeFilter}
           />
         )}
       </div>
+
+      <AnimatePresence>
+        {selectedTask && (
+          <TaskDetail 
+            task={selectedTask} 
+            onClose={() => setSelectedTask(null)}
+            onUpdate={fetchTasks}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 };

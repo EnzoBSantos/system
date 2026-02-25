@@ -9,10 +9,11 @@ interface TaskListViewProps {
   tasks: Task[];
   onToggle: (id: string, status: 'open' | 'completed') => void;
   onDelete: (id: string) => void;
+  onTaskClick: (task: Task) => void;
   title: string;
 }
 
-const TaskListView = ({ tasks, onToggle, onDelete, title }: TaskListViewProps) => {
+const TaskListView = ({ tasks, onToggle, onDelete, onTaskClick, title }: TaskListViewProps) => {
   const openTasks = tasks.filter(t => t.status === 'open');
   const completedTasks = tasks.filter(t => t.status === 'completed');
 
@@ -23,7 +24,13 @@ const TaskListView = ({ tasks, onToggle, onDelete, title }: TaskListViewProps) =
         <div className="space-y-3">
           <AnimatePresence mode="popLayout">
             {openTasks.map(task => (
-              <TaskItem key={task.id} task={task} onToggle={onToggle} onDelete={onDelete} />
+              <TaskItem 
+                key={task.id} 
+                task={task} 
+                onToggle={onToggle} 
+                onDelete={onDelete} 
+                onClick={onTaskClick}
+              />
             ))}
           </AnimatePresence>
         </div>
@@ -34,7 +41,13 @@ const TaskListView = ({ tasks, onToggle, onDelete, title }: TaskListViewProps) =
           <h3 className="text-[10px] font-bold text-zinc-700 uppercase tracking-[0.3em] px-2">Completed</h3>
           <div className="space-y-3">
             {completedTasks.map(task => (
-              <TaskItem key={task.id} task={task} onToggle={onToggle} onDelete={onDelete} />
+              <TaskItem 
+                key={task.id} 
+                task={task} 
+                onToggle={onToggle} 
+                onDelete={onDelete} 
+                onClick={onTaskClick}
+              />
             ))}
           </div>
         </div>
@@ -42,7 +55,7 @@ const TaskListView = ({ tasks, onToggle, onDelete, title }: TaskListViewProps) =
 
       {tasks.length === 0 && (
         <div className="py-20 text-center border-2 border-dashed border-zinc-900 rounded-[3rem]">
-          <p className="text-zinc-600 font-bold uppercase tracking-widest text-xs lowercase">Silence. Everything is in order.</p>
+          <p className="text-zinc-600 font-bold uppercase tracking-widest text-xs">Silence. Everything is in order.</p>
         </div>
       )}
     </div>

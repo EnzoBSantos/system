@@ -7,9 +7,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Task } from '@/types/tasks';
 
 interface TaskInputProps {
-  onTaskCreated: () => void;
+  onTaskCreated: (task?: Task) => void;
   defaultProjectId?: string | null;
 }
 
@@ -30,7 +31,6 @@ const TaskInput = ({ onTaskCreated, defaultProjectId }: TaskInputProps) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Auth required");
 
-      // 1. Resolve Project ID (Search by name or use default/inbox)
       let resolvedProjectId = defaultProjectId;
       if (parsed.project) {
         const { data: projectData } = await supabase
@@ -50,7 +50,6 @@ const TaskInput = ({ onTaskCreated, defaultProjectId }: TaskInputProps) => {
         resolvedProjectId = inbox?.id;
       }
 
-      // 2. Create the Task
       const { data: task, error: taskError } = await supabase
         .from('tasks')
         .insert({
@@ -67,11 +66,8 @@ const TaskInput = ({ onTaskCreated, defaultProjectId }: TaskInputProps) => {
 
       if (taskError) throw taskError;
 
-      // 3. Handle Labels (Phase 2 extension: sync labels to DB)
-      // Note: For brevity, we focus on core task creation here
-
       setInput('');
-      onTaskCreated();
+      onTaskCreated(task);
       toast({ title: "task captured." });
     } catch (error: any) {
       toast({ title: "capture failed", description: error.message, variant: "destructive" });
