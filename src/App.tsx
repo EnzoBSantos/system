@@ -11,8 +11,8 @@ import Index from "./pages/Index";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 import LessonView from "./pages/LessonView";
-import AdminCourses from "./pages/admin/Courses";
-import LessonBuilder from "./pages/admin/LessonBuilder";
+import AdminCourses from "./pages/Admin/Courses";
+import LessonBuilder from "./pages/Admin/LessonBuilder";
 import PWAInstallPrompt from "./components/PWAInstallPrompt";
 
 const queryClient = new QueryClient();
@@ -24,7 +24,6 @@ const App = () => {
   useEffect(() => {
     const initAuth = async () => {
       try {
-        // Use getUser() instead of getSession() for server-side verification
         const { data: { user }, error } = await supabase.auth.getUser();
         if (error || !user) {
           setSession(null);
